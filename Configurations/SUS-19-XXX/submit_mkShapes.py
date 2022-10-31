@@ -59,14 +59,16 @@ def submit_shapes(args):
 
     yearset,tags = getVariables(args)    
     #    tags=sys.argv[2]                                                                         
-    lastarg = len(args)-1
-    yearnm  = '-'.join(yearset)
-    hadd    = args[3]
-    sigset  = args[4]
-    queue   = ''
-    split   = ''
-    rmlog   = None
-    runopts = ['tomorrow','workday','cms_high','cms_med','cms_main']
+    lastarg   = len(args)-1
+    yearnm    = '-'.join(yearset)
+    hadd      = args[3]
+    sigset    = args[4]
+    queue     = ''
+    split     = ''
+    rmlog     = None
+    runopts   = ['tomorrow','workday','cms_high','cms_med','cms_main']
+    keepsplit = False
+    
     if 'rm' in args[lastarg]:
         args[lastarg] = ''
         rmlog = True
@@ -86,7 +88,7 @@ def submit_shapes(args):
         print "not running on multi"
 
     queue  = ''
-    split  = ''
+    split_i  = ''
     rmlog  = None
     if 'rm' in args[len(args)-1]:
         args[len(args)-1] = ''
@@ -95,41 +97,43 @@ def submit_shapes(args):
         if args[5] in ['tomorrow','workday','cms_high','cms_med','cms_main']: 
             queue = args[5]
             if len(args)>6: 
-                split = args[6]
+                split_i = args[6]
         else:
-            split  = args[5]
+            split_i  = args[5]
     
-    if "amap" in split.lower(): split = "AsMuchAsPossible"
-    
+    if "amap" in split.lower(): 
+        split_i   = "AsMuchAsPossible"
+        keepsplit = True
     script    = './run_mkShapes'+multi+'.sh'
-    keepsplit = False
     allsam    = None
     bkgs      = ['ttbar','tW','ttW','VZ','VVV','WZ','ttZ','ZZ', 'DY', 'Higgs']
     bkgsend   = ['BackgroundsVetoDYVetottbarVetoWZ','Backgroundsttbar','BackgroundsDY','BackgroundsZZTo4L', 'BackgroundsWZ']
     smsend    = bkgsend+ ['Data']
     for signal in sigset.split('__'):
-        print "sample:",signal
-    if      len(sigset.split('__'))>1 : allsend = sigset.split('__')
+        print "sample:",signal, split_i
     if           '.' in sigset        : allsend = readsamples(sigset)
-    if 'backgrounds' in split.lower() : allsend = bkgsend
-    if      split    == 'SM'          : allsend = smsend
-    elif         'all' in split.lower() :
+    if      sigset   == 'backgrounds' : allsend = bkgsend
+    if      sigset   == 'SM'          : allsend = smsend
+        
+    if      len(sigset.split('__'))>1 : allsend = sigset.split('__')
+    elif         'all' in split_i.lower() :
         if hadd == '1' and "SM-" not in sigset and sigset not in smsend+["SM","Backgrounds"]: sigset="SM-"+sigset
         if sigset.replace('Backgrounds','') in bkgs or sigset == 'Data': 
             print "please choose a valid signal"
             exit()
-        elif "mc" in split.lower(): allsend = bkgsend
+        elif "mc" in split_i.lower(): allsend = bkgsend
         elif hadd == '0' and sigset in ["SM", "Backgrounds"]:
             allsend = smsend
         else: allsend = smsend+[sigset]
     else: 
+        print "ee"
         allsend   = [sigset]
         keepsplit = True
 
     if   'plot' in args[-1].lower(): 
         script  = './run_mkPlot.sh'
         hadd    = ''
-        split   = ''
+        split_i = ''
     elif 'merge' in args[-1].lower():
         script  = './mergeShapes.py'
     elif 'fit'   in args[-1].lower():
@@ -156,9 +160,9 @@ def submit_shapes(args):
             #if hadd =='0' and all_sam is True and  : continue
             if keepsplit is False:
                 if samsend in smsend and 'Veto' not in samsend and 'EOY' not in samsend:
-                    split = 'AsMuchAsPossible'
+                    split_i = 'AsMuchAsPossible'
                 else:
-                    split = ''
+                    split_i = ''
             i=0
             for year in yearset:
                 if 'mergeShapes' in script:
@@ -170,7 +174,7 @@ def submit_shapes(args):
                     if year=='2016no': continue
                     command = script+' --year='+year+' --tag='+tag+' --masspoint='+samsend.split('SM-')[-1]+' --fileset='+samsend
                 else:
-                    command = script+" "+ year +" "+tag+" "+hadd+" "+samsend+" "+split
+                    command = script+" "+ year +" "+tag+" "+hadd+" "+samsend+" "+split_i
                 allcomms.append(command)
     print "Commands to be ran:"
     for comm in allcomms:

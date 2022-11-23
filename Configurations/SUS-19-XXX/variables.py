@@ -498,6 +498,8 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
     ### Set the mt2ll variable
     mt2ll = 'mt2ll' + ctrltag
 
+    if isShape and 'Fast' in opt.tag: mt2ll = 'mt2ll_reco'
+
     if 'WZValidationRegionZLeps' in opt.tag:
         mt2ll = '(mt2llfake0+mt2llfake1+mt2llfake2-mt2ll_WZ)'
 
@@ -556,11 +558,13 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                 cutTypes = { } 
 
                 for cut in cuts: 
+                    if '_gen' in cut: continue
                     cutType = cut.split('_')[0].replace('CR','SR')
                     if cutType not in cutTypes:
                         cutTypes[cutType] = { }
                         cutTypes[cutType]['cuts'] = [ ]
                         for cut2 in cuts:
+                            if '_gen' in cut2: continue
                             if cutType in cut2 or cutType.replace('SR','CR') in cut2:
                                 cutTypes[cutType]['cuts'].append(cut2)
                         if 'SR1' in cutType: cutTypes[cutType]['mt2llbins'] = mt2llOptimBin
@@ -577,6 +581,21 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                                                      'CRbins' : [1, 4],
                                                      'nameLatex' : '\\mtll'
                                                   }
+
+        # For FastSim pTmiss 
+        if isShape and 'Fast' in opt.tag and 'FastReco' not in opt.tag:
+
+            variableList = variables.keys()
+            for variable in variableList:
+
+                if 'cuts' not in variables[variable]: variables[variable]['cuts'] = [ x for x in cuts.keys() if '_reco' in x ]
+ 
+                variables[variable+'_gen'] = { }
+                for key in variables[variable]:
+                    if key!='name' and key!='cuts':
+                        variables[variable+'_gen'][key] = variables[variable][key]
+                variables[variable+'_gen']['name'] = 'mt2ll_gen'
+                variables[variable+'_gen']['cuts'] = [ x.replace('_reco','_gen') for x in variables[variable]['cuts'] if 'SR' in x ]
 
         # Some other mt2ll binning for validation regions
         if 'ValidationRegion' in opt.tag:

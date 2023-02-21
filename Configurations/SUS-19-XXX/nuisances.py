@@ -75,7 +75,7 @@ for scalefactor in leptonSF:
     for sample in samples.keys():
         if not samples[sample]['isDATA']:
             if 'FS' not in scalefactor or samples[sample]['isFastsim']:
-                if ('EOY' not in sample and not samples[sample]['isFastsim']) or 'Extra' not in scalefactor:
+                if ('nanoAODv6' not in opt.samplesFile and 'EOY' not in sample and (not samples[sample]['isFastsim'] or 'SigV6' not in opt.tag )) or 'Extra' not in scalefactor:
                     nuisances[scalefactor]['samples'][sample] = leptonSF[scalefactor]['weight']
 
 # b-tagging scale factors
@@ -349,7 +349,7 @@ nuisances['pdf'] = {
 
 for yeartomerge in yearstaglist:
 
-    theoryRecoFlag = recoFlag+'SigV6' if 'SigV6' in opt.tag else recoFlag
+    theoryRecoFlag = recoFlag+'SigV6' if ('SigV6' in opt.tag or 'EOY' in opt.sigset) else recoFlag
     exec(open('./Data/theoryNormalizations/theoryNormalizations'+theoryRecoFlag+'_'+yeartomerge+'.py').read())
 
     # LHE scale variation weights (w_var / w_nominal)
@@ -593,6 +593,33 @@ if 'SignalRegion' in opt.tag or 'ValidationRegion' in opt.tag or 'ttZNormalizati
         for nuisance in nuisances:
             if nuisance!='stat' and 'norm' in nuisances[nuisance]['name']:
                 nuisanceToRemove.append(nuisance)
+
+    if 'JetUncertainties' in opt.tag:
+
+        nuisanceToDuplicate = []
+        for nuisance in nuisances:
+            if nuisance!='stat' and 'jesTotal' not in nuisance and 'unclustEn' not in nuisance and 'jer' not in nuisance:
+                nuisanceToRemove.append(nuisance)
+            elif nuisance!='stat':
+                nuisanceToDuplicate.append(nuisance)
+                nuisances[nuisance]['cuts'] = []
+                for cut in cuts:
+                    if 'jesTotal' not in cut and 'unclustEn' not in cut and 'jer' not in cut:
+                        nuisances[nuisance]['cuts'].append(cut)
+        if not isShape:
+            for nuisance in nuisanceToDuplicate:
+                nuisances[nuisance+'MET'] = {}
+                for key in nuisances[nuisance]:
+                    nuisances[nuisance+'MET'][key] = nuisances[nuisance][key]
+                nuisances[nuisance+'MET']['name'] = nuisances[nuisance+'MET']['name'].replace(year,'MET'+year)
+                    
+elif 'unEn' in opt.tag or 'TwoLeptons' in opt.tag:
+
+    for nuisance in nuisances:
+        if nuisance!='stat' and 'jes' not in nuisance and 'jer' not in nuisance and 'unclustEn' not in nuisance:
+            nuisanceToRemove.append(nuisance)
+        elif nuisance!='stat' and 'unEn' in opt.tag:
+            nuisances[nuisance]['cuts'] = [ 'TwoLep' ] 
 
 else:
 

@@ -12,7 +12,7 @@ def mkShapesMulti(opt, year, tag, splits, action):
 
     shapeMultiCommand = 'mkShapesMulti.py --pycfg='+opt.configuration+' --treeName=Events --tag='+year+tag+' --sigset=SIGSET'
     if 'shapes' in action:
-        shapeMultiCommand += ' --doBatch=True --batchQueue='+opt.batchQueue
+        if not opt.interactive: shapeMultiCommand += ' --doBatch=True --batchQueue='+opt.batchQueue
         if opt.dryRun: shapeMultiCommand += ' --dry-run '
     else:
         shapeMultiCommand += ' --doHadd=True --doNotCleanup'
@@ -74,7 +74,7 @@ def shapes(opt):
         print '                 Please use \'_\' only to set datacard options.'
         exit()
 
-    opt.batchQueue = commonTools.batchQueue(opt.batchQueue)
+    if not opt.interactive: opt.batchQueue = commonTools.batchQueue(opt.batchQueue)
 
     commonTools.cleanLogs(opt)
 
@@ -127,8 +127,8 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+year+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --maxLogCratio=1000 --minLogCratio=0.1 --scaleToPlot=2 --nuisancesFile='+nuisances
 
     if 'normalizedCR' in opt.option: plotCommand += ' --plotNormalizedCRratio=1' # This is not yet re-implemented in latino's mkPlot.py
-    elif 'normalized' in opt.option: plotCommand += ' --plotNormalizedDistributions=1'
-    elif plotAsExotics:              plotCommand += ' --showDataVsBkgOnly'       # This is not yet re-implemented in latino's mkPlot.py
+    elif 'normalized' in opt.option: plotCommand += ' --plotNormalizedDistributions'
+    if plotAsExotics:                plotCommand += ' --showDataVsBkgOnly'       # This is not yet re-implemented in latino's mkPlot.py
     if 'noyields' not in opt.option: plotCommand += ' --showIntegralLegend=1'
     if 'saveC'        in opt.option: plotCommand += ' --fileFormats=\'png,root,C\''
     if 'plotsmearvar' in opt.option: plotCommand += ' --plotSmearVariation=1'    # This is not yet re-implemented in latino's mkPlot.py
@@ -139,7 +139,7 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     os.system(plotCommand)
 
     if not opt.keepallplots:
-        plotToDelete = 'c_' if 'SM' in opt.sigset else 'cratio_'
+        plotToDelete = 'c_' if ('SM' in opt.sigset or 'keepratioplots' in opt.option) else 'cratio_'
         for plot2delete in [ plotToDelete, 'log_'+plotToDelete, 'cdifference_', 'log_cdifference_' ]:
             os.system('rm '+plotsDir+'/'+plot2delete+'*')
 
@@ -149,7 +149,7 @@ def plotNuisances(opt):
 
    opt.fileset = commonTools.setFileset(opt.fileset, opt.sigset)
    opt.samplesFile = commonTools.getCfgFileName(opt, 'samples')
-   opt.option += 'nuisanceVariations'
+   opt.option += 'keepratioplots'
 
    for year in opt.year.split('-'):
        for tag in opt.tag.split('-'):
@@ -171,7 +171,7 @@ def plotNuisances(opt):
 
            for singleNuisance in singleNuisances:
 
-               opt2.option = opt.option if singleNuisance=='statistics' else opt.option+'nostat'
+               opt2.option = opt.option if singleNuisance=='statistics' else opt.option+'nuisanceVariations'
 
                backgroundList, sampleList = [], []
 

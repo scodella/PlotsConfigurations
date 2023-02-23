@@ -7,7 +7,8 @@ SF    = LL+' && '+vetoZ
 
 NoJets = 'Alt$(CleanJet_pt[0],0)<' +jetPtCut
 HasJet = 'Alt$(CleanJet_pt[0],0)>='+jetPtCut
- 
+
+
 if 'Data' in opt.sigset or 'SingleLepton' in opt.sigset: # from nAODv9 it should't matter anymore 
     btagWeightNoCut = '1.'
     btagWeight1tag = bTagPass
@@ -295,6 +296,13 @@ if 'DYMeasurements' in opt.tag:
     cuts['DY_ee_cuts']  = { 'expr' : '(' + DY+' && '+EE+' && ptmiss<30. && Alt$(CleanJet_pt[0],0)<30.)', 'weight' : btagWeight0tag }
     cuts['DY_ee_cuts']  = { 'expr' : '(' + DY+' && '+EE+' && ptmiss<30. && Alt$(CleanJet_pt[0],0)<30.)', 'weight' : btagWeight0tag }
 
+if 'DYCompToWW' in opt.tag:
+    mTLep2MET = 'sqrt(2*Lepton_pt[1]*MET_pt*(1.-cos(Lepton_phi[1]-MET_phi)))'
+    DYall     = mTllptmiss+'>40. && mll>20. && '+mTLep2MET+'>30.'
+    DYComWW   = OC+' && '+DF+' && '+DYall
+    
+    cuts['DY_all'] = { 'expr' : '(' + DYall+')'  , 'weight' : btagWeight0tag }
+    cuts['DY_em']  = { 'expr' : '(' + DYComWW+')', 'weight' : btagWeight0tag }
 if 'DYtauControlRegion' in opt.tag:
 
     DYtau = OC+' && '+DF+' && '+Zcut.replace('ZCUT',  '15.')
@@ -354,6 +362,7 @@ if 'LeptonL2TRate' in opt.tag:
     mTLep1MET = 'sqrt(2*Lepton_pt[0]*MET_pt*(1.-cos(Lepton_phi[0]-MET_phi)))'
     hadronCut = 'nCleanJet>=1 && CleanJet_pt[0]>25. && sqrt((Lepton_eta[0]-CleanJet_eta[0])*(Lepton_eta[0]-CleanJet_eta[0])+acos(cos(Lepton_phi[0]-CleanJet_phi[0]))*acos(cos(Lepton_phi[0]-CleanJet_phi[0])))>1.'
     LeptonL2TRateSelection = nLooseLepton+'==1 && MET_pt<20. && '+mTLep1MET+'<20. && '+hadronCut+' && Lepton_pt[0]>=20. && abs(Lepton_eta[0])<2.4'
+
 
     tightIDcut = nTightLepton+'==1'
     if 'TightLep' in opt.tag: tightIDcut += ' && (Lepton_isTightElectron_cutBasedTightPOG[0]+(abs(Lepton_pdgId[0])==13)*Alt$(Muon_tightId[abs(Lepton_muonIdx[0])],0))==1' 

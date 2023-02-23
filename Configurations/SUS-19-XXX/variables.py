@@ -74,7 +74,7 @@ elif 'METFix' in opt.tag:
                                  }   
     
     
-elif 'DYchecks' in opt.tag:
+elif 'DYchecks' in opt.tag or 'DYCompToWW' in opt.tag:
     #print "inside this plots"
     #exit()
     variables['PuppiMET_pt']  = {  'name'  : 'PuppiMET_pt',           #   variable name    

@@ -213,21 +213,22 @@ def merge2016CR(opt):
             opt2.sigset = sigset
             merge2016(opt2)
 
-# To study signal in CRs
-
-def mergeCRToSignal(opt):
+def mergeSignalToSM(opt):
 
     for year in opt.year.split('-'):
         for tag in opt.tag.split('-'):
 
+            smtag = tag.split('VetoesUL')[0]+'VetoesUL'
+            signaltag = tag.replace('Group','').replace('WWPol1a','').replace('SmtEU','')
+
             for sigset in getSignalList(opt, opt.sigset, tag):
-
+                print sigset
                 outputDir = commonTools.getShapeDirName(opt.shapedir, year, tag)
-                outputFile = outputDir + '/plots_' + tag + '_SM-' + sigset + '.root'
-                smFile     = outputDir + '/plots_' + tag + '_SM.root' 
-                signalFile = outputDir.replace('Group','') + '/plots_' + tag.replace('Group','') + '_' + sigset + '.root'
+                outputFile = outputDir                         + '/plots_' + tag       + '_SM-' + sigset + '.root'
+                smFile     = outputDir.replace(tag, smtag)     + '/plots_' + smtag     + '_SM.root' 
+                signalFile = outputDir.replace(tag, signaltag) + '/plots_' + signaltag + '_' + sigset + '.root'
 
-                os.system('haddfast --compress '+outputFile+' '+smFile+' '+signalFile) 
+                os.system('mkdir -p '+outputDir+' ; haddfast --compress '+outputFile+' '+smFile+' '+signalFile) 
 
 # groups
 
@@ -408,19 +409,21 @@ def printLimits(opt):
         limitResult = {}
 
         for tags in [ '', '_WWSimm' ]:
-            for tagm in [ '', 'WWTails', 'WWHighs', 'WWPol1a' ]:
-                if (tags=='' and tagm=='') or (tags!='' and tagm!=''): continue
+            for tagm in [ '', 'WWTails', 'WWHighs', 'WWPol1a', 'SmtEU' ]:
+                #if (tags=='' and tagm=='') or (tags!='' and tagm!=''): continue
+                if (tags!='' and tagm!=''): continue
                 #if 'Stop' in opt.tag and 'Merge' in tagm: continue
                 #if 'Stop' not in opt.tag and 'Merge' not in tagm: continue
                 #tagopt = (tagm+tags).replace('_WWSimm','')
-                tagopt = (tagm+tags).replace('WWPol1a','')
-                tag = opt.tag.replace('Group', tagm+'Group')
+                tagopt = (tagm+tags)#.replace('WWPol1a','')
+                #tag = opt.tag.replace('Group', tagm+'Group')
+                tag = opt.tag.replace('Group', 'Group'+tagm)
                 tag += tags
                 outputDir = '/'.join([ opt.limitdir, opt.year, tag, signal ])
-                if not commonTools.isGoodFile(outputDir+'/higgsCombine_Blind.AsymptoticLimits.mH120.root', 6000.):
-                    if opt.debug: print outputDir+'/higgsCombine_Blind.AsymptoticLimits.mH120.root'
+                if not commonTools.isGoodFile(outputDir+'/higgsCombine_Both.AsymptoticLimits.mH120.root', 6000.):
+                    if opt.debug: print outputDir+'/higgsCombine_Both.AsymptoticLimits.mH120.root'
                     continue
-                inputFile =  commonTools.openRootFile(outputDir+'/higgsCombine_Blind.AsymptoticLimits.mH120.root')
+                inputFile =  commonTools.openRootFile(outputDir+'/higgsCombine_Both.AsymptoticLimits.mH120.root')
 
                 if tagopt=='': limitResult['central'] = []
                 else: limitResult[tagopt] = []
@@ -437,7 +440,7 @@ def printLimits(opt):
         if len(limitResult.keys())==1: printSignal = True
         for evt in range(len(limitResult['central'])):
             resultList = [ str(limitResult['central'][evt]) ]
-            for tags in [ '', 'WWTails', 'WWHighs', 'WWPol1a' ]:
+            for tags in [ '', 'WWTails', 'WWHighs', 'WWPol1a', 'SmtEU' ]:
                 for tagm in [ '' ]:
                     tagopt = tagm+tags
                     if tagopt!='' and tagopt in limitResult:

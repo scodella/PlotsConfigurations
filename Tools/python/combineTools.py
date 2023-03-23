@@ -12,9 +12,9 @@ def submitCombineJobs(opt, jobName, jobTag, combineJobs):
 
     latinoTools.submitJobs(opt, jobName, jobTag, combineJobs, splitBatch, jobSplit, nThreads)
 
-def setupCombineCommand(opt):
+def setupCombineCommand(opt, joinstr='\n'):
 
-    return '\n'.join([ 'cd '+opt.combineLocation, 'eval `scramv1 runtime -sh`', 'cd '+opt.baseDir ])
+    return joinstr.join([ 'cd '+opt.combineLocation, 'eval `scramv1 runtime -sh`', 'cd '+opt.baseDir ])
 
 def getLimitRun(unblind):
 
@@ -139,7 +139,13 @@ def runCombine(opt):
             combineCommandList = [ ]
             if makeDatacards:  combineCommandList.append(prepareDatacards(opt2, 'MASSPOINT', True))
             combineCommandList.append(combineDatacards(opt2, 'MASSPOINT', True))
-            if runCombineJob:  combineCommandList.append(opt.combineCommand)
+            if runCombineJob:  
+                combineCommandList.append(opt.combineCommand)
+                if opt.combineAction=='impacts':
+                   impactPlotDir = '/'.join([ opt2.baseDir, opt.plotsdir, year, 'Impacts' ])
+                   os.system('mkdir -p '+impactPlotDir)
+                   impactPlotString = '_asimovB' if 'asimovb' in opt.option.lower() else '_asimovS' if 'asimovs' in opt.option.lower() else '_asimovI' if 'asimovi' in opt.option.lower() else ''
+                   combineCommandList.append('mv impacts.pdf '+impactPlotDir+'/'+outtag+'_MASSPOINT'+impactPlotString +'.pdf')
             combineCommandList.append( 'cd '+opt2.baseDir )
             if cleanDatacards: combineCommandList.append(commonTools.cleanSignalDatacards(opt2, year, outtag, 'MASSPOINT', True))
 
@@ -238,6 +244,24 @@ def impactsPlots(opt):
 
     runCombine(opt)
 
+def diffNuisances(opt):
 
+    opt.baseDir = os.getenv('PWD')
+    commandList = [ setupCombineCommand(opt, ' ; ') ]
+    nuisCommand = 'python $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/test/diffNuisances.py  -a fitDiagnostics.root -g plots.root > diffNuisances.txt'
+    outputString = ''
+    if 'asimovb' in opt.option.lower(): outputString = '_asimovB'
+    if 'asimovs' in opt.option.lower(): outputString = '_asimovS'
+    if 'asimovi' in opt.option.lower(): outputString = '_asimovI'
+    nuisCommand = nuisCommand.replace('.root', outputString+'.root').replace('.txt', outputString+'.txt')
 
+    yearList = opt.year.split('-') if 'split' in opt.option else [ opt.year ]
+    for year in yearList:
+        for tag in opt.tag.split('-'):
+            
+            signals = commonTools.getSignals(opt)
+            for signal in signals:
+                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])               
+
+    os.system(' ; '.join(commandList))
 

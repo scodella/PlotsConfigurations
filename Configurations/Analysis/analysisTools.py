@@ -13,6 +13,7 @@ def setAnalysisDefaults(opt):
     
     #opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
     opt.combineLocation = os.getenv('COMBINE')
+    #opt.combineLocation = 
     opt.isExotics = True
 
     if opt.year.lower()=='run2split': opt.year = '2016HIPM-2016noHIPM-2017-2018'

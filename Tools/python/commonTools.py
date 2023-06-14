@@ -283,6 +283,10 @@ def cleanDirectory(directory):
         if os.path.isdir(directory.replace('*', extension)):
             os.system('rmdir --ignore-fail-on-non-empty '+directory)
 
+def resetFile(filename):
+
+    os.system('rm -f '+filename)
+
 def deleteDirectory(directory):
 
     os.system('rm -r -f '+directory)
@@ -665,6 +669,10 @@ def mkPseudoData(opt, reftag=None, refsigset=None):
 
 ### Modules for analyzing results from combine
 
+def setupCombineCommand(opt, joinstr='\n'):
+
+    return joinstr.join([ 'cd '+opt.combineLocation, 'eval `scramv1 runtime -sh`', 'cd '+opt.baseDir ])
+
 def getCombineOptionFlag(option, isForPlot=False):
 
     combineOptionFlag = '_Toy' if 'toy' in option.lower() else ''
@@ -687,8 +695,11 @@ def getCombineOutputFileName(opt, signal, year='', tag='', combineAction=''):
 
     if combineAction=='limits':
         combineOutDir = 'limitdir'
-        limitRun = 'Both' if opt.unblind else 'Blind'
-        outputFileName = 'higgsCombine_'+limitRun+'.AsymptoticLimits.mH120.root'
+        if 'toy' in opt.option:
+            outputFileName = 'higgsCombineTest.HybridNew.mH120.root'
+        else:
+            limitRun = 'Both' if opt.unblind else 'Blind'
+            outputFileName = 'higgsCombine_'+limitRun+'.AsymptoticLimits.mH120.root'
     elif combineAction=='mlfits': 
         combineOutDir = 'mlfitdir'
         outputFileName = 'fitDiagnostics'+getCombineOptionFlag(opt.option)+'.root'
@@ -770,18 +781,21 @@ def fitMatrices(opt):
 
                 commandList = [ '--postFit='+fitlevel, '--legend='+legend ]
                 if 'nosavecov' not in opt.option.lower(): commandList.append('--saveCovariance')
-                if 'regionsToRemove:' in opt.option:
-                    commandList.append('--regionsToRemove='+opt.option.split('regionsToRemove:')[1].split(':')[0])
+                if 'cutsToRemove:' in opt.option:
+                    commandList.append('--cutsToRemove='+opt.option.split('cutsToRemove:')[1].split(':')[0])
+                if 'nuisToRemove:' in opt.option:
+                    commandList.append('--nuisToRemove='+opt.option.split('nuisToRemove:')[1].split(':')[0])
  
                 for signal in signals:
 
                     signalCommandList = commandList
                     signalCommandList.append('--inputFile='+getCombineFitFileName(opt, signal, year, tag))
-                    signalCommandList.append('--outputDir='+'/'.join([ mainOutputDir, fitoption, signal ]))
+                    signalCommandList.append('--outputDir='+'/'.join([ mainOutputDir, fitoption, signal, 'FitMatrices' ]))
                     signalCommandList.append('--signal='+signal)
 
-                    os.system('mkMatrixPlots.py '+' '.join(signalCommandList))
-                    copyIndexForPlots(opt.plotsdir, '/'.join([ mainOutputDir, fitoption, signal ]))
+                    if not 'onlynuis' in opt.option.lower(): os.system('mkMatrixPlots.py '+' '.join(signalCommandList))
+                    if not 'onlycuts' in opt.option.lower(): os.system('mkMatrixPlots.py '+' '.join(signalCommandList+['--doNuisances']))
+                    copyIndexForPlots(opt.plotsdir, '/'.join([ mainOutputDir, fitoption, signal, 'FitMatrices' ]))
 
 def postFitYieldsTables(opt, cardNameStructure='cut', masspoints=''):
 

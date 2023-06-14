@@ -14,7 +14,9 @@ def setAnalysisDefaults(opt):
     #opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
     
     opt.baseDir = os.getenv('PWD')
-    if 'pmatorra' in os.getenv('PWD'): opt.combineLocation = os.getenv('COMBINE')
+    if 'pmatorra' in os.getenv('PWD'): 
+        opt.combineLocation = os.getenv('COMBINE')
+        if opt.combineLocation is None: opt.combineLocation = opt.baseDir.split('CMSSW_')[0]+'CMSSW_10_2_14/src/'
     else: opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
     opt.isExotics = True
 

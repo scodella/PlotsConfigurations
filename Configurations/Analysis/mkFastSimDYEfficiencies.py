@@ -126,12 +126,12 @@ if __name__ == '__main__':
             print maxentries, nentries
             if maxentries>0. and maxentries<nentries:
                 nentries = maxentries
-
+            nentries=10
             print year, sim, nentries 
             for entry in range(nentries):
-
+    
                 events.GetEntry(entry)
-
+                print entry, events.GetEntry(entry)
                 #recoleptons = Collection(events, 'Lepton')      
                 #if 'DY' not in treeLevel: 
                 #    genleptons = Collection(events, 'LeptonGen') 

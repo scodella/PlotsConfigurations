@@ -44,9 +44,11 @@ if __name__ == '__main__':
     (opt, args) = parser.parse_args()
 
     analysisTools.setAnalysisDefaults(opt)
-
+    print "combine", opt.combineLocation, "action", opt.action 
     for tool in [ commonTools, latinoTools, combineTools, analysisTools ]:
+        print "tool", tool, "has", hasattr(tool, opt.action)
         if hasattr(tool, opt.action):
             module = getattr(tool, opt.action)
+            print "go please", (tool, opt.action)
             module(opt)
-
+            

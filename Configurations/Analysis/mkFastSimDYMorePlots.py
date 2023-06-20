@@ -20,7 +20,7 @@ def getLeptonMass(pdgId) :
 Zmass = 91.1876
 
 yearset=sys.argv[1]
-
+leparg =sys.argv[2] if len(sys.argv)>2  else "both" 
 def mkDivide(histo1, histo2, kind) :
 
     #histo1.Divide(histo2)
@@ -123,9 +123,21 @@ def mkPlot(histo, lepton, year, level, sim) :
 
 if __name__ == '__main__':
 
+        
+    leptons = [ 'Ele', 'Muo' ] 
     sims = [ 'fastsim', 'fullsim' ]
-    leptons = [ 'Ele', 'Muo' ]
-
+    if   'e' in leparg: 
+            leptons = ['Ele']
+            lepnm  =  '_Ele'
+    elif 'm' in leparg: 
+            leptons = ['Muo']
+            lepnm   =  '_Muo'
+    elif 'b' in leparg: 
+            leptons = ['Ele', 'Muo']
+            lepnm   =  ''
+    else:
+        print "please choose a valid lepton decision"
+        exit()
     for year in yearset.split('-'):
 
         histos = { }
@@ -133,7 +145,7 @@ if __name__ == '__main__':
 
             histos[sim] = { }
 
-            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_UL_'+sim+'.root', 'read')  
+            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_UL_'+sim+lepnm+'.root', 'read')  
 
             for key in inputFile.GetListOfKeys():
 

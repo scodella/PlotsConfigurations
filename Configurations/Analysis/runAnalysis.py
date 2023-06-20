@@ -14,11 +14,13 @@ if __name__ == '__main__':
     
     parser.add_option('--action'          , dest='action'          , help='Action to be performed'         , default='shapes')
     parser.add_option('--configuration'   , dest='configuration'   , help='Configuration file'             , default='configuration.py')
+    parser.add_option('--lepton'          , dest='lepton'          , help='Only check one lepton?'             , default='e')
     parser.add_option('--tag'             , dest='tag'             , help='Tag'                            , default='test')
     parser.add_option('--year'            , dest='year'            , help='year'                           , default='test')
     parser.add_option('--sigset'          , dest='sigset'          , help='Sample to run on'               , default='SM')
     parser.add_option('--fileset'         , dest='fileset'         , help='Input shape file'               , default='')
     parser.add_option('--option'          , dest='option'          , help='Options for the action'         , default='')
+    parser.add_option('--minLogC'         , dest='minLogC'         , help='MinLog value for plotting'      , default='0.1')
     parser.add_option('--keepallplots'    , dest='keepallplots'    , help='Keep all plots'                 , default=False, action='store_true')
     parser.add_option('--shapedir'        , dest='shapedir'        , help='Directory to store shapes'      , default='./Shapes')
     parser.add_option('--plotsdir'        , dest='plotsdir'        , help='Directory to store plots'       , default='./Plots')
@@ -44,9 +46,7 @@ if __name__ == '__main__':
     (opt, args) = parser.parse_args()
 
     analysisTools.setAnalysisDefaults(opt)
-    print "combine", opt.combineLocation, "action", opt.action 
     for tool in [ commonTools, latinoTools, combineTools, analysisTools ]:
-        print "tool", tool, "has", hasattr(tool, opt.action)
         if hasattr(tool, opt.action):
             module = getattr(tool, opt.action)
             print "go please", (tool, opt.action)

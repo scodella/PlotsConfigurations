@@ -677,19 +677,22 @@ def getMassPointList(signal):
 def makeFastSimLeptonEfficiencies(opt):
 
     cdWorkDir = 'cd '+os.getenv('PWD')+'; eval `scramv1 runtime -sh`;'   
- 
-    for year in opt.year.split('-'): 
-        mergeJobs = {}
-        for sample in [ 'fullsim', 'fastsim' ]:
-            if opt.sigset=='SM' or sample in opt.sigset:
-                mergeJobs[sample] = ' '.join([ cdWorkDir, './mkFastSimDYEfficiencies.py', year, sample, '-1' ])
-        if len(mergeJobs.keys())>0:
-            latinoTools.submitJobs(opt, 'fastsimlep', year+'Efficiency', mergeJobs, 'Targets', True, 1) 
-
-def plotFastSimLeptonEfficiencies(opt):
-
+    leps = ['e','m'] if 'both' in opt.lepton else opt.lepton.split('-')
     for year in opt.year.split('-'):
-        os.system('./mkFastSimDYMorePlots.py '+year)
-
-
-
+        for lep in leps: # for now
+            mergeJobs = {}
+            for sample in [ 'fullsim', 'fastsim' ]:
+                if opt.sigset=='SM' or sample in opt.sigset:
+                    #mergeJobs[sample] = ' '.join([ cdWorkDir, './mkFastSimDYEfficiencies.py', year, sample, '-1' ])
+                    mergeJobs[sample] = ' '.join([ cdWorkDir, './mkFastSimDYEfficiencies.py', '-y', year, '-p', sample,'-l', lep,' -m -1' ]) #
+                    print mergeJobs[sample]
+                    #exit()
+            if len(mergeJobs.keys())>0:
+                latinoTools.submitJobs(opt, 'fastsimlep', year+lep+'Efficiency', mergeJobs, 'Targets', True, 1) 
+            else:
+                print "no jobs to send"
+def plotFastSimLeptonEfficiencies(opt):
+    leps = opt.lepton
+    for year in opt.year.split('-'):
+        for lep in leps:
+            os.system('./mkFastSimDYMorePlots.py '+year+ " "+lep)

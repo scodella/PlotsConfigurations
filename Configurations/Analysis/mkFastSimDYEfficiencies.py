@@ -9,27 +9,10 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 
 Zmass = 91.1876
 
-
-campaign = 'UL'
 #treeLevel = 'DY'
+campaign  = 'UL'
 treeLevel = ''
-#    if campaign=='EOY':
-#
-#        eosusr = '/eos/cms/store/user/scodella/SUSY/Nano/'
-#        eoscaf = '/eos/cms/store/caf/user/scodella/BTV/Nano/' 
-        #eosusr = '/gpfs/projects/tier3data/LatinosSkims/RunII/Nano/'
-        #eoscaf = '/gpfs/projects/tier3data/LatinosSkims/RunII/Nano/' 
-
-        #treeName = 'nanoLatino_TTJetsDilep__part*root'
-treeDir = 'XXX_102X_nAODv6_Full201Yv6loose/SFSusy201Y'+treeLevel+'v6loose/'
-
-#    elif campaign=='UL':
-
-#        eosusr = '/eos/home-p/pmatorra/SUS_SF/'
-#        eoscaf = '/eos/home-p/pmatorra/SUS_SF/'
-        #eosusr = '/gpfs/projects/tier3data/LatinosSkims/RunII/Nano/'
-        #eoscaf = '/gpfs/projects/tier3data/LatinosSkims/RunII/Nano/'
-
+treeDir   = 'XXX_102X_nAODv6_Full201Yv6loose/SFSusy201Y'+treeLevel+'v6loose/'
 eosusr   = { 'UL'  : '/eos/home-p/pmatorra/SUS_SF/',
              'EOY' : '/eos/cms/store/user/scodella/SUSY/Nano/'}
 eoscaf   = { 'UL'  : '/eos/home-p/pmatorra/SUS_SF/',

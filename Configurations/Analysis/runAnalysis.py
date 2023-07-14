@@ -14,7 +14,8 @@ if __name__ == '__main__':
     
     parser.add_option('--action'          , dest='action'          , help='Action to be performed'         , default='shapes')
     parser.add_option('--configuration'   , dest='configuration'   , help='Configuration file'             , default='configuration.py')
-    parser.add_option('--lepton'          , dest='lepton'          , help='Only check one lepton?'             , default='e')
+    parser.add_option('--lepton'          , dest='lepton'          , help='Only check one lepton?'         , default='e')
+    parser.add_option('--campaign'        , dest='campaign'        , help='Campaign for Fast/FullSim SF'   , default='UL')
     parser.add_option('--tag'             , dest='tag'             , help='Tag'                            , default='test')
     parser.add_option('--year'            , dest='year'            , help='year'                           , default='test')
     parser.add_option('--sigset'          , dest='sigset'          , help='Sample to run on'               , default='SM')

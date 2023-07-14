@@ -3,9 +3,10 @@ import os
 import sys
 import ROOT
 import math
-import optparse
+import argparse
 from array import *
 #from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection 
+Zmass = 91.1876
 
 def getLeptonMass(pdgId) :
     
@@ -17,10 +18,7 @@ def getLeptonMass(pdgId) :
             print 'mt2llProducer: WARNING: unsupported lepton pdgId'
             return -1
 
-Zmass = 91.1876
 
-yearset=sys.argv[1]
-leparg =sys.argv[2] if len(sys.argv)>2  else "both" 
 def mkDivide(histo1, histo2, kind) :
 
     #histo1.Divide(histo2)
@@ -121,31 +119,49 @@ def mkPlot(histo, lepton, year, level, sim) :
 
     plotCanvas.Close()
 
-if __name__ == '__main__':
 
-        
-    leptons = [ 'Ele', 'Muo' ] 
+
+if __name__ == '__main__':
+    
+    #main part
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--campaign', '-c'   , dest='campaign'         , help='campaign to run options: (UL, EOY, Sig)'
+                        , default = 'UL'
+                        , choices = ['UL', 'EOY', 'Sig'])
+
+    parser.add_argument('--year'    , '-y', dest='year'           , help='year'
+                        , required = True)
+    parser.add_argument('--lepton'  , '-l', dest='lepton'         , help='Run electron, muon or both'
+                        , default  = 'b'
+                        , type     = str.lower
+                        , choices  = ['electron','e', 'muon','m', 'both','b'])
+    args     = parser.parse_args()
+    yearset  = args.year.split('-')
+    campaign = args.campaign 
+    #yearset=sys.argv[1]
+    #leparg =sys.argv[2] if len(sys.argv)>2  else "both" 
+    
     sims = [ 'fastsim', 'fullsim' ]
-    if   'e' in leparg: 
+    if   'e' in args.lepton: 
             leptons = ['Ele']
             lepnm  =  '_Ele'
-    elif 'm' in leparg: 
+    elif 'm' in args.lepton: 
             leptons = ['Muo']
             lepnm   =  '_Muo'
-    elif 'b' in leparg: 
+    elif 'b' in args.lepton: 
             leptons = ['Ele', 'Muo']
             lepnm   =  ''
     else:
         print "please choose a valid lepton decision"
         exit()
-    for year in yearset.split('-'):
+    for year in yearset:
 
         histos = { }
         for sim in sims:
 
             histos[sim] = { }
 
-            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_UL_'+sim+lepnm+'.root', 'read')  
+            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_'+campaign+'_'+sim+lepnm+'.root', 'read')  
 
             for key in inputFile.GetListOfKeys():
 

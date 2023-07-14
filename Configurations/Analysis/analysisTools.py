@@ -10,7 +10,7 @@ from array import array
 ### Analysis defaults
 
 def setAnalysisDefaults(opt):
-    
+
     opt.baseDir = os.getenv('PWD')
     if 'pmatorra' in os.getenv('PWD'): 
         opt.combineLocation = os.getenv('COMBINE')

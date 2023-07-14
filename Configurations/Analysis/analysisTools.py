@@ -11,8 +11,6 @@ from array import array
 
 def setAnalysisDefaults(opt):
     
-    #opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
-    
     opt.baseDir = os.getenv('PWD')
     if 'pmatorra' in os.getenv('PWD'): 
         opt.combineLocation = os.getenv('COMBINE')

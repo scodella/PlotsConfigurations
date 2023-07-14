@@ -8,7 +8,6 @@ SF    = LL+' && '+vetoZ
 NoJets = 'Alt$(CleanJet_pt[0],0)<' +jetPtCut
 HasJet = 'Alt$(CleanJet_pt[0],0)>='+jetPtCut
 
-
 if 'Data' in opt.sigset or 'SingleLepton' in opt.sigset: # from nAODv9 it should't matter anymore 
     btagWeightNoCut = '1.'
     btagWeight1tag = bTagPass

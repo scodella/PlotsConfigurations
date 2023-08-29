@@ -1,6 +1,7 @@
 import os
 import ROOT
 import copy
+import math
 import PlotsConfigurations.Tools.commonTools as commonTools
 import PlotsConfigurations.Tools.latinoTools as latinoTools
 import PlotsConfigurations.Tools.combineTools as combineTools
@@ -19,7 +20,7 @@ def setAnalysisDefaults(opt):
     opt.isExotics = True
 
     if opt.year.lower()=='run2split': opt.year = '2016HIPM-2016noHIPM-2017-2018'
-    elif opt.year.lower()=='2016split': opt.year = '2016HIPM-2016noHIPM'
+    elif '2016split' in opt.year: opt.year = opt.year.replace('2016split','2016HIPM-2016noHIPM')
     elif opt.year.lower()=='run2': opt.year = '2016-2017-2018'
 
     inputTag = opt.tag
@@ -29,7 +30,7 @@ def setAnalysisDefaults(opt):
 
     opt.signalRegionMap, opt.signalSubsets, opt.tableSigset = { }, { }, { }
 
-    opt.signalRegionMap['stopSR'] = { 'tag' : 'StopSignalRegionsVetoesUL',     'signals' : [ 'T2tt_mS-150to800_dm-80to175' ] } #, 'T2bW_mS-200to1000_mX-1to700' ] }
+    opt.signalRegionMap['stopSR'] = { 'tag' : 'StopSignalRegionsVetoesUL',     'signals' : [ 'T2tt_mS-150to800_dm-80to175', 'T2bW_mS-200to1000_mX-1to700' ] }
     opt.signalRegionMap['charSR'] = { 'tag' : 'CharginoSignalRegionsVetoesUL', 'signals' : [ 'TChipmSlepSnu_mC-100to1500_mX-1to750', 'TSlepSlep_mS-100to1000_mX-1to650' ] }
     opt.signalRegionMap['chwwSR'] = { 'tag' : 'TChipmWWSignalRegionsVetoesUL', 'signals' : [ 'TChipmWW_mC-100to700_mX-1to250' ] }
 
@@ -39,8 +40,8 @@ def setAnalysisDefaults(opt):
     opt.tableSigset['TChipmWW']      = [ 'TChipmWW_mC-100_mX-1', 'TChipmWW_mC-150_mX-1', 'TChipmWW_mC-200_mX-1', 'TChipmWW_mC-200_mX-25', 'TChipmWW_mC-200_mX-50', 'TChipmWW_mC-300_mX-75', 'TChipmWW_mC-400_mX-50' ]    
     opt.tableSigset['Studies']      = [ 'T2tt_mS-525_mX-350','T2tt_mS-525_mX-438','TChipmSlepSnu_mC-1150_mX-1','TChipmSlepSnu_mC-900_mX-475','EOYT2tt_mS-525_mX-350','EOYT2tt_mS-525_mX-438','EOYTChipmSlepSnu_mC-1150_mX-1','EOYTChipmSlepSnu_mC-900_mX-475' ]
 
-    opt.signalSubsets['T2tt']          = [ 'T2tt_mS-150to800_dm-80to175' ]
-    opt.signalSubsets['T2bW']          = [ 'T2bW_mS-200to1000_mX-1to700' ]
+    opt.signalSubsets['T2tt'] = [ 'T2tt_mS-150to800_dm-80to175' ]
+    opt.signalSubsets['T2bW'] = ['T2bW_mS-200to600_mX-1to700', 'T2bW_mS-625to800_mX-1to700', 'T2bW_mS-825to1000_mX-1to700']
 
     if 'SigV6' in inputTag or 'sigv6' in inputTag:
         opt.tableSigset['TSlepSlep'] = [ 'TSlepSlep_mS-200_mX-120', 'TSlepSlep_mS-400_mX-250', 'TSlepSlep_mS-400_mX-300', 'TSlepSlep_mS-600_mX-300', 'TSlepSlep_mS-800_mX-1' ]
@@ -283,6 +284,7 @@ def mergeFitCR(opt):
             outputTag = tag.replace('VetoesUL', 'FitCRVetoesUL')
             outputDir = commonTools.getShapeDirName(opt.shapedir, year, outputTag)
             os.system('mkdir -p '+outputDir)
+            signalTag = tag.split('VetoesUL')[-1] 
 
             for signal in getSignalList(opt, opt.sigset, tag):
 
@@ -290,10 +292,10 @@ def mergeFitCR(opt):
                 if opt.recover and commonTools.isGoodFile(outputFile): continue
                 os.system('rm -r -f '+outputFile)
 
-                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace('Fast','').replace('SigV6','') ]
+                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'') ]
                 filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('SmtEU',''))
                 for backcr in opt.backgroundsInFit:
-                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace('Fast','').replace('SigV6','').replace('SmtEU',''))
+                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU',''))
 
                 foundFilesToMerge = True
                 for fileToMerge in filesToMerge:
@@ -403,13 +405,14 @@ def signalFitMatrices(opt):
 
 def yieldsSR(opt):
 
-    yearInDatacard = '-' in opt.year and 'split' not in opt.option
+    yearInDatacard = '-' in opt.year and 'split' not in opt.option and 'merged' not in opt.option
 
     for tag in opt.tag.split('-'):
         opt2 = copy.deepcopy(opt)
         opt2.tag = tag
         cardNameStructure = latinoTools.getDatacardNameStructure(yearInDatacard, True, 'Merge' in tag)
-        commonTools.postFitYieldsTables(opt2, cardNameStructure, ','.join(getSignalList(opt, 'tabsignal', tag)))
+        if opt.sigset=='SM': opt.sigset += '-tabsignal'
+        commonTools.postFitYieldsTables(opt2, cardNameStructure, ','.join(getSignalList(opt, opt.sigset, tag)))
 
 def preFitYieldsSR(opt):
     
@@ -516,7 +519,7 @@ def makeContours(opt, plotoption='2', fitOption='Blind'):
     histogramFile                = histogramDir + '_'.join([ '/massScan', opt.tag, sigset, fitOption ]) + '.root'
     contourFile                  = contourDir   + '_'.join([ '/massScan', opt.tag, sigset, fitOption ]) + '.root' 
 
-    if opt.reset: 
+    if opt.reset:
         os.system('rm -f '+' '.join([ histogramFileNoFillEmptyBins, histogramFile, contourFile ]))
  
     commandList = [ '--years='+opt.year, '--tag='+opt.tag, '--sigset='+sigset, '--limitoption='+fitOption ]
@@ -695,9 +698,71 @@ def makeFastSimLeptonEfficiencies(opt):
                     latinoTools.submitJobs(opt, 'fastsimlep', year+lep+'Efficiency', mergeJobs, 'Targets', True, 1) 
                 else:
                     print 'no jobs to send'
+
 def plotFastSimLeptonEfficiencies(opt):
     leps = opt.lepton
     for year in opt.year.split('-'):
         for lep in leps:
             print './mkFastSimDYMorePlots.py -y '+year+ ' -l '+lep+' -c '+opt.campaign
             os.system('./mkFastSimDYMorePlots.py -y '+year+ ' -l '+lep+' -c '+opt.campaign)
+
+### Miscellanea
+
+def mergeSearchRegionKinematics(opt):
+
+    if 'SearchRegionKinematics' not in opt.tag:
+        print 'Please choose a tag with SearchRegionKinematics'
+        exit()
+
+    for year in opt.year.split('-'):
+        
+        outtag = opt.tag.replace('Kinematics', 'KinematicsMerged')
+
+        samples, cuts, variables, nuisances = commonTools.getDictionariesInLoop(opt.configuration, year, opt.tag, opt.sigset, 'nuisances')
+
+        inputFile  = commonTools.openShapeFile(opt.shapedir, year, opt.tag, opt.sigset, opt.fileset)
+        outputFile = commonTools.openShapeFile(opt.shapedir, year, outtag,  opt.sigset, opt.fileset, 'recreate')
+ 
+        for cut in cuts:
+
+            outputFile.mkdir(cut)
+
+
+            mergedShapes = {}
+
+            for variable in variables:
+                if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
+
+                    shapeName = '_'.join([ variableString for variableString in variable.replace('nbjets','nbjets_').split('_') if not variableString.isdigit() ])
+                    if shapeName not in mergedShapes:
+                        mergedShapes[shapeName] = {}
+
+                    for sample in samples:
+
+                        histoList = [ 'histo_'+sample ]
+
+                        for nuisance in nuisances:
+                            if nuisances[nuisance]['type']=='shape':
+                                if sample in nuisances[nuisance]['samples']:
+                                    for variation in [ 'Up', 'Down' ]:
+                                        histoList.append('_'.join([ 'histo', sample, nuisances[nuisance]['name']+variation ]))
+
+                        for histo in histoList:
+ 
+                            if histo not in mergedShapes[shapeName]:
+                                mergedShapes[shapeName][histo] = inputFile.Get('/'.join([ cut, variable, histo ]))
+                            else:
+                                mergedShapes[shapeName][histo].Add(inputFile.Get('/'.join([ cut, variable, histo ])))
+
+            for variable in mergedShapes:
+
+                 outputFile.mkdir(cut+'/'+variable)
+                 outputFile.cd(cut+'/'+variable)
+
+                 for histo in mergedShapes[variable]:
+                     mergedShapes[variable][histo].Write(histo)
+
+        inputFile.Close()
+        outputFile.Close()
+
+

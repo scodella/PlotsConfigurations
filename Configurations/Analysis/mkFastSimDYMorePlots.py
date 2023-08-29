@@ -18,6 +18,10 @@ def getLeptonMass(pdgId) :
             print 'mt2llProducer: WARNING: unsupported lepton pdgId'
             return -1
 
+Zmass = 91.1876
+
+yearset=sys.argv[1]
+sample=sys.argv[2]
 
 def mkDivide(histo1, histo2, kind) :
 
@@ -82,11 +86,13 @@ def mkPlot(histo, lepton, year, level, sim) :
         histo.SetYTitle('Electron p_{T} [GeV]')
         histo.GetYaxis().SetNoExponent()
         histo.GetYaxis().SetMoreLogLabels()
+        histo.GetYaxis().SetRangeUser(20.,histo.GetYaxis().GetBinLowEdge(histo.GetYaxis().GetNbins()+1))
     else:
         histo.SetXTitle('Muon p_{T} [GeV]')
         histo.SetYTitle('Muon |#eta|')
         histo.GetXaxis().SetNoExponent()
         histo.GetXaxis().SetMoreLogLabels()
+        histo.GetXaxis().SetRangeUser(20.,histo.GetXaxis().GetBinLowEdge(histo.GetXaxis().GetNbins()+1))
 
     if sim=='': 
         histo.SetZTitle('FullSim/FastSim SF')
@@ -161,7 +167,7 @@ if __name__ == '__main__':
 
             histos[sim] = { }
 
-            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_'+campaign+'_'+sim+lepnm+'.root', 'read')  
+            inputFile = ROOT.TFile.Open('./Data/'+year+'/'+'HistoLeptons_UL_'+sim+'_'+sample+'.root', 'read')  
 
             for key in inputFile.GetListOfKeys():
 
@@ -176,7 +182,7 @@ if __name__ == '__main__':
 
             inputFile.Close()
 
-        outputDir = './Plots/'+year+'/FastSim/'
+        outputDir = './Plots/'+year+'/FastSim/'+sample+'/'
         os.system('mkdir -p '+outputDir+' ; cp ./Plots/index.php '+outputDir)
 
         for lepton in leptons:
@@ -204,10 +210,11 @@ if __name__ == '__main__':
             for level in plotLevels:
                 mkPlot(histos['fullsim'][lepton][level], lepton, year, level, '')
 
-        ff = ROOT.TFile.Open('./Data/'+year+'/fastsimLeptonWeights_UL.root', 'recreate')
+        ff = ROOT.TFile.Open('./Data/'+year+'/fastsimLeptonWeights_UL_'+sample+'.root', 'recreate')
 
         for lepton in leptons:
             histos['fullsim'][lepton]['tight'].Write()
+            histos['fullsim'][lepton]['tightgen'].Write()
 
         ff.Close()
 

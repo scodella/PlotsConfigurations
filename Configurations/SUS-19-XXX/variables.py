@@ -6,6 +6,8 @@ pt   = '#font[50]{p}_{T}'
 met  = pt+'^{miss}'
 sll  = '#font[12]{ll}'
 pll  = '('+sll+')'
+pee  = '(#font[12]{ee})'
+pmm  = '(#mu #mu )'
 mt2  = '#font[50]{m}_{T2}'
 ptll = pt+'^{'+sll+'}'
 dphill           = '#Delta#phi(lep1,lep2)'
@@ -130,8 +132,6 @@ elif 'VetoNoiseEE' in opt.tag:
                                      'nameLatex' : '\\mtll'
                                   }
 
-    
-
     variables['mt2llOptim']    = {   'name'  : 'mt2ll',                #   variable name
                                      'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]),    #   variable range
                                      'xaxis' : mt2 + pll + gv,         #   x axis name
@@ -254,6 +254,34 @@ elif 'btagefficiencies' in opt.tag:
                             'range' : ([0.,0.2,0.4,0.8,1.2,1.6,2.0,2.5],[1]),  #   variable range
                             'xaxis' : 'jet pseudorapodity',        #   x axis name
                             } 
+
+elif 'SingleMuonTrigger' in opt.tag:
+
+    minPt = 29 if '2017' in opt.tag else 26
+    variables['muonpt']  = { 'name'  : 'Muon_pt[0]',                              #   variable name
+                             'range' : ([minPt, 30, 40, 50, 60, 120, 200],[1]), #   variable range
+                             'xaxis' : 'Muon'+pt+gv,                           #   x axis name
+                             'fold'  : overflow                               #   fold overflow
+                            }
+
+    variables['muon_pt']  = { 'name'  : 'Muon_pt[0]',                              #   variable name
+                             'range' : ( 40, 0., 200.),                          #   variable range
+                             'xaxis' : 'Muon'+pt+gv,                           #   x axis name
+                             'fold'  : overflow                               #   fold overflow
+                            }
+
+    variables['ptmiss']        = {  'name'  : 'ptmiss',                #   variable name
+                                    'range' : (  40,    0.,  400.),    #   variable range
+                                    'xaxis' : met + gv,                #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+
+    variables['mll']           = {   'name'  : 'mll',                #   variable name
+                                     'range' : ( 40,    0.,  400.), #   variable range
+                                     'xaxis' : 'm' + pll + gv,       #   x axis name
+                                     'fold'  : overflow              #   fold overflow
+                                 }
 
 elif 'Trigger' in opt.tag:
 
@@ -586,20 +614,6 @@ elif 'ttZNormalization' in opt.tag:
                              'xaxis' : 'number of jets',        #   x axis name
                              'fold'  : overflow                 #   fold overflow
                            }
-
-elif 'SearchRegion' in opt.tag:
-
-    mt2ll = 'mt2ll' + ctrltag
-
-    searchBins = [0, 20, 40, 60, 80, 100, 160, 220]
-    if 'Chargino' in opt.tag: searchBins = [0, 20, 40, 60, 80, 100, 160, 240, 370, 500]
-
-    variables['mt2ll'] = {   'name'  : mt2ll,            # variable name
-                             'range' : (searchBins,[1]), # variable range
-                             'xaxis' : mt2 + pll + gv,   # x axis name
-                             'fold'  : overflow,         # fold overflow
-                             'nameLatex' : '\\mtll'
-                          }
 
 elif 'unEn' in opt.tag:
 
@@ -1414,3 +1428,199 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                                          'xaxis' : 'visht' + gv,           #   x axis name
                                          'fold'  : overflow               #   fold overflow
                                      }
+
+if 'SearchRegionKinematics' in opt.tag:
+
+    variables['mt2ll'] = { 'name'  : 'mt2ll',               # variable name
+                           'range' : (10,  0., 200. ), # variable range
+                           'xaxis' : mt2 + pll + gv,      # x axis name
+                           'fold'  : overflow,            # fold overflow
+                           'nameLatex' : '\\mtll'
+                          }
+
+    variables['mt2llOptim']  = {   'name'  : 'mt2ll',                #   variable name
+                                   'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]),    #   variable range
+                                   'xaxis' : mt2 + pll + gv,         #   x axis name
+                                   'fold'  : overflow,               #   fold overflow
+                                   'CRbins' : [1, 4]
+                                }
+
+    variables['ptmiss']  = {  'name'  : 'ptmiss',                #   variable name
+                              'range' : (  12,    160.,  400.),    #   variable range
+                              'xaxis' : met + gv,                #   x axis name
+                              'fold'  : overflow                 #   fold overflow
+                             }
+
+    variables['njets']    = {  'name'  : 'nCleanJet',             #   variable name
+                               'range' : (  6 ,    0.,  6.),      #   variable range
+                               'xaxis' : 'number of jets',        #   x axis name
+                               'fold'  : overflow                 #   fold overflow
+                              }
+
+    isrJetWeight = '(CleanJet_pt[0]>150.)*(1.-(Jet_'+btagDisc+'[CleanJet_jetIdx[0]]>='+bTagCut+')*Jet_btagSF_'+btagAlgo+bTagWP+'[CleanJet_jetIdx[0]])'
+    if 'Data' in opt.sigset:
+        isrJetWeight = '(CleanJet_pt[0]>150.)*(Jet_'+btagDisc+'[CleanJet_jetIdx[0]]<'+bTagCut+')'
+    variables['dphiisrmet']  = {  'name'  : 'acos(cos(ptmiss_phi-CleanJet_phi[0]))', #   variable name
+                                  'weight': isrJetWeight,
+                                  'range' : (  10,    0., 3.2),    #   variable range
+                                  'xaxis' : '|#Delta#phi(ISR jet,'+met+')| [rad]',         #   x axis name
+                                 }
+
+    if 'Merged' in opt.tag:
+
+        variables['nbjets']  = { 'name'  : '0.', #   variable name
+                                 'range' : (  4,    -0.5, 3.5),    #   variable range
+                                 'xaxis' : 'number of b-tagged jets',         #   x axis name
+                                 'fold'  : overflow                 #   fold overflow
+                                }
+
+
+    else:
+
+        variables['nbjets0']  = { 'name'  : '0.', #   variable name
+                                  'weight': btagWeight0tag,
+                                  'range' : (  4,    -0.5, 3.5),    #   variable range
+                                  'xaxis' : 'number of b-tagged jets',         #   x axis name
+                                  'fold'  : overflow                 #   fold overflow
+                                 }
+
+        if 'Data' not in opt.sigset:
+           btagWeight2tag = 'btagWeightNtag[2]'
+           btagWeight3tag = 'btagWeightNtag[3]'
+
+        variables['nbjets1']  = { 'name'  : '1.', #   variable name
+                                  'weight': '('+btagWeight1tag+')-('+btagWeight2tag+')',
+                                  'range' : (  4,    -0.5, 3.5),    #   variable range
+                                  'xaxis' : 'number of b-tagged jets',         #   x axis name
+                                  'fold'  : overflow                 #   fold overflow
+                                 }
+
+        variables['nbjets2']  = { 'name'  : '2.', #   variable name
+                                  'weight': '('+btagWeight2tag+')-('+btagWeight3tag+')',
+                                  'range' : (  4,    -0.5, 3.5),    #   variable range
+                                  'xaxis' : 'number of b-tagged jets',         #   x axis name
+                                  'fold'  : overflow                 #   fold overflow
+                                 }
+
+        variables['nbjets3']  = {  'name'  : '3.', #   variable name
+                                   'weight': btagWeight3tag,
+                                   'range' : (  4,    -0.5, 3.5),    #   variable range
+                                   'xaxis' : 'number of b-tagged jets',         #   x axis name
+                                   'fold'  : overflow                 #   fold overflow
+                                  }
+
+elif 'SearchRegion' in opt.tag or 'SearchVetoRegion' in opt.tag or 'ObjectReview' in opt.tag or 'EGM' in opt.tag:
+
+    maxLep1Pt = 350. if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else 200. 
+    binLep1Pt =  35  if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else  40
+    maxLep2Pt = 200. if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else 200.
+    binLep2Pt =  20  if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else  40
+    maxJet1Pt = 500. if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else 200.
+    binJet1Pt =  50  if ('SearchRegion' in opt.tag or 'SignalRegion' in opt.tag) else  40
+
+    if 'SearchRegion' in opt.tag or 'SearchVetoRegion' in opt.tag or 'EGM' in opt.tag:
+
+        variables['mt2ll'] = { 'name'  : 'mt2ll',               # variable name
+                               'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]), # variable range
+                               'xaxis' : mt2 + pll + gv,      # x axis name
+                               'fold'  : overflow,            # fold overflow
+                               'nameLatex' : '\\mtll'
+                              }
+
+    if 'SearchVetoRegion' in opt.tag or 'DY' in opt.tag or 'EGM' in opt.tag:
+
+        eeOffset = '+(-9999.*((abs(Lepton_pdgId['+lep0idx+'])==13)+(abs(Lepton_pdgId['+lep1idx+'])==13)))'
+        mmOffset = '+(-9999.*((abs(Lepton_pdgId['+lep0idx+'])==11)+(abs(Lepton_pdgId['+lep1idx+'])==11)))' 
+
+        variables['mt2ee'] = { 'name'  : 'mt2ll'+eeOffset,               # variable name
+                               'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]), # variable range
+                               'xaxis' : mt2 + pee + gv,      # x axis name
+                               'fold'  : overflow,            # fold overflow
+                               'nameLatex' : '\\mtll'
+                              }
+
+        variables['mt2mm'] = { 'name'  : 'mt2ll'+mmOffset,               # variable name
+                               'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]), # variable range
+                               'xaxis' : mt2 + pmm + gv,      # x axis name
+                               'fold'  : overflow,            # fold overflow
+                               'nameLatex' : '\\mtll'
+                              }
+
+        # 91.1876
+        variables['mll']           = {  'name'  : 'mll',                   #   variable name
+                                        'range' : (  90,    1.1876,  181.1876),  #   variable range
+                                        'xaxis' : 'm' + pll  + gv,         #   x axis name
+                                        'fold'  : overflow                 #   fold overflow
+                                     }
+
+        variables['mee']           = {  'name'  : 'mll'+eeOffset  ,        #   variable name
+                                        'range' : (  90,    1.1876,  181.1876),  #   variable range
+                                        'xaxis' : 'm' + pee  + gv,         #   x axis name
+                                        'fold'  : overflow                 #   fold overflow
+                                     }
+
+        variables['mmm']           = {  'name'  : 'mll'+mmOffset  ,        #   variable name
+                                        'range' : (  90,    1.1876,  181.1876),  #   variable range
+                                        'xaxis' : 'm' + pmm  + gv,         #   x axis name
+                                        'fold'  : overflow                 #   fold overflow
+                                     }
+
+    variables['ptmiss']        = {  'name'  : 'ptmiss',                #   variable name
+                                    'range' : (  80,    0.,  400.),    #   variable range
+                                    'xaxis' : met + gv,                #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['njets']         = {  'name'  : 'nCleanJet',             #   variable name
+                                    'range' : (  6 ,    0.,  6.),      #   variable range
+                                    'xaxis' : "number of jets",        #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['jetpt']         = {   'name'  : 'CleanJet_pt',          #   variable name
+                                     'range' : (  binJet1Pt,    0.,  maxJet1Pt),  #   variable range
+                                     'xaxis' : 'leading jet ' + pt + gv,       #   x axis name
+                                     'fold'  : overflow                #   fold overflow
+                                 }
+
+    variables['jeteta'] = { 'name'  : 'CleanJet_eta',               #   variable name
+                            'range' : (  48,   -2.4, 2.4),          #   variable range
+                            'xaxis' : 'leading jet pseudorapodity', #   x axis name
+                            }
+
+    for lepType in [ 'Lep', 'Ele', 'Muo' ]:
+
+        lepflav = 'lepton'
+        lep1Offset, lep2Offset = '', ''
+        if lepType=='Ele':
+            lepflav = 'electron'
+            lep1Offset = '+(-9999.*(abs(Lepton_pdgId['+lep0idx+'])==13))'
+            lep2Offset = '+(-9999.*(abs(Lepton_pdgId['+lep1idx+'])==13))'
+        if lepType=='Muo':
+            lepflav = 'muon'
+            lep1Offset = '+(-9999.*(abs(Lepton_pdgId['+lep0idx+'])==11))'
+            lep2Offset = '+(-9999.*(abs(Lepton_pdgId['+lep1idx+'])==11))'
+
+        variables[lepType+'1pt']   = {   'name'  : 'Lepton_pt['+lep0idx+']'+lep1Offset,     #   variable name
+                                         'range' : (  binLep1Pt,    0.,  maxLep1Pt),         #   variable range
+                                         'xaxis' : 'leading '+lepflav+' ' + pt + gv,  #   x axis name
+                                         'fold'  : overflow                      #   fold overflow
+                                      }
+
+        variables[lepType+'2pt']   = {   'name'  : 'Lepton_pt['+lep1idx+']'+lep2Offset,     #   variable name
+                                         'range' : (  binLep2Pt,    0.,  maxLep2Pt),         #   variable range
+                                         'xaxis' : 'trailing '+lepflav+' ' + pt + gv, #   x axis name
+                                         'fold'  : overflow                      #   fold overflow
+                                      }
+
+        variables[lepType+'1eta']  = {   'name'  : 'Lepton_eta['+lep0idx+']'+lep1Offset,     #   variable name
+                                         'range' : (  48,   -2.4, 2.4),         #   variable range
+                                         'xaxis' : 'leading '+lepflav+' pseudorapodity'  #   x axis name
+                                     }
+
+        variables[lepType+'2eta']  = {   'name'  : 'Lepton_eta['+lep1idx+']'+lep2Offset,     #   variable name
+                                         'range' : (  48,   -2.4, 2.4),         #   variable range
+                                         'xaxis' : 'trailing '+lepflav+' pseudorapodity' #   x axis name
+                                      }
+
+

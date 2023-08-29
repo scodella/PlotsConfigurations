@@ -195,6 +195,7 @@ def limits(opt):
     else:
         limitRun = getLimitRun(opt.unblind) 
         limitMethod = ' '.join([ '-M AsymptoticLimits', '--run '+limitRun.lower(), '-n _'+limitRun ])
+    if 'asimovb' in opt.option: limitMethod += ' -t -1 --expectSignal  0'
     opt.combineCommand = ' '.join([ 'combine', limitMethod, 'combinedDatacard.txt' ])
     opt.combineOutDir = opt.limitdir
 
@@ -234,7 +235,8 @@ def impactsPlots(opt):
     stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doInitialFit --robustFit 1 '+fitOptions)
     stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --robustFit 1 --doFits --parallel 100 '+fitOptions)
     stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 -o impacts.json '+fitOptions)
-    stepList.append('plotImpacts.py -i impacts.json -o impacts')
+    stepList.append('sed "s/Smooth//g" impacts.json > impacts_final.json')
+    stepList.append('plotImpacts.py -i impacts_final.json -o impacts')
     opt.combineCommand = ' ; '.join(stepList)
     opt.combineOutDir = opt.impactdir
 

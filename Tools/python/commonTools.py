@@ -36,6 +36,10 @@ def compile(opt):
     else: directory = opt.option
     os.system('cd '+directory+' ; scram b')
 
+def cdWorkDir(opt, workdir = os.getenv('PWD')):
+
+    return 'cd '+workdir+'; eval `scramv1 runtime -sh`;'
+
 ### Plot utilities
 
 def bookHistogram(name, xBins, yBins=(), title='', style=''):
@@ -227,6 +231,10 @@ def getTagForDatacards(tag, sigset):
     return tag
 
 def getSignalDir(opt, year, tag, signal, directory):
+
+    if hasattr(opt, 'combineOutDir') and opt.combineOutDir.split('/')[-1]==opt.cardsdir.split('/')[-1]:
+        signalDirList = [ getattr(opt, directory), tag, signal, year ]
+        return '/'.join(signalDirList)
 
     signalDirList = [ getattr(opt, directory), year ]
     tag = tag.replace('___','_')
@@ -597,12 +605,16 @@ def getShapeFileName(shapeDir, year, tag, sigset, fileset, fitoption=''):
 
     shapeDirList = [ shapeDir, year, tag.split('_')[0], fitoption ]
 
-    if fitoption!='':
-        tag = tag.replace('___','_').split('__')[0]
+    #if fitoption!='':
+    tag = tag.replace('___','_').split('__')[0]
 
     return getShapeDirName(shapeDir, year, tag, fitoption)+'/plots_'+tag+setFileset(fileset, sigset)+'.root'
 
-def foundShapeFiles(opt, rawShapes=False):
+def getSampleShapeFileName(shapeDir, year, tag, sample):
+
+    return '/'.join([ shapeDir, year, tag.split('_')[0], 'Samples', 'plots_'+year+tag.split('_')[0]+'_ALL_'+sample+'.root' ])
+
+def foundShapeFiles(opt, rawShapes=False, verbose=True):
 
     missingShapeFiles = False
 
@@ -611,7 +623,7 @@ def foundShapeFiles(opt, rawShapes=False):
             rawtag = tag.split('_')[0] if rawShapes else tag
 
             if not os.path.isfile(getShapeFileName(opt.shapedir, year, rawtag, opt.sigset, opt.fileset)): 
-                print 'Error: input shape file', getShapeFileName(opt.shapedir, year, rawtag, opt.sigset, opt.fileset), 'is missing'
+                if verbose: print 'Error: input shape file', getShapeFileName(opt.shapedir, year, rawtag, opt.sigset, opt.fileset), 'is missing'
                 missingShapeFiles = True
      
     return not missingShapeFiles
@@ -626,13 +638,24 @@ def foundSampleShapeFile(shapeDir, year, tag, sample):
     sampleShapeDir = '/'.join([ shapeDir, year, tag, 'Samples' ])
     return os.path.isfile(sampleShapeDir+'/plots_'+year+tag+'_ALL_'+sample+'.root')
 
+def getParentDir(path):
+
+    return path.replace(path.split('/')[-1],'')
+
 def openRootFile(fileName, mode='READ'):
+
+    if mode=='recreate':
+        os.system('mkdir -p '+getParentDir(fileName))
 
     return ROOT.TFile(fileName, mode)
 
-def openShapeFile(shapeDir, year, tag, sigset, fileset):
+def openShapeFile(shapeDir, year, tag, sigset, fileset, mode='READ'):
 
-    return openRootFile(getShapeFileName(shapeDir, year, tag, sigset, fileset))
+    return openRootFile(getShapeFileName(shapeDir, year, tag, sigset, fileset), mode)
+
+def openSampleShapeFile(shapeDir, year, tag, samples, mode='READ'):
+
+    return openRootFile(getSampleShapeFileName(shapeDir, year, tag, samples), mode)
 
 def mergeDataTakingPeriodShapes(opt, years, tag, fileset, strategy='deep', outputdir=None, inputnuisances=None, outputnuisances=None, verbose=False):
 
@@ -808,17 +831,137 @@ def postFitYieldsTables(opt, cardNameStructure='cut', masspoints=''):
     for year in yearList:
         for tag in opt.tag.split('-'):
 
-            commandList = [ '--tag='+year+tag, '--year='+year, '--fit='+fittype, '--cardName='+cardNameStructure, '--masspoints='+masspoints ]
-
-            commandList.append('--inputDirMaxFit='+'/'.join([ opt.mlfitdir, year, tag ]))
+            commandList = [ '--tag='+tag, '--year='+year, '--fit='+fittype, '--cardName='+cardNameStructure, '--masspoints='+masspoints ]
             commandList.append('--outputTableDir='+'/'.join([ opt.tabledir, year, tag ]))
+            
+            if 'fromshapes' in opt.option:
+                commandList.append('--fromshapes')
+                if 'merged' in opt.option: commandList.append('--mergedyears')
+                dataflag = 'AsimovB' if 'asimovb' in opt.option else 'AsimovS' if 'asimovs' in opt.option else 'FitsToData'
+                yearFlag = year if len(yearList)>1 else ''
+                commandList.append('--inputDir='+'/'.join([ opt.shapedir, year, tag.split('_')[0], dataflag, fittype+yearFlag ]))
+            else:
+                dataflag = '_asimovB' if 'asimovb' in opt.option else '_asimovS' if 'asimovs' in opt.option else ''
+                commandList.append('--inputDirMaxFit='+'/'.join([ opt.mlfitdir, year, tag+dataflag ]))
 
             if opt.unblind: commandList.append('--unblind')
             if 'nosignal' in opt.option: commandList.append('--nosignal')
-    
+
             os.system('mkPostFitYieldsTables.py '+' '.join(commandList))
 
 ### Methods for computing weights, efficiencies, scale factors, etc.
+
+def getPileupScenarioFromSimulation(opt):
+
+    if 'pu:' not in opt.option:
+        print 'Please, specify the pileup variable name'
+        exit()
+
+    pileupVariable = opt.option.split('pu:')[-1].split(':')[0]
+
+    outputDir = '/'.join([ opt.datadir, opt.year, '' ])
+    os.system('mkdir -p '+outputDir)
+
+    samples = getSamples(opt)
+
+    for sample in samples:
+        if not samples[sample]['isDATA']:
+            if sample in opt.option:
+
+                events = ROOT.TChain(opt.treeName)
+                for tree in samples[sample]['name']: events.Add(tree.replace('#','')) 
+
+                pileup = bookHistogram('pileup', [ 100, 0, 100 ])
+                events.Draw(pileupVariable+'>>pileup')
+
+                outputRoot = openRootFile(outputDir+'pileup_'+sample+'.root','recreate')
+                pileup.Write('pileup')
+                outputRoot.Close()
+                
+def pileupWeights(opt, dataFile = '', simulationFile = '', outputFile = ''):
+ 
+    if 'dataFile:' in opt.option: 
+        dataFile = opt.option.split('dataFile:')[-1].split(':')[0]
+    elif dataFile=='':
+        if hasattr(opt, 'dataPileupFile'):
+            dataFile = opt.dataPileupFile
+        else:
+            print 'Missing data input file'
+            exit()
+
+    if 'simulationFile:' in opt.option:
+        simulationFile = opt.option.split('simulationFile:')[-1].split(':')[0]
+    elif simulationFile=='':
+        if hasattr(opt, 'simulationPileupFile'):
+            simulationFile = opt.simulationPileupFile
+        else:
+            print 'Missing simulation input file'
+            exit()
+
+    profileDir = '/'.join([ os.getenv('PWD'), '../../../LatinoAnalysis/NanoGardener/python/data/PUweights', opt.year, '' ]) 
+    outputDir = '/'.join([ opt.datadir, opt.year, 'Pileup/' ])
+
+    if '/' not in dataFile: dataFile = profileDir+dataFile
+    if '/' not in simulationFile: simulationFile = outputDir+simulationFile
+
+    dataFile = dataFile.replace('.root','')
+    simulationFile = simulationFile.replace('.root','')
+
+    if 'outputFile:' in opt.option:
+        outputFile = opt.option.split('outputFile:')[-1].split(':')[0].replace('.root','')
+    elif outputFile=='':
+        if hasattr(opt, 'pileupWeightsFile'):
+            outputFile = opt.pileupWeightsFile
+        else:
+            os.system('mkdir -p '+outputDir)
+            outputFile = outputDir+'pileupWeights_'+dataFile.split('/')[-1]
+    
+    if opt.debug:
+        print 'dataFile:', dataFile, 'simulationFile:', simulationFile, 'plotFile:', plotFile, 'outputFile:', outputFile
+           
+    dataRoot = openRootFile(dataFile+'.root')
+    simulationRoot = openRootFile(simulationFile+'.root')   
+     
+    if 'onlyplot' not in opt.option:
+        outputRoot = openRootFile(outputFile+'.root','recreate')
+
+    simulationPileup = simulationRoot.Get('pileup')
+    simulationPileup.Scale(1./simulationPileup.Integral())
+
+    if 'plot' in opt.option:
+        canvas = bookCanvas('canvas',600,400)
+        os.system('mkdir -p '+'/'.join([ opt.plotsdir, opt.year, 'Pileup' ]))
+        copyIndexForPlots(opt.plotsdir, '/'.join([ opt.plotsdir, opt.year, 'Pileup' ]))
+        if 'plotFile:' in opt.option:
+            plotFile = opt.option.split('plotFile:')[-1].split(':')[0].replace('.png','')
+        else:
+            plotFile = dataFile.split('/')[-1]
+            
+    for pileup in [ 'pileup', 'pileup_minus', 'pileup_plus' ]:
+
+        dataPileup = dataRoot.Get(pileup)
+        dataPileup.Scale(1./dataPileup.Integral())
+
+        if pileup=='pileup' and 'plot' in opt.option:
+            canvas.cd()
+            dataPileup.SetLineColor(2)
+            dataPileup.SetLineWidth(2)
+            simulationPileup.SetLineWidth(2)
+            dataPileup.SetXTitle('Pileup')
+            dataPileup.SetYTitle('Event fraction / pileup')
+            dataPileup.Draw('histo')
+            simulationPileup.Draw('histosame')
+            canvas.Print('/'.join([ opt.plotsdir, opt.year, 'Pileup', plotFile+'.png' ]))
+
+        dataPileup.Divide(simulationPileup)
+
+        if 'onlyplot' not in opt.option:
+            outputRoot.cd()
+            dataPileup.Write(pileup)
+      
+    if 'onlyplot' not in opt.option: outputRoot.Close()
+    dataRoot.Close()
+    simulationRoot.Close()
 
 def triggerEfficiencies(opt):
 

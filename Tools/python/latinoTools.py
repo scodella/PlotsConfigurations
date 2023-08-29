@@ -11,7 +11,7 @@ def mkShapesMulti(opt, year, tag, splits, action):
 
     mainDir = '/'.join([ opt.shapedir, year, tag ])
 
-    shapeMultiCommand = 'mkShapesMulti.py --pycfg='+opt.configuration+' --treeName=Events --tag='+year+tag+' --sigset=SIGSET'
+    shapeMultiCommand = 'mkShapesMulti.py --pycfg='+opt.configuration+' --treeName='+opt.treeName+' --tag='+year+tag+' --sigset=SIGSET'
     if 'shapes' in action:
         if not opt.interactive: shapeMultiCommand += ' --doBatch=True --batchQueue='+opt.batchQueue
         if opt.dryRun: shapeMultiCommand += ' --dry-run '
@@ -28,12 +28,12 @@ def mkShapesMulti(opt, year, tag, splits, action):
  
             if 'merge' in action:
 
-                sampleFlag = '_SIGSET' if 'worker' in commonTools.getBranch() else '' 
+                sampleFlag = '_SIGSET' #if 'worker' in commonTools.getBranch() else '' 
                 outputDir = mainDir if 'mergeall' in action else mainDir+'/Samples'
                 splitCommand += ' ; mkdir -p '+outputDir+' ; mv '+splitDir+'/plots_'+year+tag+sampleFlag+'.root '+outputDir
                 if 'mergesingle' in action: splitCommand += '/plots_'+year+tag+'_ALL_SAMPLE.root'
                 else: splitCommand += '/plots_'+tag+commonTools.setFileset('',opt.sigset)+'.root'
-
+          
             for sample in splits[split]:
                 commonTools.resetShapes(opt, split, year, tag, sample, opt.reset)
                 os.system(splitCommand.replace('SIGSET', sample).replace('SAMPLE', sample.split(':')[-1]))
@@ -132,13 +132,18 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     os.system('mkdir -p '+plotsDir+' ; cp ../../index.php '+opt.plotsdir)
     commonTools.copyIndexForPlots(opt.plotsdir, plotsDir)
 
+<<<<<<< HEAD
     plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+lumiYear+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --minLogC='+opt.minLogC+' --maxLogCratio=1000 --minLogCratio=1.0 --scaleToPlot=2 --nuisancesFile='+nuisances
+=======
+    plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+lumiYear+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --maxLogCratio=1000 --minLogCratio=0.1 --maxLogC=1000  --scaleToPlot=2 --nuisancesFile='+nuisances+' --fileFormats=\'png,root\''
+>>>>>>> upstream/worker
 
     if 'normalizedCR' in opt.option: plotCommand += ' --plotNormalizedCRratio=1' # This is not yet re-implemented in latino's mkPlot.py
     elif 'normalized' in opt.option: plotCommand += ' --plotNormalizedDistributions'
     if plotAsExotics:                plotCommand += ' --showDataVsBkgOnly'       # This is not yet re-implemented in latino's mkPlot.py
     if 'noyields' not in opt.option: plotCommand += ' --showIntegralLegend=1'
-    if 'saveC'        in opt.option: plotCommand += ' --fileFormats=\'png,root,C\''
+    if 'saveC'        in opt.option: plotCommand  = plotCommand.replace('--fileFormats=\'','--fileFormats=\'C,')
+    if 'savePDF'      in opt.option: plotCommand  = plotCommand.replace('--fileFormats=\'','--fileFormats=\'pdf,')
     if 'plotsmearvar' in opt.option: plotCommand += ' --plotSmearVariation=1'    # This is not yet re-implemented in latino's mkPlot.py
     if 'postfit' in opt.option.lower(): plotCommand += ' --postFit=p'
     if 'nostat' in opt.option.lower() : plotCommand += ' --removeMCStat'
@@ -216,6 +221,7 @@ def plotNuisances(opt):
 def mergedPlots(opt):
 
     inputNuisances = commonTools.getCfgFileName(opt, 'nuisances') if 'nonuisance' not in opt.option else 'None'
+    fileset = commonTools.setFileset(opt.fileset, opt.sigset).replace('_','')
 
     for tag in opt.tag.split('-'):
 
@@ -223,12 +229,12 @@ def mergedPlots(opt):
             year = opt.deepMerge
             outputNuisances = inputNuisances
             outputDir = '/'.join([ opt.shapedir, year, tag ])
-            commonTools.mergeDataTakingPeriodShapes(opt, opt.year, tag, opt.fileset, 'deep', outputDir, inputNuisances, 'None', opt.verbose)
+            commonTools.mergeDataTakingPeriodShapes(opt, opt.year, tag, fileset, 'deep', outputDir, inputNuisances, 'None', opt.verbose)
 
         else:
             year = opt.year
             outputNuisances =  '_'.join([ 'nuisances', opt.year, opt.tag, opt.sigset+'.py' ])
-            commonTools.mergeDataTakingPeriodShapes(opt, opt.year, tag, opt.fileset, '', 'None', inputNuisances, outputNuisances, opt.verbose)
+            commonTools.mergeDataTakingPeriodShapes(opt, opt.year, tag, fileset, '', 'None', inputNuisances, outputNuisances, opt.verbose)
         
         mkPlot(opt, year, tag, opt.sigset, outputNuisances)
         os.system('rm -f nuisances_*.py')
@@ -360,7 +366,7 @@ def postFitPlots(opt, makePlots=True):
                                         if len(yearInFitList)==1 or year!=fittedYear:
                                             mkPostFitPlot(opt, combinedataset+'/'+fitoption, fittedYear, year, tag, cut, variable, signal, sigset, datacardNameStructure)
 
-                                        elif '_NoTag' not in cut: # FIXME
+                                        else: 
                                             opt2 = copy.deepcopy(opt)
                                             opt2.year, opt2.tag, opt2.sigset, opt2.baseDir = year, combinetag, sigset, os.getenv('PWD')
                                             postFitShapeFileFullPath = commonTools.mergeDirPaths(opt2.baseDir, postFitShapeFile)
@@ -383,7 +389,7 @@ def plots(opt):
     elif 'merge' in opt.option: mergedPlots(opt)
     else: 
 
-        if not commonTools.foundShapeFiles(opt): exit()
+        if not commonTools.foundShapeFiles(opt, True): exit()
 
         nuisances = commonTools.getCfgFileName(opt, 'nuisances') if 'nonuisance' not in opt.option else 'None'
 

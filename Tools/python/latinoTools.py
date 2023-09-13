@@ -132,11 +132,7 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     os.system('mkdir -p '+plotsDir+' ; cp ../../index.php '+opt.plotsdir)
     commonTools.copyIndexForPlots(opt.plotsdir, plotsDir)
 
-<<<<<<< HEAD
-    plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+lumiYear+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --minLogC='+opt.minLogC+' --maxLogCratio=1000 --minLogCratio=1.0 --scaleToPlot=2 --nuisancesFile='+nuisances
-=======
-    plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+lumiYear+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --maxLogCratio=1000 --minLogCratio=0.1 --maxLogC=1000  --scaleToPlot=2 --nuisancesFile='+nuisances+' --fileFormats=\'png,root\''
->>>>>>> upstream/worker
+    plotCommand = 'mkPlot.py --pycfg='+opt.configuration+' --tag='+lumiYear+tag+' --sigset='+sigset+' --inputFile='+shapeFileName+' --outputDirPlots='+plotsDir+' --maxLogCratio=1000 --minLogCratio=0.1 --maxLogC=1000 --minLogCratio=1.0  --scaleToPlot=2 --nuisancesFile='+nuisances+' --fileFormats=\'png,root\''
 
     if 'normalizedCR' in opt.option: plotCommand += ' --plotNormalizedCRratio=1' # This is not yet re-implemented in latino's mkPlot.py
     elif 'normalized' in opt.option: plotCommand += ' --plotNormalizedDistributions'

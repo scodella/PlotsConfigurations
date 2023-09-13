@@ -976,7 +976,8 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     tagObj[0].GetYaxis().SetLabelSize(0.035)
 
     tagObj[0].GetYaxis().SetTitle("m#kern[0.1]{_{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}} [GeV]")
-    if 'T2' in tagnm or 'Stop' in tagnm: tagObj[0].GetXaxis().SetTitle("m#kern[0.1]{_{#lower[-0.12]{#tilde{t}}}} [GeV]")
+    if 'T2' in tagnm or 'Stop' in tagnm: 
+        tagObj[0].GetXaxis().SetTitle("m#kern[0.1]{_{#lower[-0.12]{#tilde{t}}}} [GeV]")
     elif 'TChipm' in tagnm or 'Chargino' in tagnm: tagObj[0].GetXaxis().SetTitle("m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]")
 
     if plotOption=='Histograms':
@@ -1026,7 +1027,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     elif plotOption=='Contours':
 
         legend = ROOT.TLegend(0.12,0.8,0.55,0.88);
-        print legend.GetMargin()
+        print "this is left margin", legend.GetMargin()
         legend.SetMargin(0.1)
         #exit()
         same = ''
@@ -1050,7 +1051,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     plotCanvas.Print(outputFileName)
 
     plotCanvas.Close()
-
+    print "here?"
 def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
 
     inputFileNames = [ getFileName('./Limits/' + year + '/' + tag + '/Histograms', 'massScan_' + tag + '_' + sigset + '_' + fileOption),
@@ -1112,6 +1113,7 @@ if __name__ == '__main__':
     parser.add_option('--plotoption'    , dest='plotOption'    , help='-1 None, 0 Histograms, 1 Contours, 2 Final'  , default='-1')
     parser.add_option('--fileoption'    , dest='fileOption'    , help='in case input file different to both/blind'  , default='Both')
     (opt, args) = parser.parse_args()
+
 
     if opt.years=='-1' or opt.years=='all' or opt.years=='All':
         year = '2016-2017-2018'

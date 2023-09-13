@@ -551,7 +551,7 @@ def exclusionPlot(opt, plotoption='2'):
     plotCommandList = [ '--years='+opt.year, '--tag='+tagList[0], '--sigset='+sigset, '--limitoption='+fitOption, '--plotoption='+plotoption ]
     if len(tagList)>1: plotCommandList.append('--compareto='+tagList[1])
     if plotoption=='0': plotCommandList.append('--nofillempties')
-
+    print "plot", 'analyzeLimits.py '+' '.join(plotCommandList) 
     os.system('analyzeLimits.py '+' '.join(plotCommandList))
 
 def plotLimits(opt):
@@ -559,7 +559,7 @@ def plotLimits(opt):
     exclusionPlot(opt, '0')
 
 def plotContours(opt):
-
+    print "opt", opt
     exclusionPlot(opt, '1')
     
 ### Tools for handling signal mass points

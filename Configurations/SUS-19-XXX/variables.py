@@ -1305,9 +1305,14 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
     # ... and then the real validation and signal regions
     else:
 
-        mt2llOptimBin          = [0, 20, 40, 60, 80, 100, 160,           220]
-        mt2llOptimHighBin      = [0, 20, 40, 60, 80, 100, 160,      370, 500]
-        mt2llOptimHighExtraBin = [0, 20, 40, 60, 80, 100, 160, 240, 370, 500]
+        if 'finebin' in opt.tag:
+            mt2llOptimBin          = [0, 10, 20, 40, 60, 80, 100, 160,           220]
+            mt2llOptimHighBin      = [0, 10, 20, 40, 60, 80, 100, 160,      370, 500]
+            mt2llOptimHighExtraBin = [0, 10, 20, 40, 60, 80, 100, 160, 240, 370, 500]
+        else:
+            mt2llOptimBin          = [0, 20, 40, 60, 80, 100, 160,           220]
+            mt2llOptimHighBin      = [0, 20, 40, 60, 80, 100, 160,      370, 500]
+            mt2llOptimHighExtraBin = [0, 20, 40, 60, 80, 100, 160, 240, 370, 500]
 
         # main mt2ll binning
         if 'Paper2016' in opt.tag or 'MT2Bins2016' in opt.tag or 'ValidationRegion' in opt.tag:

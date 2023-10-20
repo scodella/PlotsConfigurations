@@ -1305,7 +1305,15 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
     # ... and then the real validation and signal regions
     else:
 
-        if 'finebin' in opt.tag:
+        if 'superfinebin' in opt.tag:
+            mt2llOptimBin          = [0, 2, 10, 20, 40, 60, 80, 100, 160,           220]
+            mt2llOptimHighBin      = [0, 2, 10, 20, 40, 60, 80, 100, 160,      370, 500]
+            mt2llOptimHighExtraBin = [0, 2, 10, 20, 40, 60, 80, 100, 160, 240, 370, 500]
+        elif 'extrafinebin' in opt.tag:
+            mt2llOptimBin          = [0, 5, 10, 20, 40, 60, 80, 100, 160,           220]
+            mt2llOptimHighBin      = [0, 5, 10, 20, 40, 60, 80, 100, 160,      370, 500]
+            mt2llOptimHighExtraBin = [0, 5, 10, 20, 40, 60, 80, 100, 160, 240, 370, 500]
+        elif 'finebin' in opt.tag:
             mt2llOptimBin          = [0, 10, 20, 40, 60, 80, 100, 160,           220]
             mt2llOptimHighBin      = [0, 10, 20, 40, 60, 80, 100, 160,      370, 500]
             mt2llOptimHighExtraBin = [0, 10, 20, 40, 60, 80, 100, 160, 240, 370, 500]
@@ -1522,6 +1530,90 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                                          'xaxis' : 'visht' + gv,           #   x axis name
                                          'fold'  : overflow               #   fold overflow
                                      }
+if 'lowMT2Kinematics' in opt.tag:
+    variables['ptmiss']  = {  'name'  : 'ptmiss',                #   variable name
+                              'range' : (  20,    0.,  400.),    #   variable range
+                              'xaxis' : met + gv,                #   x axis name
+                              'fold'  : overflow                 #   fold overflow
+                             }
+
+    variables['njets']    = {  'name'  : 'nCleanJet',             #   variable name
+                               'range' : (  6 ,    0.,  6.),      #   variable range
+                               'xaxis' : 'number of jets',        #   x axis name
+                               'fold'  : overflow                 #   fold overflow
+                              }
+    variables['deltaPhiLep']   = {  'name'  : dPhill,                  #   variable name    
+                                    'range' : (  10,    0.,  3.2),     #   variable range
+                                    'xaxis' : dphill,                  #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                              }
+
+    variables['ptll']          = {  'name'  : pTll,                    #   variable name    
+                                    'range' : ([0, 20, 30, 40, 50, 60, 70, 80, 100, 120, 150, 200, 250, 300, 400, 500, 1000],[1]), #   variable range
+                                    'xaxis' : ptll + gv,               #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                              }
+    
+    variables['leppt']          = { 'name'  : 'Lepton_pt[0]',          #   variable name
+                                    'range' : ([20, 25, 30, 40, 50, 70, 100, 150, 200],[1]),  #   variable range
+                                    'xaxis' : 'lepton ' + pt + gv,     #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['lepeta']         = { 'name'  : 'abs(Lepton_eta[0])',    #   variable name
+                                    'range' : (6, 0.0, 2.4),           #   variable range
+                                    'xaxis' : 'lepton |#eta|',         #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['leppteta']       = { 'name'  : 'abs(Lepton_eta[0]):Lepton_pt[0]',        #   variable name
+                                    'range' : ([20, 25, 30, 40, 50, 70, 100, 150, 200],[0.,0.8,1.6,2.4]),    #   variable range
+                                    'xaxis' : 'lepton 2D',             #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+    variables['mt2llOptim'] = {   'name'  : 'mt2ll',                  #   variable name    
+                                  'range' : ([0, 5, 10, 20, 40, 60, 80, 100, 160,           220],[1]),    #   variable range
+                                  'xaxis' : mt2 + pll + gv,         #   x axis name
+                                  'fold'  : overflow,               #   fold overflow
+                                  'CRbins' : [1, 4] 
+                                }
+
+    variables['leppt']          = { 'name'  : 'Lepton_pt[0]',          #   variable name
+                                    'range' : ([20, 25, 30, 40, 50, 70, 100, 150, 200],[1]),  #   variable range
+                                    'xaxis' : 'lepton ' + pt + gv,     #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['lepeta']         = { 'name'  : 'abs(Lepton_eta[0])',    #   variable name
+                                    'range' : (6, 0.0, 2.4),           #   variable range
+                                    'xaxis' : 'lepton |#eta|',         #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                }
+
+    variables['deltaRLep']   = {  'name'  : dRll,                    #   variable name    
+                                  'range' : (  20,    0.,  3.),      #   variable range
+                                  'xaxis' : drll,                    #   x axis name
+                                  'fold'  : overflow                 #   fold overflow
+                                }   
+
+    variables['deltaPhiLep']   = {  'name'  : dPhill,                  #   variable name    
+                                    'range' : (  10,    0.,  3.2),     #   variable range
+                                    'xaxis' : dphill,                  #   x axis name
+                                    'fold'  : overflow                 #   fold overflow
+                                 }
+
+    variables['dPhillptmiss']   = {  'name'  : dPhillptmiss,        #   variable name    
+                                     'range' : (  10,    0.,  3.2), #   variable range
+                                     'xaxis' : dphillptmiss,        #   x axis name
+                                     'fold'  : overflow             #   fold overflow
+                                  }
+
+    variables['dPhiMinlepptmiss'] = {  'name'  : dPhiMinlepptmiss,    #   variable name    
+                                       'range' : (  10,    0.,  3.2), #   variable range
+                                       'xaxis' : dphiminlepptmiss,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                    }
+
 
 if 'SearchRegionKinematics' in opt.tag:
 
@@ -1547,6 +1639,8 @@ if 'SearchRegionKinematics' in opt.tag:
                                    'cuts'  : searchCuts,
                                    'CRbins' : [1, 4]
                                 }
+
+
 
     if 'Slep' in opt.tag or 'Chargino' in opt.tag or 'TChipmWW'  in opt.tag:
         variables['mt2llOptimHighExtra'] = {   'name'  : 'mt2ll',                        #   variable name

@@ -1001,6 +1001,7 @@ if 'SearchVetoRegion' in opt.tag:
 
 
 if 'lowMT2Kinematics' in opt.tag:
+    
     cuts['SR3_Veto_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
     cuts['SR3_Veto_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
     cuts['SR3_Veto']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
@@ -1008,12 +1009,12 @@ if 'lowMT2Kinematics' in opt.tag:
     cuts['SR3_Tag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight1tag }
     cuts['SR3_Tag']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight1tag }
 
-    cuts['SR3_Veto_VeryTightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR3_Veto_VeryTightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR3_Veto_VeryTightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR3_Tag_VeryTightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
-    cuts['SR3_Tag_VeryTightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
-    cuts['SR3_Tag_VeryTightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR3_Veto_MT2Cut_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR3_Veto_MT2Cut_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR3_Veto_MT2Cut']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR3_Tag_MT2Cut_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR3_Tag_MT2Cut_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR3_Tag_MT2Cut']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
 
     cuts['SR3_Veto_VeryTightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
     cuts['SR3_Veto_VeryTightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
@@ -1036,55 +1037,98 @@ if 'lowMT2Kinematics' in opt.tag:
     cuts['SR3_Tag_LooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
     cuts['SR3_Tag_LooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
 
-    cuts['SR3_Veto_LooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR3_Veto_LooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR3_Veto_LooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR3_Tag_LooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
-    cuts['SR3_Tag_LooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
-    cuts['SR3_Tag_LooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR3_Veto_VeryLooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR3_Veto_VeryLooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR3_Veto_VeryLooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR3_Tag_VeryLooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR3_Tag_VeryLooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR3_Tag_VeryLooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 ', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_VeryTightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_VeryTightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_VeryTightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_VeryTightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_MT2Cut_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_MT2Cut_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_MT2Cut']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_MT2Cut_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_MT2Cut_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_MT2Cut']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_VeryTightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_VeryTightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_VeryTightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_VeryTightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_VeryTightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryTightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryTightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_VeryTightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryTightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryTightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_TightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_TightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_TightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_TightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_TightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_TightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_TightDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_TightDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_TightDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_TightDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_TightDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_TightDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_LooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_LooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_LooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_LooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_LooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_LooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_LooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_LooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_LooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_LooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2', 'weight' : btagWeight1tag }
 
-    cuts['SR4_Veto_LooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_LooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Veto_LooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_LooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Veto_VeryLooseDPhi_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryLooseDPhi_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryLooseDPhi']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_VeryLooseDPhi_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryLooseDPhi_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryLooseDPhi']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1', 'weight' : btagWeight1tag }
 
+    #ISR
+    isrcut = ' && '+ISRCut
+    cuts['SR4_Veto_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
+
+    cuts['SR4_Veto_MT2Cut_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_MT2Cut_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_MT2Cut_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_MT2Cut_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_MT2Cut_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_MT2Cut_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
+
+    cuts['SR4_Veto_VeryTightDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryTightDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryTightDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
+
+    cuts['SR4_Veto_TightDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_TightDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_TightDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_TightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_TightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_TightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
+
+    cuts['SR4_Veto_LooseDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_LooseDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_LooseDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_LooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_LooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_LooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
+
+    cuts['SR4_Veto_VeryLooseDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryLooseDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Veto_VeryLooseDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
 
 # For structure and plot cfg files
 

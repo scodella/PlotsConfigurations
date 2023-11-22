@@ -872,6 +872,16 @@ if 'FitCR' in opt.tag and ('FitCRWZ' in opt.tag or 'FitCRttZ' in opt.tag or 'Fit
     for cut in crcuts:
         cuts[cut] = crcuts[cut]
 
+# Select flavour channels
+
+if '_Flav' in opt.tag:
+    flavourCut2ToRemove = []
+    for cut in cuts:
+        if '_em' in cut and '_FlavEM' not in opt.tag: flavourCut2ToRemove.append(cut)
+        if '_sf' in cut and '_FlavSF' not in opt.tag: flavourCut2ToRemove.append(cut)
+    for cut in flavourCut2ToRemove:
+        del cuts[cut]
+
 # For FastSim pTmiss
 if isShape and 'Fast' in opt.tag:
 

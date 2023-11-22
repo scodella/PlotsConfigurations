@@ -776,40 +776,43 @@ if 'SignalRegion' in opt.tag:
             if 'ISR4' not in opt.tag: isrRegions.append('SR3')
             isrRegions.append('SR4') 
 
+    #mt2cut = ' && mt2ll>2' if 'MT2Cut' in opt.tag else ''
     for SR in ptmiss_cuts:
-
+        mt2cut = ''
+        if 'MT2Cut' in opt.tag:
+            if 'MT2CutSR4' in opt.tag: mt2cut = ' && mt2ll>2' if SR =='SR4' else ''
+            else: mt2cut=' && mt2ll>2'
         isrcut, tageventweight = '', btagWeight1tag
         if SR in isrRegions:
             isrcut = ' && '+ISRCut 
             tageventweight = ISRWeightTag 
 
         if splitjets is True:
-            if   SR == "SR1":
+            if   SR == 'SR1':
                 jetscut  = ' && '+jetscutSR1
                 nojetcut = ' && '+nojetcutSR1
-            elif SR == "SR2":
+            elif SR == 'SR2':
                 jetscut  = ' && '+jetscutSR2
                 nojetcut = ' && '+nojetcutSR2
 
         btagcut=''
         vetocut=''
 
-        cuts[SR+'_Tag_em' ]  = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+btagcut+')', 'weight' : tageventweight }
-        cuts[SR+'_Tag_sf' ]  = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+btagcut+')', 'weight' : tageventweight }
+        cuts[SR+'_Tag_em' ]  = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+mt2cut+btagcut+')', 'weight' : tageventweight }
+        cuts[SR+'_Tag_sf' ]  = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+mt2cut+btagcut+')', 'weight' : tageventweight }
         
-        if splitjets is True and SR in ["SR1","SR2"]:
-            cuts[SR+'_NoTag_em'] = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+vetocut+jetscut +')', 'weight' : btagWeight0tag }
-            cuts[SR+'_NoTag_sf'] = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+vetocut+jetscut +')', 'weight' : btagWeight0tag }
+        if splitjets is True and SR in ['SR1','SR2']:
+            cuts[SR+'_NoTag_em'] = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+jetscut +')', 'weight' : btagWeight0tag }
+            cuts[SR+'_NoTag_sf'] = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+jetscut +')', 'weight' : btagWeight0tag }
             
-            cuts[SR+'_NoJet_em'] = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+vetocut+nojetcut+')', 'weight' : btagWeight0tag }
-            cuts[SR+'_NoJet_sf'] = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+vetocut+nojetcut+')', 'weight' : btagWeight0tag }
+            cuts[SR+'_NoJet_em'] = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+nojetcut+')', 'weight' : btagWeight0tag }
+            cuts[SR+'_NoJet_sf'] = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+nojetcut+')', 'weight' : btagWeight0tag }
             
         else:
-            cuts[SR+'_Veto_em']  = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+vetocut+')', 'weight' : btagWeight0tag }
-            cuts[SR+'_Veto_sf']  = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+vetocut+')', 'weight' : btagWeight0tag }
+            cuts[SR+'_Veto_em']  = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+')', 'weight' : btagWeight0tag }
+            cuts[SR+'_Veto_sf']  = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+mt2cut+vetocut+')', 'weight' : btagWeight0tag }
     
 # Add cuts for control regions to be added in the fit
-
 if 'FitCR' in opt.tag and ('FitCRWZ' in opt.tag or 'FitCRttZ' in opt.tag or 'FitCRZZ' in opt.tag or isDatacardOrPlot):
 
     crcuts = { } 
@@ -1001,7 +1004,7 @@ if 'SearchVetoRegion' in opt.tag:
 
 
 if 'lowMT2Kinematics' in opt.tag:
-    
+
     cuts['SR3_Veto_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
     cuts['SR3_Veto_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
     cuts['SR3_Veto']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=280 ', 'weight' : btagWeight0tag }
@@ -1088,47 +1091,49 @@ if 'lowMT2Kinematics' in opt.tag:
 
     #ISR
     isrcut = ' && '+ISRCut
+    tageventweight = ISRWeightTag
+
     cuts['SR4_Veto_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 '+isrcut, 'weight' : ISRWeightTag }
 
     cuts['SR4_Veto_MT2Cut_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_MT2Cut_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_MT2Cut_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_MT2Cut_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_MT2Cut_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_MT2Cut_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_MT2Cut_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_MT2Cut_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_MT2Cut_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && mt2ll >2'+isrcut, 'weight' : ISRWeightTag }
 
     cuts['SR4_Veto_VeryTightDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_VeryTightDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_VeryTightDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_VeryTightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryTightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_VeryTightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.1'+isrcut, 'weight' : ISRWeightTag }
 
     cuts['SR4_Veto_TightDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_TightDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_TightDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_TightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_TightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_TightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_TightDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_TightDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_TightDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' <0.2'+isrcut, 'weight' : ISRWeightTag }
 
     cuts['SR4_Veto_LooseDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_LooseDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_LooseDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_LooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_LooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_LooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_LooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_LooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.2'+isrcut, 'weight' : ISRWeightTag }
 
     cuts['SR4_Veto_VeryLooseDPhi_ISR_em'] = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_VeryLooseDPhi_ISR_sf'] = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
     cuts['SR4_Veto_VeryLooseDPhi_ISR']    = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight0tag }
-    cuts['SR4_Tag_VeryLooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryLooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
-    cuts['SR4_Tag_VeryLooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : btagWeight1tag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : ISRWeightTag }
+    cuts['SR4_Tag_VeryLooseDPhi_ISR']     = { 'expr' : OC          +' && ptmiss'+ctrltag+'>=380 && '+dPhiMinlepptmiss+' >0.1'+isrcut, 'weight' : ISRWeightTag }
 
 # For structure and plot cfg files
 

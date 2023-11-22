@@ -294,9 +294,9 @@ def mergeFitCR(opt):
                 os.system('rm -r -f '+outputFile)
 
                 filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'') ]
-                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('SmtEU',''))
+                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('SmtEU','').replace('MT2CutSR4','').replace('MT2Cut','') )
                 for backcr in opt.backgroundsInFit:
-                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU',''))
+                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU','').replace('MT2CutSR4','').replace('MT2Cut','') )
 
                 foundFilesToMerge = True
                 for fileToMerge in filesToMerge:
@@ -366,7 +366,6 @@ def signalCombine(opt, action):
 
             opt2.fileset = fileset
             opt2.sigset = smset+','.join(filesetMap[fileset])
-
             if action=='limits': combineTools.limits(opt2)
             if action=='goodnessOfFit': combineTools.goodnessOfFit(opt2)
             if action=='mlfits': combineTools.mlfits(opt2)
@@ -582,7 +581,9 @@ def getMassPointSubset(opt, massPoint):
           
 def getSignalList(opt, sigset, tag):
 
-    if sigset=='SM': return []
+    if sigset=='SM': 
+        print 'No signal list for SM tag. Please choose a different sigset'
+        return []
 
     for sr in opt.signalRegionMap:
        if opt.signalRegionMap[sr]['tag'].replace('VetoesUL','') in tag:

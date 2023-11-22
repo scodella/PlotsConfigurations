@@ -214,6 +214,7 @@ if __name__ == '__main__':
     for year in yearlist:
         
         inputFileName = './Shapes/'+year+'/'+tag+'/'+'plots_'+tag+'_'+opt.fileset+'.root'
+        print "inputfilename:", inputFileName
         inputFile     = ROOT.TFile(inputFileName.replace('Merge',''), 'READ') 
         outputFileName = inputFileName.replace('VetoesUL','SmtEUVetoesUL')
         if outputFileName==inputFileName or 'SmtEU' not in outputFileName: 

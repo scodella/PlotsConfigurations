@@ -1,11 +1,76 @@
 #!/usr/bin/env python
-import optparse
+import optparse, types
 
 import PlotsConfigurations.Tools.commonTools as commonTools
 import PlotsConfigurations.Tools.latinoTools as latinoTools
 import PlotsConfigurations.Tools.combineTools as combineTools
 import analysisTools
 
+
+def allfunctions(toolList):
+    all_fns= []
+    for tool_i in toolList:
+        for attr_name in dir(tool_i):
+            attr_value = getattr(tool_i, attr_name)
+            if isinstance(attr_value, types.FunctionType):
+                all_fns.append(attr_name)
+    return all_fns
+
+def sim_strings(str1, str2):
+    #Find similar strings by using the Jaro-Winkler coefficients
+    str1 = str1.lower()
+    str2 = str2.lower()
+
+    len1 = len(str1)
+    len2 = len(str2)
+
+    if len1 == 0 and len2 == 0:
+        return 1.0
+
+    match_distance = max(len1, len2) // 2 - 1
+
+    matches = 0
+    transpositions = 0
+
+    flagged_1 = []
+    flagged_2 = []
+
+    for i in range(len1):
+        start = max(0, i - match_distance)
+        end = min(i + match_distance + 1, len2)
+        for j in range(start, end):
+            if str2[j] == str1[i] and j not in flagged_2:
+                matches += 1
+                flagged_1.append(i)
+                flagged_2.append(j)
+                break
+
+    flagged_2.sort()
+
+    for i, index in enumerate(sorted(flagged_1)):
+        if str1[index] != str2[flagged_2[i]]:
+            transpositions += 1
+
+    transpositions //= 2
+
+    if matches == 0:
+        return 0.0
+
+    sim = ((matches / float(len1)) +
+            (matches / float(len2)) +
+            ((matches - transpositions) / float(matches))) / 3
+
+    # Jaro-Winkler distance
+    prefix = 0
+    for i in range(min(len(str1), len(str2))):
+        if str1[i] == str2[i]:
+            prefix += 1
+        else:
+            break
+    prefix = min(4, prefix)  # maximum prefix length is 4
+
+    string_similarity = sim + (0.1 * prefix * (1 - sim))
+    return string_similarity
 if __name__ == '__main__':
 
     # Input parameters
@@ -49,9 +114,30 @@ if __name__ == '__main__':
     (opt, args) = parser.parse_args()
 
     analysisTools.setAnalysisDefaults(opt)
+    noModule=True
     for tool in [ commonTools, latinoTools, combineTools, analysisTools ]:
+        #print "this is tool",tool
         if hasattr(tool, opt.action):
+            noModule=False
             module = getattr(tool, opt.action)
-            print "go please", (tool, opt.action)
+            print 'Running', opt.action
             module(opt)
 
+
+
+
+
+    
+    if noModule:
+        print 'no action named '+opt.action
+        allTools = [ commonTools, latinoTools, combineTools, analysisTools ]
+        allActions =  allfunctions([commonTools, latinoTools, combineTools, analysisTools])
+
+        similarity_threshold = 0.9
+        similaractions = []
+        for action in allActions:
+            similarity = sim_strings(action, opt.action)
+            if similarity >= similarity_threshold:
+                similaractions.append(action)
+
+        print "No action named "+opt.action+",did you mean: "+','.join(similaractions)+" ?"

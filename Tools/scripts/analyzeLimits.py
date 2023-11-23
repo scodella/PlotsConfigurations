@@ -716,6 +716,7 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
                         massPointLimits = { } 
 
                         for event in inputTree :
+                            print "---->-",inputTree.quantileExpected
                             if inputTree.quantileExpected==-1. and limitOption == 'Observed':
                                 massPointLimits['histo_r_observed'] = roundBin(inputTree.limit)
                             elif inputTree.quantileExpected==0.5:
@@ -724,7 +725,7 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
                                 massPointLimits['histo_r_'+limitType+'_up'] = roundBin(inputTree.limit)
                             elif round(inputTree.quantileExpected, 2)==0.16:
                                 massPointLimits['histo_r_'+limitType+'_down'] = roundBin(inputTree.limit)
-
+                        exit()
                         massPoints[massPoint]['limits'] = massPointLimits
                     
                     inputFile.Close()

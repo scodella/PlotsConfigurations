@@ -432,7 +432,7 @@ def fillEmptyBins(sigset, histo):
                 else:
                     xb += 1; yb += 1
         
-        # ... then fill grid holes 
+        # ... then fill grid holes
         nIterations = 4 if binWidth==5. else 0
         for iter in range(nIterations):
             for xb in range(1, histo.GetNbinsX()+1):
@@ -469,8 +469,8 @@ def fillEmptyBins(sigset, histo):
                             histo.SetBinContent(xb, yb, takeLinearInterpolation(histo, xb, yb, xi, yb, xf, yb))
 
                         elif iter==3 and massX-massY>=100. and yb<=5 and xb>histo.GetNbinsX()-5: # Far away corner, not much important
-                            limitR = histo.SetBinContent(xb-1, yb)
-                            limitS = histo.SetBinContent(xb, yb+5)/histo.SetBinContent(xb-1, yb+5)
+                            limitR = histo.GetBinContent(xb-1, yb)
+                            limitS = histo.GetBinContent(xb, yb+5)/histo.GetBinContent(xb-1, yb+5)
                             histo.SetBinContent(xb, yb, limitR*limitS)
 
         # Fill massY<0 bins
@@ -781,7 +781,7 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
                     massY = crossSectionHistos[xSection].GetYaxis().GetBinCenter(yb);
                     if massY>=0. and massX-massY>0.:
                         crossSectionHistos[xSection].SetBinContent(xb, yb, massPointCrossSection)
-    
+
     # Save histogram file 
     outputFile = ROOT.TFile(outputFileName, 'recreate')
     for histo in massScanHistos:
@@ -808,8 +808,8 @@ def makeMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
             fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillemptybins, outputFileName)
 
 def getMassScanContour(outputFileName, histo):
-    
-    if not 'TChipmWW' in outputFileName:
+
+    if not 'TChipmWW' in outputFileName or 'observed_up' in histo.GetName():
         histo.Smooth(1, "k3a");
 
     x, y, z = array( 'd' ), array( 'd' ), array( 'd' )
@@ -947,7 +947,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
                 if limitOption_i.lower() in obj.GetName(): 
                     if obj.ClassName()=='TH2F':
                         obj.SetDirectory(0)
-                        if '_up' in obj.GetName() or '_down' in obj.GetName() or '_X' in obj.GetName():
+                        if '_X' in obj.GetName() or (not opt.dosignificance and ('_up' in obj.GetName() or '_down' in obj.GetName())):
                             continue
                     else:
                         if i_tag>0 or 'observed' in obj.GetName(): obj.SetLineColor(2)
@@ -991,10 +991,44 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     elif 'TChipm' in tagnm or 'Chargino' in tagnm: tagObj[0].GetXaxis().SetTitle("m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]")
 
     if plotOption=='Histograms':
+
         legend = ROOT.TLegend(0.12,0.8,0.55,0.88);
         legend.SetMargin(0.01)
-        
-        if tags[1]!='':
+
+        if opt.dosignificance:
+            if limitOptions[0]+'_vs_'+limitOptions[1] not in plotName:
+                print 'Please choose comparison option to plot significance'
+                exit()
+            if 'histo_r_expected' in tagObjName and 'histo_r_observed' in tagObjName:
+                plotName = plotName.replace(limOptnm,'significance')
+                plotTitle = plotTitle.replace(limitOptions[0],'significance')
+                iobs = tagObjName.index('histo_r_observed')
+                iexp = tagObjName.index('histo_r_expected')
+                iexpp1 = tagObjName.index('histo_r_expected_up')
+                iexpp2 = tagObjName.index('histo_r_expected_up2')
+                iexpm1 = tagObjName.index('histo_r_expected_down')
+                iexpm2 = tagObjName.index('histo_r_expected_down2')
+                for bx in range(1,tagObj[iobs].GetNbinsX()+1):
+                    for by in range(1,tagObj[iobs].GetNbinsY()+1):
+                        if tagObj[iobs].GetBinContent(bx,by)>0. and tagObj[iobs].GetBinContent(bx,by)<100.:
+                            if tagObj[iobs].GetBinContent(bx,by)>=tagObj[iexp].GetBinContent(bx,by) and tagObj[iobs].GetBinContent(bx,by)<tagObj[iexpp1].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexp].GetBinContent(bx,by))/(tagObj[iexpp1].GetBinContent(bx,by)-tagObj[iexp].GetBinContent(bx,by)))
+                            elif tagObj[iobs].GetBinContent(bx,by)>=tagObj[iexpp1].GetBinContent(bx,by) and tagObj[iobs].GetBinContent(bx,by)<tagObj[iexpp2].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,1.+(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexpp1].GetBinContent(bx,by))/(tagObj[iexpp2].GetBinContent(bx,by)-tagObj[iexpp1].GetBinContent(bx,by)))
+                            elif tagObj[iobs].GetBinContent(bx,by)>=tagObj[iexpp2].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,2.+(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexpp2].GetBinContent(bx,by))/(tagObj[iexpp2].GetBinContent(bx,by)-tagObj[iexpp1].GetBinContent(bx,by)))
+                            elif tagObj[iobs].GetBinContent(bx,by)<=tagObj[iexp].GetBinContent(bx,by) and tagObj[iobs].GetBinContent(bx,by)>tagObj[iexpm1].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexp].GetBinContent(bx,by))/(tagObj[iexpm1].GetBinContent(bx,by)-tagObj[iexp].GetBinContent(bx,by)))
+                            elif tagObj[iobs].GetBinContent(bx,by)<=tagObj[iexpp1].GetBinContent(bx,by) and tagObj[iobs].GetBinContent(bx,by)>tagObj[iexpm2].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,1.+(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexpm1].GetBinContent(bx,by))/(tagObj[iexpm2].GetBinContent(bx,by)-tagObj[iexpm1].GetBinContent(bx,by)))
+                            elif tagObj[iobs].GetBinContent(bx,by)<=tagObj[iexpm2].GetBinContent(bx,by):
+                                tagObj[iobs].SetBinContent(bx,by,2.+(tagObj[iobs].GetBinContent(bx,by)-tagObj[iexpm2].GetBinContent(bx,by))/(tagObj[iexpm2].GetBinContent(bx,by)-tagObj[iexpm1].GetBinContent(bx,by)))
+                tagObj[0] = tagObj[iobs]
+            else:
+                print 'Missing histograms for significance plots'
+                exit()
+ 
+        if tags[1]!='' and not opt.dosignificance:
             if opt.tag == opt.compareto :
                 legend.AddEntry(tagObj[1],"ratio "+tags[0]+" #frac{"+tagObj[1].GetName().split('_')[-1]+"}{"+tagObj[0].GetName().split('_')[-1]+"}", '')
                 tagObj[1].Divide(tagObj[0])
@@ -1145,6 +1179,7 @@ if __name__ == '__main__':
     parser.add_option('--plotoption'    , dest='plotOption'    , help='-1 None, 0 Histograms, 1 Contours, 2 Final'  , default='-1')
     parser.add_option('--fileoption'    , dest='fileOption'    , help='in case input file different to both/blind'  , default='Both')
     parser.add_option('--add2sigma'     , dest='add2sigma'     , help='Remake limit contours'                       , default=False, action='store_true')
+    parser.add_option('--dosignificance', dest='dosignificance', help='Do significance'                             , default=False, action='store_true')
     parser.add_option('--limitdir'      , dest='limitdir'      , help='Input limits directory'                      , default='./Limits')
     (opt, args) = parser.parse_args()
 

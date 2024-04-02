@@ -1671,80 +1671,78 @@ def workingPoints(opt):
 
     inputFile = ROOT.TFile.Open('/'.join([ opt.shapedir, opt.year, opt.tag.split('_')[0], 'Samples', 'plots_'+opt.year+opt.tag.split('_')[0]+'_ALL_'+wpSamples[0]+'.root' ]), 'read')
 
-    discriminantDone = []
+    bTagAlgorithms = [ 'DeepJet', 'ParticleNet', 'ParT' ]
+    workingPointName = [ 'Loose', 'Medium', 'Tight', 'eXtraTight', 'eXtraeXtraTight' ]
+    workingPointLimit = [ 0.1, 0.01, 0.001, 0.0005, 0.0001 ]
 
-    for btagwp in list(opt.bTagWorkingPoints.keys()):
-        if opt.bTagWorkingPoints[btagwp]['discriminant'] not in discriminantDone:
+    for btagAlgo in opt.bTagAlgorithms:
+        
+        btagDiscriminant = opt.bTagWorkingPoints[btagAlgo+''.join([ x for x in opt.workingPointName[0] if x.isupper() ])]['discriminant']
+        bJetDisc = inputFile.Get('QCD/Jet_'+btagDiscriminant+'_5_0/histo_'+wpSamples[0])
+        lJetDisc = inputFile.Get('QCD/Jet_'+btagDiscriminant+'_0_0/histo_'+wpSamples[0])
 
-            bJetDisc = inputFile.Get('QCD/Jet_'+opt.bTagWorkingPoints[btagwp]['discriminant']+'_5_0/histo_'+wpSamples[0])
-            lJetDisc = inputFile.Get('QCD/Jet_'+opt.bTagWorkingPoints[btagwp]['discriminant']+'_0_0/histo_'+wpSamples[0])
+        for ijet in range(1, opt.nJetMax):
+            bJetDisc.Add(inputFile.Get('QCD/Jet_'+btagDiscriminant+'_5_'+str(ijet)+'/histo_'+wpSamples[0]))
+            lJetDisc.Add(inputFile.Get('QCD/Jet_'+btagDiscriminant+'_0_'+str(ijet)+'/histo_'+wpSamples[0]))
 
-            for ijet in range(1, opt.nJetMax):
-                bJetDisc.Add(inputFile.Get('QCD/Jet_'+opt.bTagWorkingPoints[btagwp]['discriminant']+'_5_'+str(ijet)+'/histo_'+wpSamples[0]))
-                lJetDisc.Add(inputFile.Get('QCD/Jet_'+opt.bTagWorkingPoints[btagwp]['discriminant']+'_0_'+str(ijet)+'/histo_'+wpSamples[0]))
+        if 'noprint' not in opt.option:
+            print('\n\nWorking Points for', btagAlgo)
+
+
+        oldWorkingPoint = []
+        for wp in opt.workingPointName:
+            wpflag = ''.join([ x for x in wp if x.isupper() ])
+            if btagAlgo+wpflag in opt.bTagWorkingPoints: oldWorkingPoint.append(float(opt.bTagWorkingPoints[btagAlgo+wpflag]['cut']))
+            else: oldWorkingPoint.append(0.9) 
+
+        integralLightJets  = lJetDisc.Integral(0, lJetDisc.GetNbinsX())
+        integralBottomJets = bJetDisc.Integral(0, bJetDisc.GetNbinsX())
+ 
+        if 'csv' in opt.option:
+            print('   ', btagAlgo, end=' ')
+        elif 'yml' in opt.option:
+            print(+':')
+
+        for wp in range(len(opt.workingPointName)):
+
+            wpflag = ''.join([ x for x in opt.workingPointName[wp] if x.isupper() ])
+            mistagRateDistance =  999.
+            binAtWorkingPoint  = -999
+
+            for ib in range(1, bJetDisc.GetNbinsX()+1):
+
+                mistagRate = lJetDisc.Integral(ib, lJetDisc.GetNbinsX())/integralLightJets
+
+                if abs(mistagRate-opt.workingPointLimit[wp])<mistagRateDistance: 
+
+                    mistagRateDistance = abs(mistagRate-opt.workingPointLimit[wp])
+                    binAtWorkingPoint = ib
 
             if 'noprint' not in opt.option:
-                print('\n\nWorking Points for', btagwp[:-1])
+                print('   ', opt.workingPointName[wp], 'working point:', lJetDisc.GetBinLowEdge(binAtWorkingPoint), '(', lJetDisc.GetBinLowEdge(binAtWorkingPoint-1), ',', lJetDisc.GetBinLowEdge(binAtWorkingPoint+1), ')')
+                print('        MistagRate:', lJetDisc.Integral(binAtWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets, '(', lJetDisc.Integral(binAtWorkingPoint-1, lJetDisc.GetNbinsX())/integralLightJets, ', ', lJetDisc.Integral(binAtWorkingPoint+1, lJetDisc.GetNbinsX())/integralLightJets, ') over', integralLightJets)
+                print('        Efficiency:', bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets, '(', bJetDisc.Integral(binAtWorkingPoint-1, bJetDisc.GetNbinsX())/integralBottomJets, ', ', bJetDisc.Integral(binAtWorkingPoint+1, bJetDisc.GetNbinsX())/integralBottomJets, ') over', integralBottomJets)
 
-            #opt.workingPointName = [ 'Loose', 'Medium', 'Tight', 'VeryTight', 'VeryVeryTight' ]
-            #opt.workingPointLimit = [ 0.1, 0.01, 0.001, 0.0005, 0.0001 ]
+                binOldWorkingPoint = lJetDisc.FindBin(oldWorkingPoint[wp])
+                print('        OldWorkingPoint', oldWorkingPoint[wp], lJetDisc.Integral(binOldWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets, bJetDisc.Integral(binOldWorkingPoint, lJetDisc.GetNbinsX())/integralBottomJets, '\n')
 
-            oldWorkingPoint = []
-            for wp in opt.workingPointName:
-                wpflag = ''.join([ x for x in wp if x.isupper() ])
-                if btagwp[:-1]+wpflag in opt.bTagWorkingPoints: oldWorkingPoint.append(float(opt.bTagWorkingPoints[btagwp[:-1]+wpflag]['cut']))
-                else: oldWorkingPoint.append(0.9) 
-
-            integralLightJets  = lJetDisc.Integral(0, lJetDisc.GetNbinsX())
-            integralBottomJets = bJetDisc.Integral(0, bJetDisc.GetNbinsX())
- 
-            if 'csv' in opt.option:
-                print('   ', btagwp[:-1], end=' ')
+            elif 'csv' in opt.option:
+                print(lJetDisc.GetBinLowEdge(binAtWorkingPoint), end=' ') 
+                print(round((100.*bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets),1), end=' ')
+                print(round((100.*lJetDisc.Integral(binAtWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets),1 if opt.workingPointName[wp]=='Loose' else 2), end=' ') 
             elif 'yml' in opt.option:
-                print(btagwp[:-1]+':')
-
-            for wp in range(len(opt.workingPointName)):
-
-                wpflag = ''.join([ x for x in opt.workingPointName[wp] if x.isupper() ])
-                mistagRateDistance =  999.
-                binAtWorkingPoint  = -999
-
-                for ib in range(1, bJetDisc.GetNbinsX()+1):
-
-                    mistagRate = lJetDisc.Integral(ib, lJetDisc.GetNbinsX())/integralLightJets
-
-                    if abs(mistagRate-opt.workingPointLimit[wp])<mistagRateDistance: 
-
-                        mistagRateDistance = abs(mistagRate-opt.workingPointLimit[wp])
-                        binAtWorkingPoint = ib
-
-                if 'noprint' not in opt.option:
-                    print('   ', opt.workingPointName[wp], 'working point:', lJetDisc.GetBinLowEdge(binAtWorkingPoint), '(', lJetDisc.GetBinLowEdge(binAtWorkingPoint-1), ',', lJetDisc.GetBinLowEdge(binAtWorkingPoint+1), ')')
-                    print('        MistagRate:', lJetDisc.Integral(binAtWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets, '(', lJetDisc.Integral(binAtWorkingPoint-1, lJetDisc.GetNbinsX())/integralLightJets, ', ', lJetDisc.Integral(binAtWorkingPoint+1, lJetDisc.GetNbinsX())/integralLightJets, ') over', integralLightJets)
-                    print('        Efficiency:', bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets, '(', bJetDisc.Integral(binAtWorkingPoint-1, bJetDisc.GetNbinsX())/integralBottomJets, ', ', bJetDisc.Integral(binAtWorkingPoint+1, bJetDisc.GetNbinsX())/integralBottomJets, ') over', integralBottomJets)
-
-                    binOldWorkingPoint = lJetDisc.FindBin(oldWorkingPoint[wp])
-                    print('        OldWorkingPoint', oldWorkingPoint[wp], lJetDisc.Integral(binOldWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets, bJetDisc.Integral(binOldWorkingPoint, lJetDisc.GetNbinsX())/integralBottomJets, '\n')
-
-                elif 'csv' in opt.option:
-                    print(lJetDisc.GetBinLowEdge(binAtWorkingPoint), end=' ') 
-                    print(round((100.*bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets),1), end=' ')
-                    print(round((100.*lJetDisc.Integral(binAtWorkingPoint, lJetDisc.GetNbinsX())/integralLightJets),1 if opt.workingPointName[wp]=='Loose' else 2), end=' ') 
-                elif 'yml' in opt.option:
-                    print('   ',wpflag+':')
-                    print('       ', 'eff:', round((100.*bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets),1))
-                    print('       ', 'wp:', lJetDisc.GetBinLowEdge(binAtWorkingPoint)) 
+                print('   ',wpflag+':')
+                print('       ', 'eff:', round((100.*bJetDisc.Integral(binAtWorkingPoint, bJetDisc.GetNbinsX())/integralBottomJets),1))
+                print('       ', 'wp:', lJetDisc.GetBinLowEdge(binAtWorkingPoint)) 
 
 
-                if btagwp[:-1]+wpflag not in opt.bTagWorkingPoints:
-                    opt.bTagWorkingPoints[btagwp[:-1]+wpflag] = {}
-                    opt.bTagWorkingPoints[btagwp[:-1]+wpflag]['discriminant'] = opt.bTagWorkingPoints[btagwp]['discriminant']
+            if btagAlgo+wpflag not in opt.bTagWorkingPoints:
+                opt.bTagWorkingPoints[btagAlgo+wpflag] = {}
+                opt.bTagWorkingPoints[btagAlgo+wpflag]['discriminant'] = btagDiscriminant
 
-                opt.bTagWorkingPoints[btagwp[:-1]+wpflag]['cut'] = str(lJetDisc.GetBinLowEdge(binAtWorkingPoint))
+            opt.bTagWorkingPoints[btagAlgo+wpflag]['cut'] = str(round(lJetDisc.GetBinLowEdge(binAtWorkingPoint),4))
 
-            if 'csv' in opt.option: print('')
-
-            discriminantDone.append(opt.bTagWorkingPoints[btagwp]['discriminant'])
+        if 'csv' in opt.option: print('')
 
     if 'noprint' not in opt.option:
         print('\n\nbTagWorkingPoints =', opt.bTagWorkingPoints, '\n\n') 
@@ -1789,7 +1787,6 @@ def ptHatWeights(opt):
                 xSec = float(genPars[0])
                 fEff = 1. if len(genPars)==1 else float(genPars[1])
             opt.qcdMuPtHatBins[ptHatBin]['weight'] = str(1000.*xSec*fEff/events.GetEntries())
-            print('\nqcdMuPtHatBins =', opt.qcdMuPtHatBins)
 
         elif 'QCD_' in sample:
             opt.qcdPtHatBins[ptHatBin]['events'] = str(events.GetEntries())
@@ -1801,7 +1798,9 @@ def ptHatWeights(opt):
                 xSec = float(genPars[0])
                 fEff = 1. if len(genPars)==1 else float(genPars[1])
             opt.qcdPtHatBins[ptHatBin]['weight'] = str(1000.*xSec*fEff/events.GetEntries())
-            print('\nqcdPtHatBins =', opt.qcdPtHatBins, '\n')
+
+    print('\nqcdMuPtHatBins =', opt.qcdMuPtHatBins)
+    print('\nqcdPtHatBins =', opt.qcdPtHatBins, '\n')
 
 def triggerPrescales(opt):
 
@@ -1821,12 +1820,12 @@ def triggerPrescales(opt):
 
         commandList = [ opt.dataConditionScript ]
         commandList.append('--action=ps')
-        commandList.append('--years='+campaignRunPeriod['year'])
-        commandList.append('--periods='+campaignRunPeriod['period'])
+        commandList.append('--years='+opt.campaignRunPeriod['year'])
+        commandList.append('--periods='+opt.campaignRunPeriod['period'])
         commandList.append('--outputDir='+commonTools.mergeDirPaths(opt.baseDir,opt.datadir+'/'+campaign))
 
-        for trigger in triggerInfos:
-            for hltpath in [ trigger, triggerInfos[trigger]['jetTrigger'] ]:
+        for trigger in opt.triggerInfos:
+            for hltpath in [ trigger, opt.triggerInfos[trigger]['jetTrigger'] ]:
                 if 'hltpath:' in opt.option and hltpath not in opt.option: continue
                 if 'hltpathveto:' in opt.option and hltpath in opt.option: continue
                 if opt.interactive:
@@ -1901,7 +1900,7 @@ def kinematicWeights(opt):
             for variable in variables:
                 if variable.split('_')[0]!=kinematicVariable: continue
                 if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
-
+                    print(cut, variable)
                     dataHisto = data_File.Get('/'.join([ cut, variable.replace('lightjet','mujet').replace('jeteta_'+cut,'jeteta'), 'histo_'+data ])) ; dataHisto.SetDirectory(0)
                     backHisto = inputFile.Get('/'.join([ cut, variable                                                            , 'histo_'+back ])) ; backHisto.SetDirectory(0)
 
@@ -1927,18 +1926,22 @@ def kinematicWeights(opt):
                                 backHisto.SetBinContent(spike, spikeContent)
 
                     if 'jetpt' in opt.option.lower() or 'jeteta' in opt.option.lower():
-
+                        print('ww', dataHisto.Integral(), backHisto.Integral())  
                         dataHisto.Divide(backHisto) 
-
+                        print('ww0')
                         if 'jetpt' in opt.option.lower():
                         
                             minPtFit, maxPtFit = dataHisto.GetBinLowEdge(1), dataHisto.GetBinLowEdge(dataHisto.GetNbinsX()+1)
+                            print('ff0', minPtFit, maxPtFit)
                             ptfit = ROOT.TF1('ptfit', 'pol3', minPtFit, maxPtFit)
-                            dataHisto.Fit('ptfit')
-
+                            print('ff1')
+                            #exit()
+                            dataHisto.Fit('pol3')
+                            print('ff2')
+                        print('ww1')
                         ptval  = float(opt.jetPtBins[cut][0]) + 0.1
                         etaval = weightsHisto.GetYaxis().GetBinCenter(1)
-
+                        print('ww2', dataHisto.GetNbinsX())
                         for ib in range(dataHisto.GetNbinsX()):
 
                             if 'jetpt' in opt.option.lower():

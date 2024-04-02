@@ -867,7 +867,7 @@ def getPileupScenarioFromSimulation(opt):
 
     pileupVariable = opt.option.split('pu:')[-1].split(':')[0]
 
-    outputDir = '/'.join([ opt.datadir, opt.year, '' ])
+    outputDir = '/'.join([ opt.datadir, opt.year, 'Pileup', '' ])
     os.system('mkdir -p '+outputDir)
 
     samples = getSamples(opt)
@@ -885,7 +885,26 @@ def getPileupScenarioFromSimulation(opt):
                 outputRoot = openRootFile(outputDir+'pileup_'+sample+'.root','recreate')
                 pileup.Write('pileup')
                 outputRoot.Close()
-                
+    
+def writePileupScenarioFromList(opt):
+
+    if not hasattr(opt, 'simulationPileupList'):
+        print('Missing simulation pileup list')
+        exit()
+
+    outputDir = '/'.join([ opt.datadir, opt.year, 'Pileup', '' ])
+    os.system('mkdir -p '+outputDir)
+
+    nBins = len(opt.simulationPileupList)
+    pileup = bookHistogram('pileup', [ nBins, 0, nBins ])
+    for ibin in range(nBins):
+        pileup.SetBinContent(ibin+1, opt.simulationPileupList[ibin])
+
+
+    outputRoot = openRootFile(outputDir+opt.simulationPileupFile,'recreate')
+    pileup.Write('pileup')
+    outputRoot.Close()
+
 def pileupWeights(opt, dataFile = '', simulationFile = '', outputFile = ''):
  
     if 'dataFile:' in opt.option: 
@@ -897,17 +916,24 @@ def pileupWeights(opt, dataFile = '', simulationFile = '', outputFile = ''):
             print('Missing data input file')
             exit()
 
+    profileDir = '/'.join([ os.getenv('PWD'), '../../../LatinoAnalysis/NanoGardener/python/data/PUweights', opt.year, '' ])
+    outputDir = '/'.join([ opt.datadir, opt.year, 'Pileup/' ])
+
     if 'simulationFile:' in opt.option:
         simulationFile = opt.option.split('simulationFile:')[-1].split(':')[0]
     elif simulationFile=='':
         if hasattr(opt, 'simulationPileupFile'):
             simulationFile = opt.simulationPileupFile
+            if not isGoodFile(outputDir+simulationFile, 0.):
+                print('Simulation input file does not exist')
+                if hasattr(opt, 'simulationPileupList'):
+                    print('Writing simulation input file from list')
+                    writePileupScenarioFromList(opt)
+                else:
+                    exit()
         else:
             print('Missing simulation input file')
             exit()
-
-    profileDir = '/'.join([ os.getenv('PWD'), '../../../LatinoAnalysis/NanoGardener/python/data/PUweights', opt.year, '' ]) 
-    outputDir = '/'.join([ opt.datadir, opt.year, 'Pileup/' ])
 
     if '/' not in dataFile: dataFile = profileDir+dataFile
     if '/' not in simulationFile: simulationFile = outputDir+simulationFile
@@ -950,6 +976,10 @@ def pileupWeights(opt, dataFile = '', simulationFile = '', outputFile = ''):
 
         dataPileup = dataRoot.Get(pileup)
         dataPileup.Scale(1./dataPileup.Integral())
+
+        if dataPileup.GetNbinsX()!=simulationPileup.GetNbinsX():
+            print('Error: data and simulation pileup histograms have different binning')
+            exit()
 
         if pileup=='pileup' and 'plot' in opt.option:
             canvas.cd()

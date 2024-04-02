@@ -1900,7 +1900,7 @@ def kinematicWeights(opt):
             for variable in variables:
                 if variable.split('_')[0]!=kinematicVariable: continue
                 if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
-                    print(cut, variable)
+
                     dataHisto = data_File.Get('/'.join([ cut, variable.replace('lightjet','mujet').replace('jeteta_'+cut,'jeteta'), 'histo_'+data ])) ; dataHisto.SetDirectory(0)
                     backHisto = inputFile.Get('/'.join([ cut, variable                                                            , 'histo_'+back ])) ; backHisto.SetDirectory(0)
 
@@ -1926,22 +1926,18 @@ def kinematicWeights(opt):
                                 backHisto.SetBinContent(spike, spikeContent)
 
                     if 'jetpt' in opt.option.lower() or 'jeteta' in opt.option.lower():
-                        print('ww', dataHisto.Integral(), backHisto.Integral())  
+
                         dataHisto.Divide(backHisto) 
-                        print('ww0')
+
                         if 'jetpt' in opt.option.lower():
                         
                             minPtFit, maxPtFit = dataHisto.GetBinLowEdge(1), dataHisto.GetBinLowEdge(dataHisto.GetNbinsX()+1)
-                            print('ff0', minPtFit, maxPtFit)
                             ptfit = ROOT.TF1('ptfit', 'pol3', minPtFit, maxPtFit)
-                            print('ff1')
-                            #exit()
-                            dataHisto.Fit('pol3')
-                            print('ff2')
-                        print('ww1')
+                            dataHisto.Fit('ptfit')
+
                         ptval  = float(opt.jetPtBins[cut][0]) + 0.1
                         etaval = weightsHisto.GetYaxis().GetBinCenter(1)
-                        print('ww2', dataHisto.GetNbinsX())
+
                         for ib in range(dataHisto.GetNbinsX()):
 
                             if 'jetpt' in opt.option.lower():

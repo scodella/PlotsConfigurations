@@ -640,9 +640,9 @@ for lep_i in ['Lep']:
 
 # nonprompt lepton rate:
 
-if   '2016HIPM'   in yeartag: nonpromptLep = { 'rate' : '1.18', 'rateUp' : '0.88', 'rateDown' : '1.48' } 
-elif '2016noHIPM' in yeartag: nonpromptLep = { 'rate' : '1.10', 'rateUp' : '0.70', 'rateDown' : '1.50' } 
-elif '2017'       in yeartag: nonpromptLep = { 'rate' : '1.38', 'rateUp' : '1.09', 'rateDown' : '1.67' } 
+if   '2016HIPM'   in yeartag: nonpromptLep = { 'rate' : '1.19', 'rateUp' : '0.89', 'rateDown' : '1.49' } 
+elif '2016noHIPM' in yeartag: nonpromptLep = { 'rate' : '1.11', 'rateUp' : '0.71', 'rateDown' : '1.51' } 
+elif '2017'       in yeartag: nonpromptLep = { 'rate' : '1.36', 'rateUp' : '1.07', 'rateDown' : '1.65' } 
 elif '2018'       in yeartag: nonpromptLep = { 'rate' : '1.36', 'rateUp' : '1.11', 'rateDown' : '1.61' } 
 if 'nonpromptSF' in opt.tag: # To check that mismodelling doesnt change much the limits
     if   '2016HIPM'   in yeartag: nonpromptLep = { 'rate' : '1.00', 'rateUp' : '1.03', 'rateDown' : '0.97' } 

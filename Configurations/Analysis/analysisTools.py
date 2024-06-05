@@ -290,10 +290,10 @@ def mergeFitCR(opt):
                 if opt.recover and commonTools.isGoodFile(outputFile): continue
                 os.system('rm -r -f '+outputFile)
 
-                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'') ]
+                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('EventEven','').replace('EventOdd','') ]
                 filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('SmtEU',''))
                 for backcr in opt.backgroundsInFit:
-                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU',''))
+                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU','').replace('EventEven','').replace('EventOdd',''))
 
                 foundFilesToMerge = True
                 for fileToMerge in filesToMerge:
@@ -577,7 +577,675 @@ def plotLimits(opt):
 def plotContours(opt):
 
     exclusionPlot(opt, '1')
+ 
+def checkTChipmSlepSnuMasses(opt):
+
+    chain = ROOT.TChain('Events')
+
+    if opt.year=='2018':
+        chain.Add('/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21UL18FS_106X_nAODv9_Full2018v8/susyGen__susyW__FSSusy2018v8__FSSusyCorr2018v8__hadd__FSSusyNomin2018v8__susyMT2fastSmear/nanoLatino_TChipmSlepSnu_*.root')
+    elif opt.year=='2017':
+        chain.Add('/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21UL17FS_106X_nAODv9_Full2017v8/susyGen__susyW__FSSusy2017v8__FSSusyCorr2017v8__hadd__FSSusyNomin2017v8__susyMT2fastSmear/nanoLatino_TChipmSlepSnu_*.root')
+    elif opt.year=='2016':
+        chain.Add('/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21UL16FS_106X_nAODv9_Full2016v8/susyGen__susyW__FSSusy2016v8__FSSusyCorr2016v8HIPM__hadd__FSSusyNomin2016v8HIPM__susyMT2fastSmear/nanoLatino_TChipmSlepSnu_*.root')
+        chain.Add('/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21UL16FS_106X_nAODv9_Full2016v8/susyGen__susyW__FSSusy2016v8__FSSusyCorr2016v8noHIPM__hadd__FSSusyNomin2016v8noHIPM__susyMT2fastSmear/nanoLatino_TChipmSlepSnu_*.root')
+
+    totalEvents = commonTools.bookHistogram('totalEvents', (57, 87.5, 1512.5), (33, -12.5, 812.5))
+    goodEvents  = commonTools.bookHistogram('goodEvents',  (57, 87.5, 1512.5), (33, -12.5, 812.5)) 
+    sleptonMass = commonTools.bookHistogram('sleptonMass',  (57, 87.5, 1512.5), (33, -12.5, 812.5))
+
+    totalEvents.GetYaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}} [GeV]')
+    totalEvents.GetXaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]')
+
+    goodEvents.GetYaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}} [GeV]')
+    goodEvents.GetXaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]')
+
+    chain.Draw('susyMLSP:susyMChargino>>totalEvents')
+    chain.Draw('susyMLSP:susyMChargino>>goodEvents' ,'fabs(susyMSlepton-(susyMLSP+susyMChargino)/2)<5')
+
+    ROOT.gStyle.SetOptStat(ROOT.kFALSE)
+    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+
+    plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
+    plotCanvas.cd()
+
+    pad = commonTools.bookPad('pad', 0.0, 0.0, 0.9, 0.9)
+    pad.Draw()
+    pad.cd()
+
+    outputDir = '/'.join([ opt.plotsdir, opt.year, 'Limits', ''])
+    os.system('mkdir -p '+outputDir)
+
+    NRGBs = 5
+    NCont = 255
+    stops = array("d",[0.00, 0.34, 0.61, 0.84, 1.00])
+    red = array("d",[0.50, 0.50, 1.00, 1.00, 1.00])
+    green = array("d",[ 0.50, 1.00, 1.00, 0.60, 0.50])
+    blue = array("d",[1.00, 1.00, 0.50, 0.40, 0.50])
+    ROOT.TColor.CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont)
+    ROOT.gStyle.SetNumberContours(NCont)
+    ROOT.gStyle.SetPaintTextFormat('4.0f')
+
+    refBin = totalEvents.FindBin(1150., 1.)
+    print totalEvents.GetBinContent(refBin), goodEvents.GetBinContent(refBin)
+
+    totalEvents.Draw('textcolz')
+    plotName = '_'.join([ 'TChipmSlepSnuMasses_Total' ])
+    plotCanvas.Print(outputDir+plotName+'.png')
+
+    goodEvents.GetZaxis().SetLabelFont(42)
+    goodEvents.GetZaxis().SetTitleFont(42)
+    goodEvents.GetZaxis().SetLabelSize(0.035)
+    goodEvents.GetZaxis().SetTitleSize(0.035)
+    goodEvents.GetZaxis().SetTitleOffset(1.2)
+
+    goodEvents.Draw('textcolz')
+    plotName = '_'.join([ 'TChipmSlepSnuMasses_Good' ])
+    plotCanvas.Print(outputDir+plotName+'.png')
+
+    goodEvents.Scale(100)
+    goodEvents.Divide(totalEvents)
+
+    sleptonMassList = []
+    for xb in range(1, goodEvents.GetNbinsX()+1):
+        mx = goodEvents.GetXaxis().GetBinCenter(xb)
+        for yb in range(1, goodEvents.GetNbinsY()+1):
+            my = goodEvents.GetYaxis().GetBinCenter(yb)
+            if mx-my<20 or my>750.: 
+                goodEvents.SetBinContent(xb, yb, -1)
+            else:
+                sleptonMass.SetBinContent(xb, yb, (mx+my)/2.)
+                if (mx+my)/2. not in sleptonMassList: sleptonMassList.append((mx+my)/2.)
+                if goodEvents.GetBinContent(xb, yb)==0: goodEvents.SetBinContent(xb, yb, 0.1)
+
+    print 'nSleptonMasses', len(sleptonMassList)
+
+    goodEvents.SetMinimum(-0.01)
+    goodEvents.SetMaximum(100.01)
+
+    goodEvents.Draw('textcolz')
+
+    contourFile = commonTools.openRootFile('Limits/2016-2017-2018/CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3_WWcorrYear/Contours/massScan_CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3_WWcorrYear_TChipmSlepSnu_mC-100to1500_Both.root')
+
+    expectedExclusion = contourFile.Get('graph_r_expected')
+    observedExclusion = contourFile.Get('graph_r_observed')
+    expectedExclusion.SetLineWidth(2) 
+    observedExclusion.SetLineWidth(2)
+    expectedExclusion.SetLineColor(2)
+    observedExclusion.SetLineColor(1)
+    #expectedExclusion.Draw('same')
+    #observedExclusion.Draw('same')
+
+    plotName = '_'.join([ 'TChipmSlepSnuMasses' ])
+    plotCanvas.Print(outputDir+plotName+'.png')
+
+    sleptonMass.Draw('textcolz')
+    plotName = '_'.join([ 'TChipmSlepSnu_SleptonMass' ])
+    plotCanvas.Print(outputDir+plotName+'.png')
+
+    if 'mcmtest' in opt.option:
+
+        chain = ROOT.TChain('Events')
+        chain.Add('/afs/cern.ch/work/s/scodella/MonteCarlo/SUS-RunIISpring21UL18FSGSPremixLLPBugFix-00011.root')
+        
+        charginoMass     = commonTools.bookHistogram('charginoMass', (1400, 100, 1500))
+        neutralinoMass   = commonTools.bookHistogram('neutralinoMass', (1400, 100, 1500))
+        sleptonMass     = commonTools.bookHistogram('sleptonMass', (800, 100, 900))
+        sleptonMassDiff = commonTools.bookHistogram('sleptonMassDiff', (1000, -500, 500))
+
+        chain.Draw('recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM>>charginoMass', 'abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000024')
+
+        charginoMass.Draw()
+        plotName = '_'.join([ 'TChipmSlepSnuMcM_CharginoMass' ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+        chain.Draw('recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM>>neutralinoMass', 'abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000022')
+
+        neutralinoMass.Draw()
+        plotName = '_'.join([ 'TChipmSlepSnuMcM_NeutralinoMass' ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+        chain.Draw('recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM>>sleptonMass', 'abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)>=1000010 && abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)<=1000020')
+
+        sleptonMass.Draw()
+        plotName = '_'.join([ 'TChipmSlepSnuMcM_SleptonMass' ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+        chain.Draw('recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000024))/Sum$((abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000024))+Sum$(recoGenParticles_genParticles__GEN.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)==1000022)))/2.>>sleptonMassDiff', 'abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)>=1000010 && abs(recoGenParticles_genParticles__GEN.obj.m_state.pdgId_)<=1000020')
+
+        sleptonMassDiff.SetXTitle('M_{slepton}-0.5*(M_{chargino}+M_{LSP})/2 [Gev]')
+        sleptonMassDiff.Draw()
+        plotName = '_'.join([ 'TChipmSlepSnuMcM_SleptonMassDiff' ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+def testMCM(opt):
+
+    ROOT.gStyle.SetOptStat(ROOT.kFALSE)
+    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+
+    plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
+    plotCanvas.cd()
+
+    pad = commonTools.bookPad('pad', 0.0, 0.0, 0.9, 0.9)
+    pad.Draw()
+    pad.cd()
+
+    outputDir = '/'.join([ opt.plotsdir, opt.year, 'Limits', ''])
+    os.system('mkdir -p '+outputDir)
+
+    if opt.option=='T2bW':
+
+        chain = ROOT.TChain('Events')
+        chain.Add('/afs/cern.ch/user/f/fiorendi/public/forSUS23002/SUS-RunIISpring21UL16FSGSPremixLLPBugFix-00016_T2bW.root')
+
+        massDiff = commonTools.bookHistogram('massDiff', (1000, -500, 500))
+
+        #chain.Scan('recoGenParticles_genParticles__RECO.obj.m_state.pdgId_:recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM', 'abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)>=1000000')
+
+        #chain.Scan('recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.', 'abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024')
+
+        chain.Scan('recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM:(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.:Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006)):Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))', '(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.)>1. && abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024')
+
+        #chain.Scan('recoGenParticles_genParticles__RECO.obj.m_state.pdgId_:recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM:(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.:Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006)):Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)):(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.)>1.', 'abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024')
+
+        #chain.Draw('recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000006))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.>>massDiff', 'abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024')
+
+        massDiff.SetXTitle('M_{chargino}-0.5*(M_{stop}+M_{LSP})/2 [Gev]')
+        massDiff.Draw()
+        plotName = '_'.join([ 'T2bWMcM_CharginoMassDiff' ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+    elif opt.option=='TChipmSlepSnu':
+
+        chain = ROOT.TChain('Events')
+        chain.Add('/afs/cern.ch/user/f/fiorendi/public/forSUS23002/SUS-RunIISpring21UL16FSGSPremixLLPBugFix-00012_TChiSlepSnu_825to1500.root')
+
+        chain.Scan('recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM:(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.:Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024)):Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))', '(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM-(Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000024))+Sum$(recoGenParticles_genParticles__RECO.obj.m_state.p4Polar_.fCoordinates.fM*(abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022))/Sum$((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)==1000022)))/2.)>1. && ((abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)>=1000010 && abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)<=1000020) || (abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)>=2000010 && abs(recoGenParticles_genParticles__RECO.obj.m_state.pdgId_)<=2000020))')
+
+def plotTChipmSlepSnuExtensions(opt):
+
+    opt.sigset = 'TChipmSlepSnu'
+    opt.unblind = True
+
+    histos = {}
+    histos['ExtensionLimExp'] = commonTools.bookHistogram('ExtensionLimExp', (141, 97.5, 802.5), (151, -2.5, 752.5))
+    histos['ExtensionLimits'] = commonTools.bookHistogram('ExtensionLimits', (141, 97.5, 802.5), (151, -2.5, 752.5))
+    histos['ExtensionLim100'] = commonTools.bookHistogram('ExtensionLim100', (141, 97.5, 802.5), (151, -2.5, 752.5))
+    histos['ExtensionRawFac'] = commonTools.bookHistogram('ExtensionRawFac', (141, 97.5, 802.5), (151, -2.5, 752.5))
+    histos['ExtensionFactor'] = commonTools.bookHistogram('ExtensionFactor', (141, 97.5, 802.5), (151, -2.5, 752.5))
+    histos['ExtensionEvents'] = commonTools.bookHistogram('ExtensionEvents', (141, 97.5, 802.5), (151, -2.5, 752.5))
+
+    for charginoMass in range(100, 801, 25):
+
+        neutralinoMasses = [ 1 ]
+        neutralinoMasses.extend([ x for x in range(25, 751, 25) if charginoMass-x>=25 ])
+
+        for neutralinoMass in neutralinoMasses:
+
+            tollerance = 0.05
+            if charginoMass-neutralinoMass<50.: tollerance = 0.1
+            if charginoMass-neutralinoMass<31.: tollerance = 10.
+
+            minimumScale = 10 #100
+
+            refLimit = 999.
+            refFileName = commonTools.getCombineOutputFileName(opt, 'TChipmSlepSnu_mC-'+str(charginoMass)+'_mX-'+str(neutralinoMass), combineAction='limits')
+            if not commonTools.isGoodFile(refFileName, 6000.):
+                if opt.verbose: print 'Missing reference file', refFileName
+                if charginoMass-neutralinoMass==25:
+                    ibin = histos['ExtensionRawFac'].FindBin(charginoMass, neutralinoMass)
+                    histos['ExtensionRawFac'].SetBinContent(ibin, 1.)
+                continue
+
+            refFile = commonTools.openRootFile(refFileName)
+            refTree = refFile.Get('limit')
+            for event in refTree:
+                if refTree.quantileExpected==-1.: refLimit = refTree.limit
+
+            if refLimit<999. and refLimit>10.:
+                minimumScale = 1
+
+            elif refLimit<999.:
+                for scale in [ '1', '2', '3', '4', '5', '6', '7', '8', '9', '10' ]: #, '25', '50' ]:
+
+                    inputFileName = refFileName.replace('F100R', 'F'+scale+'R') if scale!='1' else refFileName.replace('_SigStatF100R','')
+
+                    if not commonTools.isGoodFile(inputFileName, 6000.):
+                        if opt.verbose: print 'Missing input file', inputFileName
+                        minimumScale = 999
+                        break
+
+                    inputFile = commonTools.openRootFile(inputFileName)
+                    inputTree = inputFile.Get('limit')
+                    limex = 999.
+                    limit = 999.
+                    for event in inputTree:
+                        if inputTree.quantileExpected==0.5: limex = inputTree.limit
+                        if inputTree.quantileExpected==-1.: limit = inputTree.limit
+
+                    if scale=='1':
+                        ibin = histos['ExtensionLimits'].FindBin(charginoMass, neutralinoMass)
+                        histos['ExtensionLimExp'].SetBinContent(ibin, 100*limex)
+                        histos['ExtensionLimits'].SetBinContent(ibin, 100*limit)
+                        histos['ExtensionLim100'].SetBinContent(ibin, 100*refLimit)
+                        if limit<0.5 or refLimit>2.: 
+                            minimumScale = 1
+                            break 
+
+                    if scale=='1' and limit>1000000000.:
+                        minimumScale = 1
+                        break
+
+                    elif limit<999.:
+
+                        if opt.verbose and charginoMass==125 and neutralinoMass==1:
+                            print scale, limit/refLimit
+
+                        if abs(limit/refLimit-1)<tollerance:
+                           minimumScale = int(scale)
+                           break
+
+            if minimumScale<999:
+
+                if opt.verbose:
+                    print charginoMass, neutralinoMass, minimumScale
+
+                ibin = histos['ExtensionRawFac'].FindBin(charginoMass, neutralinoMass)
+                histos['ExtensionRawFac'].SetBinContent(ibin, minimumScale)
     
+    for xb in range(1, histos['ExtensionRawFac'].GetNbinsX()+1):
+        ybList = []
+        for yb in range(1, histos['ExtensionRawFac'].GetNbinsY()+1):
+            if histos['ExtensionRawFac'].GetBinContent(xb, yb)>1:
+                ybList.append(yb)
+        weightS, weightA = 0., 0.
+        for yb in ybList:
+            weightS += 1./pow(histos['ExtensionLimits'].GetBinContent(xb,yb)-100.,2)
+            weightA += histos['ExtensionRawFac'].GetBinContent(xb,yb)/pow(histos['ExtensionLimits'].GetBinContent(xb,yb)-100.,2)
+        if len(ybList)>0 and opt.verbose: print xb, ybList, round(weightA/weightS,0)
+        for yb in range(1, histos['ExtensionRawFac'].GetNbinsY()+1):
+            if histos['ExtensionRawFac'].GetBinContent(xb, yb)>0.:
+                if len(ybList)>0 and yb>=ybList[0] and yb<=ybList[len(ybList)-1]:
+                    histos['ExtensionFactor'].SetBinContent(xb, yb, round(weightA/weightS,0))
+                else:
+                    histos['ExtensionFactor'].SetBinContent(xb, yb, histos['ExtensionRawFac'].GetBinContent(xb, yb))
+
+    for xb in range(1, histos['ExtensionFactor'].GetNbinsX()+1):
+        mx = histos['ExtensionFactor'].GetXaxis().GetBinCenter(xb)
+        for yb in range(1, histos['ExtensionFactor'].GetNbinsY()+1):
+            if histos['ExtensionFactor'].GetBinContent(xb, yb)>0:
+                my = histos['ExtensionFactor'].GetYaxis().GetBinCenter(yb)
+
+                nevt_mass = 10
+                if mx-my<=175:
+                    nevt_mass *= max((int((175.-(mx-my))/25.)-max(int((my-250.)/25.),0)+4),1)
+
+                extEvents = nevt_mass #*histos['ExtensionFactor'].GetBinContent(xb, yb)
+                histos['ExtensionEvents'].SetBinContent(xb, yb, extEvents)
+                mygrid = int(my) if my!=0 else 1
+                nevt_grid = int(extEvents)
+                if histos['ExtensionFactor'].GetBinContent(xb, yb)>1.:
+                    print 'mpoints.append([',int(mx),',',mygrid,',',nevt_grid,'])'
+
+    print 'Total events =', 1000.*histos['ExtensionEvents'].Integral()
+    print 1000.*histos['ExtensionEvents'].Integral(), 1000.*histos['ExtensionEvents'].Integral()*9548000./8680000., 1000.*histos['ExtensionEvents'].Integral()*14322000./8680000.
+    print 1000.*histos['ExtensionEvents'].Integral(), 1000.*histos['ExtensionEvents'].Integral()*1.1, 1000.*histos['ExtensionEvents'].Integral()*1.1*1.5, 1000.*histos['ExtensionEvents'].Integral()*(1.+1.1+1.1*1.5)
+
+    ROOT.gStyle.SetOptStat(ROOT.kFALSE)
+    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+
+    plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
+    plotCanvas.cd()
+
+    pad = commonTools.bookPad('pad', 0.0, 0.0, 0.9, 0.9)
+    pad.Draw()
+    pad.cd()
+
+    outputDir = '/'.join([ opt.plotsdir, opt.year, 'Limits', ''])
+    os.system('mkdir -p '+outputDir)
+
+    NRGBs = 5
+    NCont = 255
+    stops = array("d",[0.00, 0.34, 0.61, 0.84, 1.00])
+    red = array("d",[0.50, 0.50, 1.00, 1.00, 1.00])
+    green = array("d",[ 0.50, 1.00, 1.00, 0.60, 0.50])
+    blue = array("d",[1.00, 1.00, 0.50, 0.40, 0.50])
+    ROOT.TColor.CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont)
+    ROOT.gStyle.SetNumberContours(NCont)
+    ROOT.gStyle.SetPaintTextFormat("4.0f")
+
+    contourFile = commonTools.openRootFile('Limits/2016-2017-2018/CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3_WWcorrYear/Contours/massScan_CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3_WWcorrYear_TChipmSlepSnu_mC-100to1500_Both.root')
+
+    expectedExclusion = contourFile.Get('graph_r_expected')
+    observedExclusion = contourFile.Get('graph_r_observed')
+    expectedExclusion.SetLineWidth(2)
+    observedExclusion.SetLineWidth(2)
+    expectedExclusion.SetLineColor(2)
+    observedExclusion.SetLineColor(1)
+
+    for histo in histos:
+
+        histos[histo].GetXaxis().SetLabelFont(42)
+        histos[histo].GetXaxis().SetTitleFont(42)
+        histos[histo].GetXaxis().SetLabelSize(0.035)
+        histos[histo].GetXaxis().SetTitleSize(0.035)
+        histos[histo].GetXaxis().SetTitleOffset(1.2)
+        histos[histo].GetYaxis().SetLabelFont(42)
+        histos[histo].GetYaxis().SetTitleFont(42)
+        histos[histo].GetYaxis().SetLabelSize(0.035)
+        histos[histo].GetYaxis().SetTitleSize(0.035)
+
+        histos[histo].GetYaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}} [GeV]')
+        histos[histo].GetXaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]')
+
+        histos[histo].GetZaxis().SetTitleSize(0.035)
+        histos[histo].GetZaxis().SetLabelFont(42)
+        histos[histo].GetZaxis().SetTitleFont(42)
+        histos[histo].GetZaxis().SetLabelOffset(2)
+        histos[histo].GetZaxis().SetLabelSize(0.035)
+        histos[histo].GetZaxis().SetTitleSize(0.035)
+
+        histos[histo].Draw('textcolz')
+
+        expectedExclusion.Draw('same')
+        observedExclusion.Draw('same')
+
+        plotName = '_'.join([ histo, opt.tag, opt.sigset ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+def plotTChipmWWExtensions(opt):
+
+    opt.sigset = 'TChipmWW'
+    opt.unblind = True
+
+    histos = {}
+    histos['ExtensionRawFac'] = commonTools.bookHistogram('ExtensionRawFac', (81, 97.5, 502.5), (61, -2.5, 302.5))
+    histos['ExtensionFactor'] = commonTools.bookHistogram('ExtensionFactor', (81, 97.5, 502.5), (61, -2.5, 302.5))
+    histos['ExtensionEvents'] = commonTools.bookHistogram('ExtensionEvents', (81, 97.5, 502.5), (61, -2.5, 302.5))
+
+    for charginoMass in range(100, 501, 25):
+
+        neutralinoMasses = [ 1 ]
+        neutralinoMasses.extend([ x for x in range(25, 251, 25) if x<charginoMass-100 ])
+        neutralinoMasses.extend([ charginoMass-x for x in range(100, 9, -10) if charginoMass-x>0 and charginoMass-x<=250 ])
+        for neutralinoMass in neutralinoMasses:
+
+            tollerance = 0.05
+            if charginoMass-neutralinoMass<50.: tollerance = 0.1
+            if charginoMass-neutralinoMass<31.: tollerance = 10.
+
+            minimumScale = 100
+
+            refLimit = 999.
+            refFileName = commonTools.getCombineOutputFileName(opt, 'TChipmWW_mC-'+str(charginoMass)+'_mX-'+str(neutralinoMass), combineAction='limits')
+            if not commonTools.isGoodFile(refFileName, 6000.): 
+                if opt.verbose: print 'Missing reference file', refFileName
+                continue
+            refFile = commonTools.openRootFile(refFileName)
+            refTree = refFile.Get('limit')
+            for event in refTree:
+                if refTree.quantileExpected==-1.: refLimit = refTree.limit
+
+            if refLimit<999. and refLimit>10.: 
+                minimumScale = 1
+
+            elif refLimit<999.:
+                for scale in [ '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '25', '50' ]:
+
+                    inputFileName = refFileName.replace('F100R', 'F'+scale+'R') if scale!='1' else refFileName.replace('_SigStatF100R','')
+
+                    if not commonTools.isGoodFile(inputFileName, 6000.): 
+                        if opt.verbose: print 'Missing input file', inputFileName
+                        minimumScale = 999
+                        break
+
+                    inputFile = commonTools.openRootFile(inputFileName)
+                    inputTree = inputFile.Get('limit')
+                    limit = 999.
+                    for event in inputTree:
+                        if inputTree.quantileExpected==-1.: limit = inputTree.limit
+                    
+                    if scale=='1' and limit>1000000000.: 
+                        minimumScale = 1
+                        break
+
+                    elif limit<999.:
+ 
+                        if opt.verbose and charginoMass==125 and neutralinoMass==1:
+                            print scale, limit/refLimit 
+
+                        if abs(limit/refLimit-1)<tollerance:
+                           minimumScale = int(scale)
+                           break
+
+            if minimumScale<999:
+
+                if opt.verbose: 
+                    print charginoMass, neutralinoMass, minimumScale
+  
+                ibin = histos['ExtensionRawFac'].FindBin(charginoMass, neutralinoMass) 
+                histos['ExtensionRawFac'].SetBinContent(ibin, minimumScale)
+
+    strategy = 'deg'
+
+    for yb in range(histos['ExtensionRawFac'].GetNbinsY(), 0, -1):
+        if histos['ExtensionRawFac'].GetBinContent(1, yb)>0:
+            if strategy=='uniform':
+                maxScale = histos['ExtensionRawFac'].GetBinContent(1, yb)
+                for xb in range(1, histos['ExtensionRawFac'].GetNbinsX()+1):  
+                    if histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1)>maxScale:
+                        maxScale = histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1)        
+                for xb in range(1, histos['ExtensionRawFac'].GetNbinsX()+1):
+                    if histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1)>0:
+                        histos['ExtensionFactor'].SetBinContent(xb, yb+xb-1, maxScale)
+            elif strategy=='deg':
+                previousScale = -1
+                for xb in range(histos['ExtensionRawFac'].GetNbinsX(),0,-1):
+                    if histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1)>0: 
+                        if histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1)<previousScale:
+                            histos['ExtensionFactor'].SetBinContent(xb, yb+xb-1, previousScale)
+                        else:
+                            histos['ExtensionFactor'].SetBinContent(xb, yb+xb-1, histos['ExtensionRawFac'].GetBinContent(xb, yb+xb-1))
+                        previousScale = histos['ExtensionFactor'].GetBinContent(xb, yb+xb-1)
+    for xb in range(2, histos['ExtensionRawFac'].GetNbinsX()+1):
+        if histos['ExtensionRawFac'].GetBinContent(xb, 1)>0:
+            if strategy=='uniform':
+                maxScale = histos['ExtensionRawFac'].GetBinContent(xb, 1)
+                for yb in range(1, histos['ExtensionRawFac'].GetNbinsY()+1):
+                    if histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb)>maxScale:
+                        maxScale = histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb)
+                for yb in range(1, histos['ExtensionRawFac'].GetNbinsY()+1):
+                    if histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb)>0:
+                        histos['ExtensionFactor'].SetBinContent(xb+yb-1, yb, maxScale)
+            elif strategy=='deg':
+                previousScale = -1
+                for yb in range(histos['ExtensionRawFac'].GetNbinsY(),0,-1):
+                    if histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb)>0:
+                        if histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb)<previousScale:
+                            histos['ExtensionFactor'].SetBinContent(xb+yb-1, yb, previousScale)
+                        else:
+                            histos['ExtensionFactor'].SetBinContent(xb+yb-1, yb, histos['ExtensionRawFac'].GetBinContent(xb+yb-1, yb))
+                        previousScale = histos['ExtensionFactor'].GetBinContent(xb+yb-1, yb)
+
+    for xb in range(1, histos['ExtensionFactor'].GetNbinsX()+1):
+        mx = histos['ExtensionFactor'].GetXaxis().GetBinCenter(xb)
+        for yb in range(1, histos['ExtensionFactor'].GetNbinsY()+1):
+            if histos['ExtensionFactor'].GetBinContent(xb, yb)>0:
+                my = histos['ExtensionFactor'].GetYaxis().GetBinCenter(yb)
+
+                nevt_mass = 20
+                if mx-my<=150:
+                    fk = min(int((225.-(mx-my))/25.), 5)
+                    if mx>=350.-25.*fk:
+                        fk = max(fk-int((mx-(350.-25.*fk))/25.+1),2)
+                    nevt_mass = 10*fk
+
+                if my>=200: histos['ExtensionFactor'].SetBinContent(xb, yb, 1.)
+                if mx-my>100:
+                    if mx<=450 and my<=150:
+                        if histos['ExtensionFactor'].GetBinContent(xb, yb)<2.: histos['ExtensionFactor'].SetBinContent(xb, yb, 2.)
+                        if mx<=400 and my<=100:
+                            if histos['ExtensionFactor'].GetBinContent(xb, yb)<3.: histos['ExtensionFactor'].SetBinContent(xb, yb, 3.)
+                   
+                if histos['ExtensionFactor'].GetBinContent(xb, yb)>1:
+                    extEvents = nevt_mass*histos['ExtensionFactor'].GetBinContent(xb, yb)
+                    histos['ExtensionEvents'].SetBinContent(xb, yb, extEvents)
+                    mygrid = int(my) if my!=0 else 1
+                    nevt_grid = int(extEvents)
+                    print 'mpoints.append([',int(mx),',',mygrid,',',nevt_grid,'])'
+
+    print 'Total events =', 1000.*histos['ExtensionEvents'].Integral()
+
+    # https://scodella.web.cern.ch/scodella/Work/CMS/SUSY/SUS-19-XXX/V9/2016-2017-2018/Limits/ExtensionGrid_TChipmWW.pdf
+    # https://cms-pdmv-prod.web.cern.ch/mcm/requests?dataset_name=SMS-TChipmSlepSnu_mC1-825to1500_TuneCP5_13TeV-madgraphMLM-pythia8&member_of_chain=*Spring21UL1*FS*&prepid=*FS*Premix*-*&page=0&shown=8796093022207
+    # https://docs.google.com/spreadsheets/d/1ahxcIY6eu0scOViuIsQs6vbzM05T48Nv6Yd3p787_Gc/edit#gid=0
+    # 7900000	8690000	13035000
+    print 1000.*histos['ExtensionEvents'].Integral(), 1000.*histos['ExtensionEvents'].Integral()*9548000./8680000., 1000.*histos['ExtensionEvents'].Integral()*14322000./8680000.
+    print 1000.*histos['ExtensionEvents'].Integral(), 1000.*histos['ExtensionEvents'].Integral()*1.1, 1000.*histos['ExtensionEvents'].Integral()*1.1*1.5, 1000.*histos['ExtensionEvents'].Integral()*(1.+1.1+1.1*1.5)
+
+    ROOT.gStyle.SetOptStat(ROOT.kFALSE)
+    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+
+    plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
+    plotCanvas.cd()
+
+    pad = commonTools.bookPad('pad', 0.0, 0.0, 0.9, 0.9)
+    pad.Draw()
+    pad.cd()
+
+    outputDir = '/'.join([ opt.plotsdir, opt.year, 'Limits', ''])
+    os.system('mkdir -p '+outputDir)
+
+    NRGBs = 5
+    NCont = 255
+    stops = array("d",[0.00, 0.34, 0.61, 0.84, 1.00])
+    red = array("d",[0.50, 0.50, 1.00, 1.00, 1.00])
+    green = array("d",[ 0.50, 1.00, 1.00, 0.60, 0.50])
+    blue = array("d",[1.00, 1.00, 0.50, 0.40, 0.50])
+    ROOT.TColor.CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont)
+    ROOT.gStyle.SetNumberContours(NCont)
+    ROOT.gStyle.SetPaintTextFormat("4.0f")
+
+    for histo in histos:
+
+        histos[histo].GetXaxis().SetLabelFont(42)
+        histos[histo].GetXaxis().SetTitleFont(42)
+        histos[histo].GetXaxis().SetLabelSize(0.035)
+        histos[histo].GetXaxis().SetTitleSize(0.035)
+        histos[histo].GetXaxis().SetTitleOffset(1.2)
+        histos[histo].GetYaxis().SetLabelFont(42)
+        histos[histo].GetYaxis().SetTitleFont(42)
+        histos[histo].GetYaxis().SetLabelSize(0.035)
+        histos[histo].GetYaxis().SetTitleSize(0.035)
+
+        histos[histo].GetYaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}} [GeV]')
+        histos[histo].GetXaxis().SetTitle('m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]')
+
+        histos[histo].GetZaxis().SetTitleSize(0.035)
+        histos[histo].GetZaxis().SetLabelFont(42)
+        histos[histo].GetZaxis().SetTitleFont(42)
+        histos[histo].GetZaxis().SetLabelOffset(2)
+        histos[histo].GetZaxis().SetLabelSize(0.035)
+        histos[histo].GetZaxis().SetTitleSize(0.035) 
+       
+        histos[histo].Draw('textcolz')  
+
+        plotName = '_'.join([ histo, opt.tag, opt.sigset ])
+        plotCanvas.Print(outputDir+plotName+'.png')
+
+def plotTChipmWWLimits1D(opt):
+
+    limitValues = {}
+    for limit in [ 'Mass', 'Observed', 'Expected', 'p1sigma', 'p2sigma', 'm1sigma', 'm2sigma' ]:
+        limitValues[limit] = [] 
+
+    opt.sigset = 'TChipmWW'
+    opt.unblind = True
+
+    for mass in range(100, 501, 25):
+
+        limitFile = commonTools.openRootFile(commonTools.getCombineOutputFileName(opt, 'TChipmWW_mC-'+str(mass)+'_mX-1', combineAction='limits'))
+        inputTree = limitFile.Get('limit')
+
+        if inputTree:
+            if inputTree.GetEntries()==6:
+
+                limitValues['Mass'].append(mass)
+
+                for event in inputTree:
+                    if inputTree.quantileExpected==-1.: limitValues['Observed'].append(inputTree.limit)
+                    elif inputTree.quantileExpected==0.5: limitValues['Expected'].append(inputTree.limit)
+                    elif round(inputTree.quantileExpected, 2)==0.84: limitValues['p1sigma'].append(inputTree.limit)
+                    elif round(inputTree.quantileExpected, 2)==0.16: limitValues['m1sigma'].append(inputTree.limit)
+                    elif round(inputTree.quantileExpected, 3)==0.975: limitValues['p2sigma'].append(inputTree.limit)
+                    elif round(inputTree.quantileExpected, 3)==0.025: limitValues['m2sigma'].append(inputTree.limit)
+
+    canvas = commonTools.bookCanvas('canvas', 1200, 800)
+    canvas.cd()
+
+    pad = commonTools.bookPad('pad', 0.02, 0.02, 0.98, 0.98)
+    pad.Draw()
+    pad.cd()
+
+    histo = commonTools.bookHistogram('roc', (1000,90.,510.))
+    histo.SetXTitle('m#kern[0.1]{_{#lower[-0.12]{#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}}}} [GeV]')
+    if 'xs' in opt.option: 
+        CHRP = '#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{+}}}#kern[-1.3]{#scale[0.85]{_{1}}}' 
+        CHRM = '#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{-}}}#kern[-1.3]{#scale[0.85]{_{1}}}'
+        histo.SetYTitle('95% CL upper limit on #sigma(pp#rightarrow '+CHRP+CHRM+') [pb]')
+        histo.SetMaximum(35.)
+        histo.SetMinimum(0.01)
+        pad.SetLogy()
+    else: 
+        histo.SetYTitle('95% CL upper limit on the signal strength')
+    histo.GetXaxis().SetTitleSize(0.05)
+    histo.GetYaxis().SetTitleSize(0.05) 
+    histo.Draw()
+
+    ob, ex = ROOT.TGraph(), ROOT.TGraph()
+    e1, e2 = ROOT.TGraphAsymmErrors(), ROOT.TGraphAsymmErrors()
+
+    from LatinoAnalysis.NanoGardener.framework.samples.susyCrossSections import SUSYCrossSections
+
+    maxYhisto = -999.
+
+    for point in range(len(limitValues['Mass'])):
+        XS = 1. if 'xs' not in opt.option else float(SUSYCrossSections['WinoC1C1']['massPoints'][str(limitValues['Mass'][point])]['value'])/1000.
+        maxYhisto = max(maxYhisto, XS*limitValues['Observed'][point])
+        maxYhisto = max(maxYhisto, XS*limitValues['p2sigma'][point])
+        ob.SetPoint(point, limitValues['Mass'][point], limitValues['Observed'][point]*XS)
+        ex.SetPoint(point, limitValues['Mass'][point], limitValues['Expected'][point]*XS)
+        e1.SetPoint(point, limitValues['Mass'][point], limitValues['Expected'][point]*XS)
+        e1.SetPointError(point, 12.5, 12.5, XS*(limitValues['Expected'][point]-limitValues['m1sigma'][point]), XS*(limitValues['p1sigma'][point]-limitValues['Expected'][point])) 
+        e2.SetPoint(point, limitValues['Mass'][point], limitValues['Expected'][point]*XS)
+        e2.SetPointError(point, 12.5, 12.5, XS*(limitValues['Expected'][point]-limitValues['m2sigma'][point]), XS*(limitValues['p2sigma'][point]-limitValues['Expected'][point]))      
+
+    histo.SetMaximum(1.1*maxYhisto)
+    histo.Draw()
+   
+    e2.SetFillColor(5)
+    e2.Draw('e3')
+
+    e1.SetFillColor(3)
+    e1.Draw('e3')
+
+    ex.SetLineColor(1)
+    ex.SetLineWidth(2)
+    ex.Draw('l')
+
+    ob.SetLineColor(2)
+    ob.SetLineWidth(2)
+    ob.SetMarkerStyle(20)
+    ob.SetMarkerColor(2)
+    ob.Draw('lp')
+
+    outputDir = '/'.join([ opt.plotsdir, opt.year, 'Limits', ''])
+    os.system('mkdir -p '+outputDir)
+
+    plotName = '_'.join([ 'Limits1D', opt.tag, opt.sigset ]) + '_mX-1'
+    if 'xs' in opt.option: plotName += '_XS'
+    canvas.Print(outputDir+plotName+'.png')
+
 ### Tools for handling signal mass points
 
 def getMassPointSubset(opt, massPoint):
@@ -742,7 +1410,6 @@ def mergeSearchRegionKinematics(opt):
         for cut in cuts:
 
             outputFile.mkdir(cut)
-
 
             mergedShapes = {}
 

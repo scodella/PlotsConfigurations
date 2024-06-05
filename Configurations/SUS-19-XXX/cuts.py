@@ -427,9 +427,9 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
 
     if 'HighPtMissDY' in opt.tag: SF = LL
 
-    if not hasattr(opt, 'outputDirDatacard'):
+    if not hasattr(opt, 'outputDirDatacard') and not hasattr(opt, 'combineAction'):
 
-        cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        #cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
         cuts['VR1_em']   = { 'expr' : OC+' && '+DF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
         cuts['VR1_sf']   = { 'expr' : OC+' && '+SF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
 
@@ -443,6 +443,20 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
     cuts['VR1_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag+'*'+HasJetWeight }
     cuts['VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
     cuts['VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+if 'LooseHighPtMissNoJetControlRegion' in opt.tag or 'LooseHighPtMissNoJetValidationRegion' in opt.tag:
+
+    cuts['L60_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=60 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L60_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=60 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L70_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=70 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L70_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=70 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L80_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=80 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L80_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=80 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L90_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=90 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L90_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=90 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
 
 if 'JetSelectionRegions' in opt.tag: # To optimize jet selections 
 

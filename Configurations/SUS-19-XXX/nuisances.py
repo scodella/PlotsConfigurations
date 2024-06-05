@@ -760,6 +760,12 @@ if 'SignalRegion' in opt.tag or 'ValidationRegion' in opt.tag or 'ttZNormalizati
                     nuisances[nuisance+'MET'][key] = nuisances[nuisance][key]
                 nuisances[nuisance+'MET']['name'] = nuisances[nuisance+'MET']['name'].replace(year,'MET'+year)
                     
+    if 'LooseHighPtMiss' in opt.tag:
+
+        for nuisance in nuisances:
+            if 'jesTotal' in nuisance or 'unclustEn' in nuisance or 'jer' in nuisance:
+                nuisanceToRemove.append(nuisance)
+
 elif 'unEn' in opt.tag or 'TwoLeptons' in opt.tag:
 
     for nuisance in nuisances:
@@ -767,6 +773,12 @@ elif 'unEn' in opt.tag or 'TwoLeptons' in opt.tag:
             nuisanceToRemove.append(nuisance)
         elif nuisance!='stat' and 'unEn' in opt.tag:
             nuisances[nuisance]['cuts'] = [ 'TwoLep' ] 
+
+elif 'LooseHighPtMiss' in opt.tag:
+
+    for nuisance in nuisances:
+        if 'jesTotal' in nuisance or 'unclustEn' in nuisance or 'jer' in nuisance:
+            nuisanceToRemove.append(nuisance)
 
 else:
 
@@ -794,6 +806,17 @@ if '_BTV' in opt.tag:
 for nuisance in nuisanceToRemove:
     del nuisances[nuisance]
 
+if '_NoNormMinorNuis' in opt.tag:
+    normMinorNuis = []
+    for nuisance in nuisances:
+        if 'name' in nuisances[nuisance]:
+            if 'normminor' in nuisances[nuisance]['name']: normMinorNuis.append(nuisance)
+    for nuisance in normMinorNuis:
+        nuisances[nuisance]['cuts'] = []
+        for cut in cuts:
+            if '_Tag'  in cut and '_NoNormMinorNuisTag'  not in opt.tag: nuisances[nuisance]['cuts'].append(cut)
+            if '_Veto' in cut and '_NoNormMinorNuisVeto' not in opt.tag: nuisances[nuisance]['cuts'].append(cut)
+ 
 if len(yearstaglist)>1:
   
    nuisanceToRemove = [ ]

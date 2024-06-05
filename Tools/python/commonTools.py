@@ -38,7 +38,7 @@ def compile(opt):
 
 def cdWorkDir(opt, workdir = os.getenv('PWD')):
 
-    return 'cd '+workdir+'; eval `scramv1 runtime -sh`;'
+    return 'cd '+workdir+'; eval `scramv1 runtime -sh`; cd - '
 
 ### Plot utilities
 
@@ -846,6 +846,8 @@ def postFitYieldsTables(opt, cardNameStructure='cut', masspoints=''):
             else:
                 dataflag = '_asimovB' if 'asimovb' in opt.option else '_asimovS' if 'asimovs' in opt.option else ''
                 commandList.append('--inputDirMaxFit='+'/'.join([ opt.mlfitdir, year, tag+dataflag ]))
+
+            if 'globaltable' in opt.option: commandList.append('--globaltable')
 
             if opt.unblind: commandList.append('--unblind')
             if 'nosignal' in opt.option: commandList.append('--nosignal')

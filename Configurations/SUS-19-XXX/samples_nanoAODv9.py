@@ -1275,7 +1275,7 @@ for sigSetItem in sigSetList:
                                        'isSignal'  : 1,
                                        'isDATA'    : 0,
                                      }
-                  
+ 
                 if fastsimSignal:
                     signalWeight = SFweightFS
                     samples[massPointName]['isFastsim'] = 1

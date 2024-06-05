@@ -931,6 +931,8 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
 
         tagFileName = getFileName('./Limits/' + year + '/' + tag + '/' + plotOption, 'massScan_' + tag + '_' + sigset + '_' + fileOption + emptyBinsOption)
 
+        if '_Smooth' in tag: tagFileName = tagFileName.replace('_Smooth', '').replace('.root', '_Smooth.root')
+
         if not fileExist(tagFileName):
             print 'Error: input file', tagFileName, 'not found'
             exit()
@@ -939,7 +941,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
         limOptions_i = [limitOptions[0]]
 
         if opt.tag == opt.compareto: limOptions_i = limitOptions
-        
+ 
         for limitOption_i in limOptions_i:
             
             for key in tagFile.GetListOfKeys():
@@ -950,7 +952,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
                         if '_X' in obj.GetName() or (not opt.dosignificance and ('_up' in obj.GetName() or '_down' in obj.GetName())):
                             continue
                     else:
-                        if i_tag>0 or 'observed' in obj.GetName(): obj.SetLineColor(2)
+                        if i_tag>0 or ('observed' in obj.GetName() and len(tags)==1): obj.SetLineColor(2)
                         if '_up2' in obj.GetName() or '_down2' in obj.GetName():
                             if not opt.add2sigma: continue
                             obj.SetLineStyle(4)
@@ -975,7 +977,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     if tags[1]!='':
         plotName.replace(tags[0], tags[0] + '_to_' + tags[1]) 
     #tagObj[0].SetTitle(plotTitle)   
-   
+ 
     tagObj[0].GetXaxis().SetLabelFont(42)
     tagObj[0].GetXaxis().SetTitleFont(42)
     tagObj[0].GetXaxis().SetLabelSize(0.035)
@@ -1078,28 +1080,29 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
         same = ''
         ntag = 0
 
-        cDone = 'None'
+        cDone = -1
         if 'graph_r_expected_down2' in tagObjName: 
             iobj = tagObjName.index('graph_r_expected_down2')
             tagObj[iobj].Draw(same)
             same = 'same'
-            cDone = 'graph_r_expected_down2'
+            cDone = iobj
         elif 'graph_r_expected_down' in tagObjName:
             iobj = tagObjName.index('graph_r_expected_down')
             tagObj[iobj].Draw(same)
             same = 'same'
-            cDone = 'graph_r_expected_down'
+            cDone = iobj
 
-        for obj in sorted(tagObjName):
+        for iobj in range(len(tagObjName)):
 
-            if obj==cDone: continue
+            if iobj==cDone: continue
+            #if 'ved_up' in tagObjName[iobj]: continue
 
-            iobj = tagObjName.index(obj)
+            #iobj = tagObjName.index(obj)
             #if iobj>=3:
             #    tagObj[iobj].SetLineColor(2)
             #if iobj>=6:
             #    tagObj[iobj].SetLineColor(418)
- 
+             
             tagObj[iobj].Draw(same)
             same = 'same'
             hname = tagObj[iobj].GetName()
@@ -1109,17 +1112,28 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties correlated across years' if 'WWcorrYear' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully correlated' if 'WWcorr' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully uncorrelated'
                 #legend.AddEntry(tagObj[iobj],legeflag, 'l')
                 ntag+=1
+            
         legend.Draw()
         #exit()
+    plotName = plotName.replace('TChipmWWSignalRegionsMergeWWPol1aGroupSmtEUEventEvenFitCRVetoesULFast_NewBond3_WWcorrYear','TChipmWWShortEventEven')
+    plotName = plotName.replace('TChipmWWSignalRegionsMergeWWPol1aGroupSmtEUEventOddFitCRVetoesULFast_NewBond3_WWcorrYear', 'TChipmWWShortEventOdd')
+    plotName = plotName.replace('TChipmWWSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULFast_NewBond3_WWcorrYear_SigStatF', 'TChipmWWShort_SigStatF')
+    plotName = plotName.replace('CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULFast_NewBond3_WWcorrYear_SigStatF', 'CharginoShort_SigStatF')
+    plotName = plotName.replace('CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3_WWcorrYear_SigStatF', 'CharginoShort_SigStatF')
     outputFileName = getFileName('./Plots/' + year + '/Limits', plotName, '.png')
     plotCanvas.Print(outputFileName)
 
     plotCanvas.Close()
 
 def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
-    
-    inputFileNames = [ getFileName('./Limits/' + year + '/' + tag + '/Histograms', 'massScan_' + tag + '_' + sigset + '_' + fileOption),
-                       getFileName('./Limits/' + year + '/' + tag + '/Contours',   'massScan_' + tag + '_' + sigset + '_' + fileOption) ]
+   
+    inputTag, smoothOption = tag, '' 
+    if '_Smooth' in tag:
+       inputTag = tag.replace('_Smooth','')
+       smoothOption = '_Smooth'
+
+    inputFileNames = [ getFileName('./Limits/' + year + '/' + inputTag + '/Histograms', 'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption),
+                       getFileName('./Limits/' + year + '/' + inputTag + '/Contours',   'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption) ]
 
     for inputfilename in inputFileNames:
         if not fileExist(inputfilename):
@@ -1127,10 +1141,10 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
             exit() 
 
     cfgFileName = sigset + '_' + tag + '_' + limitOptions[1]
-    cfgFile = open('./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg', 'w')
+    cfgFile = open('./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg', 'w')
 
     limitType = 'blind' if (limitOption=='Blind') else 'expected' 
-    inputFileName = './Limits/' + year + '/' + tag + '//massScan_' + tag + '_' + sigset + '_' + fileOption + '.root'
+    #inputFileName = './Limits/' + year + '/' + tag + '//massScan_' + tag + '_' + sigset + '_' + fileOption + smoothOption + '.root'
 
     lumi = 0.
     if '2016' in year:
@@ -1141,22 +1155,23 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
         lumi += 59.83
     if lumi>100: lumi_i=int(round(lumi, 0))
     else:        lumi_i=round(lumi, 1)
-    cfgFile.write('HISTOGRAM '+ inputFileName.replace('//', '/Histograms/') + ' histo_X_' + limitOptions[1].lower() + '\n')
+    cfgFile.write('HISTOGRAM '+ inputFileNames[0] + ' histo_X_' + limitOptions[1].lower() + '\n')
     add2sigma = '1' if opt.add2sigma else '0'
-    cfgFile.write('EXPECTED ' + inputFileName.replace('//', '/Contours/') + ' graph_r_'+limitType+' graph_r_'+limitType+'_up graph_r_'+limitType+'_down kRed kOrange '+add2sigma+' graph_r_'+limitType+'_up2 graph_r_'+limitType+'_down2\n')
-    cfgFile.write('OBSERVED ' + inputFileName.replace('//', '/Contours/') + ' graph_r_observed graph_r_observed_up graph_r_observed_down kBlack kGray\n')
-    cfgFile.write('PRELIMINARY Preliminary\n')
+    cfgFile.write('EXPECTED ' + inputFileNames[1] + ' graph_r_'+limitType+' graph_r_'+limitType+'_up graph_r_'+limitType+'_down kRed kOrange '+add2sigma+' graph_r_'+limitType+'_up2 graph_r_'+limitType+'_down2\n')
+    cfgFile.write('OBSERVED ' + inputFileNames[1] + ' graph_r_observed graph_r_observed_up graph_r_observed_down kBlack kGray\n')
+    #cfgFile.write('PRELIMINARY Preliminary\n')
+    cfgFile.write('PRELIMINARY Private Work\n')
     cfgFile.write('LUMI ' + str(lumi_i) + '\n')
     cfgFile.write('ENERGY 13\n\n')
 
     cfgFile.close()
-    os.system('cat '+ './Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg')
+    os.system('cat '+ './Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg')
     outputDirectory = 'Plots/' + year + '/ExclusionPlots/'
     os.system('mkdir -p ' + outputDirectory)
     os.system('cp Plots/index.php ' + outputDirectory)
     workingDirectory = 'cd ../../../../../CMSSW_8_1_0/src; eval `scramv1 runtime -sh`; cd - ;'
-    os.system(workingDirectory + 'python ../../../PlotsSMS/python/makeSMSplots.py ./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg ' + outputDirectory + cfgFileName) 
-    os.system('rm ./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg')
+    os.system(workingDirectory + 'python ../../../PlotsSMS/python/makeSMSplots.py ./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg ' + outputDirectory + cfgFileName) 
+    os.system('rm ./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg')
 
 if __name__ == '__main__':
 
@@ -1225,7 +1240,7 @@ if __name__ == '__main__':
         fileOption = limitOption
     else:
         fileOption = opt.fileOption
-    
+   
     skipCompareScan = False
     if opt.tag == opt.compareto or len(opt.compareto)<1: skipCompareScan = True 
     

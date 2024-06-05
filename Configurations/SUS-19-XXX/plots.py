@@ -390,6 +390,7 @@ if 'SM' in opt.sigset or 'Data' in opt.sigset:
 # Signal  
 
 signalType = 3 if ('SM' in opt.sigset or 'Backgrounds' in opt.sigset) else 0
+if hasattr(opt,'showDataVsBkgOnly') and not opt.showDataVsBkgOnly: signalType = 1
 
 signalColor = 1 if (hasattr(opt, 'postFit') and opt.postFit=='n') else 880 # kViolet
 

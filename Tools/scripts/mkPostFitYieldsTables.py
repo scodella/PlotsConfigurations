@@ -8,7 +8,7 @@ import ROOT
 import LatinoAnalysis.Gardener.hwwtools as hwwtools
 from collections import OrderedDict
 
-def getSampleYields(sample, shape, nBins, SMyields):
+def getSampleYields(sample, shape, nBins, SMyieldsi, sampleName):
 
     sampleYields = ''
     maxYields, maxSignificance = 0., 0.
@@ -20,16 +20,19 @@ def getSampleYields(sample, shape, nBins, SMyields):
         if len(SMyields)>0 and yields>0.:
             if yields/math.sqrt(yields+SMyields[ibin-1])>maxSignificance:
                 maxSignificance = yields/math.sqrt(yields+SMyields[ibin-1])
-        if yields>=100.:
-            yieldsString = '%.0f' % yields
-            errorString = '%.0f' % error
-        elif yields>=1.:
-            yieldsString = '%.1f' % yields
-            errorString = '%.1f' % error
+        if sampleName=='Data':
+           sampleYields += ' & $' + str(int(yields)) +'$'
         else:
-            yieldsString = '%.2f' % yields
-            errorString = '%.2f' % error  
-        sampleYields += ' & $' + yieldsString + '\\pm ' + errorString +'$'
+            if yields>=100.:
+                yieldsString = '%.0f' % yields
+                errorString = '%.0f' % error
+            elif yields>=1.:
+                yieldsString = '%.1f' % yields
+                errorString = '%.1f' % error
+            else:
+                yieldsString = '%.2f' % yields
+                errorString = '%.2f' % error  
+            sampleYields += ' & $' + yieldsString + '\\pm ' + errorString +'$'
 
     return sampleYields, maxYields, maxSignificance
 
@@ -53,6 +56,7 @@ if __name__ == '__main__':
     parser.add_option('--maxsignallines'  , dest='maxsignallines'  , help='Maximum number of lines for signals'    , default=5)
     parser.add_option('--minsignalyields' , dest='minsignalyields' , help='Minimal signal yields for tables'       , default=0.6)
     parser.add_option('--minsignalsig'    , dest='minsignalsig'    , help='Minimal signal significance for tables' , default=0.5)
+    parser.add_option('--globaltable'     , dest='globaltable'     , help='Produce just on global table'           , default=False, action='store_true')
     # read default parsing options as well
     hwwtools.addOptions(parser)
     hwwtools.loadOptDefaults(parser)
@@ -112,7 +116,58 @@ if __name__ == '__main__':
 
     for fittype in opt.fit.split('-'):
         for year in yearList:
-            for cut in cuts:
+
+            cutList = sorted(cuts.keys())
+
+            if opt.globaltable:
+
+                opt.maxsignallines = 1
+
+                tableName = opt.outputTableDir+'/Yields_'+fittype+'_global.tex'
+                table = open(tableName , 'w')
+                #table.write('\\begin{center}\n')
+                table.write('\\begin{tabular}{ll')
+               
+                cutsToMove = []
+                for cut in cutList:
+                    if '_sf' in cut: cutsToMove.append(cut)
+                for cut in cutsToMove: cutList.remove(cut)
+                for cut in cutsToMove: cutList.append(cut)
+
+                nBinsMax = -1
+                for cut in cutList:
+                    for variable in variables:
+                        if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
+                            nBinsVar = len(variables[variable]['range'][0])-1 if len(variables[variable]['range'])<=2 else variables[variable]['range'][0]
+                            if nBinsVar>nBinsMax:
+                                if len(variables[variable]['range'])<=2:
+                                    variableEdges = variables[variable]['range'][0]
+                                elif len(variables[variable]['range'])==3:
+                                    binWidth = (variables[variable]['range'][2]-variables[variable]['range'][1])/variables[variable]['range'][0]
+                                    variableEdges = []
+                                    for ibin in range(nBins): variableEdges.append(variables[variable]['range'][1]+ibin*binWidth)
+                                variableLatexName = variables[variable]['nameLatex'] 
+                                nBinsMax = nBinsVar
+
+                for ibin in range(nBinsMax): table.write('c')
+                table.write('}\n')
+                table.write('\\hline\n')
+
+                table.write('\\multicolumn{2}{c}{'+variableLatexName+' [{\\GeVns}]}')
+                for ibin in range(nBinsMax-1):
+                    table.write(' & '+str(variableEdges[ibin])+'-'+str(variableEdges[ibin+1]))
+                table.write(' & $\\ge '+str(variableEdges[nBinsMax-1])+'$')
+                table.write(' \\\\\n')
+                table.write('\\hline\n')
+ 
+                multiRows = 1
+                if opt.unblind: multiRows += 1
+                if not opt.nosignal: multiRows += 1
+                flavourFlag = ''
+                
+            processStart = ' & ' if opt.globaltable else ''
+
+            for cut in cutList:
                 for variable in variables:
                     if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
 
@@ -121,6 +176,7 @@ if __name__ == '__main__':
                         if opt.fromshapes:
                             histoprefix = 'histo_'
                             inDir = '/'.join([ cut, variable ])
+                            inDirRef = inDir
                         else:
                             histoprefix = ''
                             inDir = 'shapes_'+fittype.lower().replace('postfit','_fit_') + '/' + cardName
@@ -133,28 +189,45 @@ if __name__ == '__main__':
                         if len(variables[variable]['range'])<=2: nBins = len(variables[variable]['range'][0])-1
                         elif len(variables[variable]['range'])==3: nBins = variables[variable]['range'][0]
 
-                        tableName = opt.outputTableDir+'/Yields_'+fittype+'_'+cardName+'.tex'
-                        table = open(tableName , 'w')
+                        if opt.globaltable:
 
-                        #table.write('\\begin{center}\n')
-                        table.write('\\begin{tabular}{l')
-                        for ibin in range(nBins): table.write('c')
-                        table.write('}\n')
+                            cutFlavourFlag = 'SF' if '_sf' in cut else 'DF' 
+                            if cutFlavourFlag!=flavourFlag:
+                                table.write(cutFlavourFlag+' events')
+                                for ibin in range(nBinsMax+1): table.write(' & ')
+                                table.write('\\\\\n')
+                                flavourFlag = cutFlavourFlag
 
-                        table.write('\\hline\n')
+                            srg = cut.split('_')[0]
+                            tgg = 'tags' if '_Tag' in cut else '0tag'
+                            jtg = '0jet' if '_NoJet' in cut else 'jets' if '_NoTag' in cut else 'ISR' if ('Stop' in opt.tag and ('SR3' in cut or 'SR4' in cut)) else ''
+                            table.write('\\multirow{'+str(multiRows)+'}{*}{\Reg{'+srg+'}{'+tgg+'}{'+jtg+'}}')
 
-                        table.write(variables[variable]['nameLatex']+' bin')
-                        if len(variables[variable]['range'])<=2:           
-                            variableEdges = variables[variable]['range'][0]
-                        elif len(variables[variable]['range'])==3:
-                            binWidth = (variables[variable]['range'][2]-variables[variable]['range'][1])/variables[variable]['range'][0]
-                            for ibin in range(nBins): variableEdges[ibin] = variables[variable]['range'][1]+ibin*binWidth                              
-                        for ibin in range(nBins-1):
-                            table.write(' & '+str(variableEdges[ibin])+'-'+str(variableEdges[ibin+1]))
-                        table.write(' & $\\ge '+str(variableEdges[nBins-1])+'$')
+                        else:
 
-                        table.write(' \\\\\n')
-                   
+                            tableName = opt.outputTableDir+'/Yields_'+fittype+'_'+cardName+'.tex'
+                            table = open(tableName , 'w')
+
+                            #table.write('\\begin{center}\n')
+                            table.write('\\begin{tabular}{l')
+                            for ibin in range(nBins): table.write('c')
+                            table.write('}\n')
+
+                            table.write('\\hline\n')
+
+                            table.write(variables[variable]['nameLatex']+' bin')
+                            if len(variables[variable]['range'])<=2:           
+                                variableEdges = variables[variable]['range'][0]
+                            elif len(variables[variable]['range'])==3:
+                                binWidth = (variables[variable]['range'][2]-variables[variable]['range'][1])/variables[variable]['range'][0]
+                                variableEdges = []
+                                for ibin in range(nBins): variableEdges.append(variables[variable]['range'][1]+ibin*binWidth)                              
+                            for ibin in range(nBins-1):
+                                table.write(' & '+str(variableEdges[ibin])+'-'+str(variableEdges[ibin+1]))
+                            table.write(' & $\\ge '+str(variableEdges[nBins-1])+'$')
+
+                            table.write(' \\\\\n')
+
                         refDir = inputFiles[refmasspoint].Get(inDirRef)
                      
 
@@ -165,10 +238,10 @@ if __name__ == '__main__':
                         signalSignificance = { } 
 
                         for iteration in range(4):
-                            if (iteration!=2 or opt.unblind) and (iteration!=3 or not opt.nosignal): table.write('\\hline\n')
+                            if (iteration!=2 or opt.unblind) and (iteration!=3 or not opt.nosignal) and not opt.globaltable: table.write('\\hline\n')
                             for sample in plot.keys():
 
-                                if iteration==0 and (plot[sample]['isData'] or plot[sample]['isSignal'] or sample=='total_background'): continue
+                                if iteration==0 and (plot[sample]['isData'] or plot[sample]['isSignal'] or sample=='total_background' or opt.globaltable): continue
                                 if iteration==1 and sample!='total_background': continue
                                 if iteration==2 and (not plot[sample]['isData'] or not opt.unblind): continue 
                                 if iteration==3 and (not plot[sample]['isSignal'] or opt.nosignal): continue
@@ -191,15 +264,15 @@ if __name__ == '__main__':
 
                                 if shape:
                                     sampleName = plot[sample]['nameLatex'] if 'nameLatex' in plot[sample] else plot[sample]['nameHR']
-                                    sampleYields, maxYields, maxSignificance = getSampleYields(sample, shape, nBins, SMyields)
+                                    sampleYields, maxYields, maxSignificance = getSampleYields(sample, shape, nBins, SMyields, sampleName)
 
                                     if iteration!=3:
-                                        table.write(sampleName+sampleYields+' \\\\\n')
+                                        table.write(processStart+sampleName+sampleYields+' \\\\\n')
                                         if iteration==1:
                                             for ibin in range(1, nBins+1):
                                                 SMyields.append(shape.GetBinContent(ibin))
 
-                                    elif maxYields>opt.minsignalyields and maxSignificance>opt.minsignalsig:
+                                    elif (maxYields>opt.minsignalyields and maxSignificance>opt.minsignalsig) or opt.globaltable:
                                         signalPoint.append(sampleName)
                                         signalYields[sampleName] = sampleYields             
                                         signalMaximum[sampleName] = maxYields
@@ -215,11 +288,19 @@ if __name__ == '__main__':
 
                         for siter in range(len(signalPoint)):
                             if siter<opt.maxsignallines:
-                                table.write(signalPoint[siter]+signalYields[signalPoint[siter]]+' \\\\\n')
+                                table.write(processStart+signalPoint[siter]+signalYields[signalPoint[siter]]+' \\\\\n')
 
-                        table.write('\\hline\n')
+                        if not opt.globaltable:
 
-                        table.write('\\end{tabular}\n')
-                        #table.write('\\end{center}\n') 
+                            table.write('\\hline\n')
+
+                            table.write('\\end{tabular}\n')
+                            #table.write('\\end{center}\n') 
                              
+            if opt.globaltable:
+
+                table.write('\\hline\n')
+
+                table.write('\\end{tabular}\n')
+                #table.write('\\end{center}\n')
 

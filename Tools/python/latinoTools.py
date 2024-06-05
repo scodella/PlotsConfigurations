@@ -17,7 +17,7 @@ def mkShapesMulti(opt, year, tag, splits, action):
         if not opt.interactive: shapeMultiCommand += ' --doBatch=True --batchQueue='+opt.batchQueue
         if opt.dryRun: shapeMultiCommand += ' --dry-run '
     else:
-        shapeMultiCommand += ' --doHadd=True --doNotCleanup'
+        shapeMultiCommand += ' --doHadd=True --doNotCleanup --aliasesFile=None'
 
     for split in splits:
         if len(splits[split])>0:

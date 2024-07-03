@@ -534,6 +534,14 @@ elif 'Preselection' in opt.tag or 'ControlRegion' in opt.tag or 'Baseline' in op
                                     'fold'  : overflow                 #   fold overflow
                                 }
 
+    variables['mt2llOptim'] = {   'name'  : 'mt2ll',                  #   variable name
+                                  'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]),    #   variable range
+                                  'xaxis' : mt2 + pll + gv,         #   x axis name
+                                  'fold'  : overflow,               #   fold overflow
+                               }
+
+
+
     """ 
     variables['njets']         = {  'name'  : njetscut,              #   variable name    
                                     'range' : (  6,    0.,     6.),    #   variable range
@@ -546,13 +554,15 @@ elif 'Preselection' in opt.tag or 'ControlRegion' in opt.tag or 'Baseline' in op
                                     'xaxis' : 'number of b-tagged jets', #   x axis name
                                     'fold'  : overflow                   #   fold overflow
                                 }
-    
+    """ 
+
     variables['mt2ll']         = {   'name'  : 'mt2ll',                #   variable name    
                                      'range' : (  20,    0.,  200.),   #   variable range
                                      'xaxis' : mt2 + pll + gv,         #   x axis name
                                      'fold'  : overflow                #   fold overflow
                                  }
-    
+
+    """
     variables['jetpt']         = {   'name'  : 'CleanJet_pt',          #   variable name    
                                      'range' : (  40,    0.,  200.),   #   variable range
                                      'xaxis' : 'jet ' + pt + gv,       #   x axis name
@@ -1456,18 +1466,20 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                                                 'xaxis' : 'lepton ' + pt + gv,     #   x axis name
                                                 'fold'  : overflow                 #   fold overflow
                                               }
- 
-            variables['ptmiss']      = {  'name'  : 'ptmiss'+ctrltag,        #   variable name
-                                          'range' : (  40,    0.,  400.),    #   variable range
-                                          'xaxis' : met + gv,                #   x axis name
-                                          #'fold'  : overflow                 #   fold overflow
-                                         }
 
-            variables['ptmissSR']     = {  'name'  : 'ptmiss'+ctrltag,        #   variable name  
-                                           'range' : ([0, 20, 40, 60, 80, 100, 120, 160, 220, 280, 380, 480],[1]), #   variable range
-                                           'xaxis' : met + gv,                #   x axis name
-                                           'fold'  : overflow                 #   fold overflow
-                                         }
+            if not hasattr(opt, 'outputDirDatacard') and not hasattr(opt, '--skipBOnlyFit') and not hasattr(opt, 'prefitSignal'):
+
+                variables['ptmiss']      = {  'name'  : 'ptmiss'+ctrltag,        #   variable name
+                                              'range' : (  40,    0.,  400.),    #   variable range
+                                              'xaxis' : met + gv,                #   x axis name
+                                              #'fold'  : overflow                 #   fold overflow
+                                             }
+
+                variables['ptmissSR']     = {  'name'  : 'ptmiss'+ctrltag,        #   variable name  
+                                               'range' : ([0, 20, 40, 60, 80, 100, 120, 160, 220, 280, 380, 480],[1]), #   variable range
+                                               'xaxis' : met + gv,                #   x axis name
+                                               'fold'  : overflow                 #   fold overflow
+                                             }
 
         if 'DYValidationRegion' in opt.tag:  
 

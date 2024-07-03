@@ -558,6 +558,7 @@ if '2017' in yeartag and 'EENoise' in DataQualityCuts:
 elif '2018' in yeartag and 'HEM' in DataQualityCuts and 'VetoHEM' not in opt.tag:
     hemPtCut    = '20.' if 'HEM20' in DataQualityCuts or 'UL20' in opt.tag else '30.' 
     VetoHEMele  = '(Sum$(Electron_pt>'+hemPtCut+' && Electron_eta>-3.0 && Electron_eta<-1.4 && Electron_phi>-1.57 && Electron_phi<-0.87)==0)'
+    if 'UL20Ele30' in opt.tag: '(Sum$(Electron_pt>'+hemPtCut+' && Electron_pt<30. && Electron_eta>-3.0 && Electron_eta<-1.4 && Electron_phi>-1.57 && Electron_phi<-0.87)==0)'
     if 'UL20Ele' in opt.tag: hemPtCut = '30.'
     VetoHEMjet  = '(Sum$(Jet_pt>'+hemPtCut+' && Jet_eta>-3.2 && Jet_eta<-1.2 && Jet_phi>-1.77 && Jet_phi<-0.67)==0)'
     if 'ULLow' in opt.tag:
@@ -572,10 +573,13 @@ elif '2018' in yeartag and 'HEM' in DataQualityCuts and 'VetoHEM' not in opt.tag
         VetoHEMmc   = '((1.-'+VetoHEM+')*(1-0.35225285))'
     if 'AntiEleVetoesUL' in opt.tag or 'AntiEleCleanVetoesUL' in opt.tag:
         VetoHEMdata = '(run>=319077 && !('+VetoHEMele+'))'
-        VetoHEMmc   = '((1.-'+VetoHEMele+')*(1-0.35225285))'
+        VetoHEMmc   = '((1.-'+VetoHEMele+')*(1-0.35225285)*(1.4535))'
     if 'AntiJetVetoesUL' in opt.tag or 'AntiJetCleanVetoesUL' in opt.tag:
         VetoHEMdata = '(run>=319077 && !('+VetoHEMjet+'))'
         VetoHEMmc   = '((1.-'+VetoHEMjet+')*(1-0.35225285))'
+    if 'AntiMuoVetoesUL' in opt.tag:
+        VetoHEMdata = '(run>=319077 && !('+VetoHEMele.replace('Electron','Muon')+'))'
+        VetoHEMmc   = '((1.-'+VetoHEMele.replace('Electron','Muon')+')*(1-0.35225285))'
 
 ### Trigger Efficiencies
 
@@ -1017,7 +1021,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                                    'weight' : XSWeight+'*'+SFweight.replace('*' + nonpromptLepSF, '') ,
                                    #'isControlSample' : 1,
                                   }
-            addSampleWeight(samples,nameWJets,'WJetsToLNu-LO', '(LHE_HT<70.0)*(genWeight<20.)')
+            addSampleWeight(samples,nameWJets,'WJetsToLNu-LO', '(LHE_HT>0.)*(genWeight<20.)')
 
             if 'AppWJetsSplit' in opt.tag:
 

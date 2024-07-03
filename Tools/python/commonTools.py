@@ -38,7 +38,7 @@ def compile(opt):
 
 def cdWorkDir(opt, workdir = os.getenv('PWD')):
 
-    return 'cd '+workdir+'; eval `scramv1 runtime -sh`;'
+    return 'cd '+workdir+'; eval `scramv1 runtime -sh`; cd - '
 
 ### Plot utilities
 

@@ -255,21 +255,38 @@ def impactsPlots(opt):
 
     runCombine(opt)
 
+def saveNuisancesPlots(opt):
+
+    plotRootFile = commonTools.openRootFile(commonTools.getSignalDir(opt,opt.year,opt.tag,opt.sigset,'mlfitdir')+'/plots'+commonTools.getCombineOptionFlag(opt.option)+'.root')
+    for canvasName in [ 'asdf', 'nuisances', 'post_fit_errs' ]:
+        nuisancePlot = plotRootFile.Get(canvasName)
+        nuisancePlot.Print('/'.join([ opt.plotsdir, opt.year, 'Impacts', 'Nuisances', '' ])+'_'.join([ opt.tag, opt.sigset, canvasName ])+'.png')
+
 def diffNuisances(opt):
 
     opt.baseDir = os.getenv('PWD')
     commandList = [ commonTools.setupCombineCommand(opt, ' ; ') ]
     nuisCommand = 'python $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/test/diffNuisances.py  -a fitDiagnostics.root -g plots.root > diffNuisances.txt'
     outputString = commonTools.getCombineOptionFlag(opt.option)
+    if 'skipfitb' in opt.option.lower(): nuisCommand = nuisCommand.replace(' > ', ' --skipFitB > ')
+    if 'skipfits' in opt.option.lower(): nuisCommand = nuisCommand.replace(' > ', ' --skipFitS > ')
     nuisCommand = nuisCommand.replace('.root', outputString+'.root').replace('.txt', outputString+'.txt')
+    plotCommandList = [ commonTools.cdWorkDir(opt) ]
 
     yearList = opt.year.split('-') if 'split' in opt.option else [ opt.year ]
     for year in yearList:
+
+        plotOutputDir = '/'.join([ opt.plotsdir, year, 'Impacts', 'Nuisances', '' ])
+        os.system('mkdir -p '+plotOutputDir)
+        commonTools.copyIndexForPlots(opt.plotsdir, plotOutputDir)
+
         for tag in opt.tag.split('-'):
             
             signals = commonTools.getSignals(opt)
             for signal in signals:
-                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])               
 
-    os.system(' ; '.join(commandList))
+                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])               
+                plotCommandList.append('./runAnalysis.py --action=saveNuisancesPlots --year='+year+' --tag='+tag+' --sigset='+signal)
+
+    os.system(' ; '.join(commandList+plotCommandList))
 

@@ -593,7 +593,7 @@ def getSignalList(opt, sigset, tag):
     if sigset=='SM': return []
 
     for sr in opt.signalRegionMap:
-       if opt.signalRegionMap[sr]['tag'].replace('VetoesUL','') in tag:
+        if opt.signalRegionMap[sr]['tag'].replace('VetoesUL','') in tag:
             if 'all' in sigset:
                 signalList = []
                 for signal in opt.signalRegionMap[sr]['signals']:

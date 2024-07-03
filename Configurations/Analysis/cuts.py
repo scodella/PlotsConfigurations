@@ -444,6 +444,20 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
     cuts['VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
     cuts['VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
 
+if 'LooseHighPtMissNoJetControlRegion' in opt.tag or 'LooseHighPtMissNoJetValidationRegion' in opt.tag:
+
+    cuts['L60_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=60 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L60_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=60 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L70_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=70 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L70_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=70 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L80_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=80 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L80_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=80 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
+    cuts['L90_VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=90 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    cuts['L90_VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=90 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+
 if 'JetSelectionRegions' in opt.tag: # To optimize jet selections 
 
     cuts['VR1_Veto_em']  = { 'expr' : OC+' && '+DF+' && ptmiss>=100 && ptmiss<140', 'weight' : btagWeight0tag }

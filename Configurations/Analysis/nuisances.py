@@ -480,7 +480,7 @@ for treeNuisance in treeNuisances:
                 'folderUp':   treeNuisanceDirs[treeNuisance][mcType]['Up'],
             }
             for sample in list(samples.keys()):
-                if not samples[sample]['isDATA'] and not ('NoDY' in opt.tag and treeNuisance=='jer' and '2017' in year and sample=='DY'):
+                if not samples[sample]['isDATA'] and not ('NoDY' in opt.tag and treeNuisance=='jer' and '2017' in year and sample=='DY'):# and sample!='WJetsToLNu':
                     if (mcType=='Bkg' and not samples[sample]['isSignal']) or (mcType=='Sig' and samples[sample]['isSignal']):
                         nuisances[treeNuisance+mcType]['samples'][sample] = ['1.', '1.']
 

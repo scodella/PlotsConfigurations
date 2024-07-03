@@ -197,7 +197,6 @@ for mChipm in range( 100,  1501, 25):
 signalMassPoints['TChipmWW'] = {}
 
 for mChipm in range( 100,  701, 25):
-    datasetName = 'TChipmWW_WWTo2LNu_mC1-100to700'
     for mNeutralino in range( 0,  min(mChipm-9, 251), 5):
             
         if ((mChipm-mNeutralino<=100 and (mChipm-mNeutralino)%10==0) or 
@@ -205,7 +204,15 @@ for mChipm in range( 100,  701, 25):
 
             mLSP = mNeutralino
             if mLSP==0: mLSP = 1
-            
+
+            useExtension = True
+            if mChipm>450 or (mChipm-mLSP)<50: useExtension = False
+            elif mChipm>=225 and (mChipm-mLSP)<60: useExtension = False
+            elif mChipm>=275 and (mChipm-mLSP)<80: useExtension = False
+            elif mChipm>=300 and mLSP>175: useExtension = False
+            elif mChipm>=350 and mLSP>150: useExtension = False
+            datasetName = 'TChipmWW_WWTo2LNu_mC1-100to450' if useExtension else 'TChipmWW_WWTo2LNu_mC1-100to700'
+
             massPointName = 'TChipmWW' + '_mC-' + str(mChipm) + '_mX-' + str(mLSP)
             massPointCut = '(susyMChargino>=' + str(mChipm) + '-4 && susyMChargino<=' + str(mChipm) + '+4 && susyMLSP>=' + str(mLSP) + '-2 && susyMLSP<=' + str(mLSP) + '+2)'
 

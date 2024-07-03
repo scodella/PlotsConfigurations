@@ -184,7 +184,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'color': 418,    # kGreen+2
         'isSignal' : 0,
         'isData'   : 0, 
-        'scale'    : 1.   ,
+        'scale'    : 1.0   ,
     }
     
     plot['ZZTo2L2Nu'] = { 
@@ -211,7 +211,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'color': 798,    # kOrange-2
         'isSignal' : 0,
         'isData'   : 0,
-        'scale'    : 1.0 #1.0052546#1.1133904#1.0176622                 
+        'scale'    : 1.0             
     }
     
     plot['WW']  = {  

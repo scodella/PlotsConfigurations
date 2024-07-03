@@ -1091,11 +1091,17 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
             tagObj[iobj].Draw(same)
             same = 'same'
             cDone = iobj
+        elif 'graph_r_observed_up' in tagObjName:
+            iobj = tagObjName.index('graph_r_observed_up')
+            tagObj[iobj].Draw(same)
+            same = 'same'
+            cDone = iobj
 
         for iobj in range(len(tagObjName)):
 
             if iobj==cDone: continue
-            #if 'ved_up' in tagObjName[iobj]: continue
+          
+            #if 'ved_down' in tagObjName[iobj]: continue
 
             #iobj = tagObjName.index(obj)
             #if iobj>=3:

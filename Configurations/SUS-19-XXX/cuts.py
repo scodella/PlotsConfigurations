@@ -429,7 +429,7 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
 
     if not hasattr(opt, 'outputDirDatacard') and not hasattr(opt, 'combineAction'):
 
-        #cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
         cuts['VR1_em']   = { 'expr' : OC+' && '+DF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
         cuts['VR1_sf']   = { 'expr' : OC+' && '+SF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
 

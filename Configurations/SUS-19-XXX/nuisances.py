@@ -528,7 +528,7 @@ if '_NewBond4' in opt.tag:
     rateparameters['Topnorm']['limits'] = '[0.7,1.3]'
     rateparameters['WWnorm']['limits'] = '[0.5,1.5.]'
 if '_NoJetBond' not in opt.tag:
-    if '_NewBond3x' in opt.tag or '_NewBond4' in opt.tag:
+    if '_NewBond3' in opt.tag or '_NewBond4' in opt.tag:
         rateparameters['NoJetRate_JetBack']['limits'] = '[0.2,2.]'
         rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.2.,2.]'
     else:

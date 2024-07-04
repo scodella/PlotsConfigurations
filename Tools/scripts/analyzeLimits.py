@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import ROOT
@@ -696,9 +696,19 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
 
                 if signalMassPoints.massPointInSignalSet(massPoint, sigset): 
                     inputFileName = inputDirectory + massPoint + '/higgsCombine_' + fileOption + '.AsymptoticLimits.mH120.root'
+
+                    if not fileExist(inputFileName):
+                        print('fillMassScanHistograms: input file', inputFileName, 'not found')
+                        continue
+
+                    fileSize = os.path.getsize(inputFileName)
+                    if fileSize<6200.:
+                        print('fillMassScanHistograms: input file', inputFileName, 'has not good size')
+                        continue
+
                     inputFile     = ROOT.TFile(inputFileName, 'READ')
                     inputTree     = inputFile.Get('limit')
-                    
+
                     #if inputTree:
 
                     massX = float(massPoint.split('_')[1].split('-')[1])
@@ -873,7 +883,6 @@ def getMassScanContours(outputFileName):
         exit()
 
     inputFile = ROOT.TFile(inputFileName, 'READ')
-
     inputHistos = [ ] 
 
     for key in inputFile.GetListOfKeys():
@@ -1103,7 +1112,8 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
             tagObj[iobj].Draw(same)
             same = 'same'
             hname = tagObj[iobj].GetName()
-            if "down" not in hname and "up" not in hname: 
+            if 'down' not in hname and 'up' not in hname: 
+                print(hname, ntag)
                 legend.AddEntry(tagObj[iobj],tags[ntag], 'l')
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction applied' if 'WWPol1a' in tags[ntag] else 'No #font[50]{m}_{T2}(#font[12]{ll}) correction applied'
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties correlated across years' if 'WWcorrYear' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully correlated' if 'WWcorr' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully uncorrelated'
@@ -1117,9 +1127,14 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
     plotCanvas.Close()
 
 def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
-    
-    inputFileNames = [ getFileName('./Limits/' + year + '/' + tag + '/Histograms', 'massScan_' + tag + '_' + sigset + '_' + fileOption),
-                       getFileName('./Limits/' + year + '/' + tag + '/Contours',   'massScan_' + tag + '_' + sigset + '_' + fileOption) ]
+
+    inputTag, smoothOption = tag, ''
+    if '_Smooth' in tag:
+        inputTag = tag.replace('_Smooth','')
+        smoothOption = '_Smooth' 
+
+    inputFileNames = [ getFileName('./Limits/' + year + '/' + inputTag + '/Histograms', 'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption),
+                       getFileName('./Limits/' + year + '/' + inputTag + '/Contours',   'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption) ]
 
     for inputfilename in inputFileNames:
         if not fileExist(inputfilename):
@@ -1127,10 +1142,10 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
             exit() 
 
     cfgFileName = sigset + '_' + tag + '_' + limitOptions[1]
-    cfgFile = open('./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg', 'w')
+    cfgFile = open('./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg', 'w')
 
     limitType = 'blind' if (limitOption=='Blind') else 'expected' 
-    inputFileName = './Limits/' + year + '/' + tag + '//massScan_' + tag + '_' + sigset + '_' + fileOption + '.root'
+    #inputFileName = './Limits/' + year + '/' + tag + '//massScan_' + tag + '_' + sigset + '_' + fileOption + '.root'
 
     lumi = 0.
     if '2016' in year:
@@ -1141,10 +1156,10 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
         lumi += 59.83
     if lumi>100: lumi_i=int(round(lumi, 0))
     else:        lumi_i=round(lumi, 1)
-    cfgFile.write('HISTOGRAM '+ inputFileName.replace('//', '/Histograms/') + ' histo_X_' + limitOptions[1].lower() + '\n')
+    cfgFile.write('HISTOGRAM '+ inputFileNames[0] + ' histo_X_' + limitOptions[1].lower() + '\n')
     add2sigma = '1' if opt.add2sigma else '0'
-    cfgFile.write('EXPECTED ' + inputFileName.replace('//', '/Contours/') + ' graph_r_'+limitType+' graph_r_'+limitType+'_up graph_r_'+limitType+'_down kRed kOrange '+add2sigma+' graph_r_'+limitType+'_up2 graph_r_'+limitType+'_down2\n')
-    cfgFile.write('OBSERVED ' + inputFileName.replace('//', '/Contours/') + ' graph_r_observed graph_r_observed_up graph_r_observed_down kBlack kGray\n')
+    cfgFile.write('EXPECTED ' + inputFileNames[1] + ' graph_r_'+limitType+' graph_r_'+limitType+'_up graph_r_'+limitType+'_down kRed kOrange '+add2sigma+' graph_r_'+limitType+'_up2 graph_r_'+limitType+'_down2\n')
+    cfgFile.write('OBSERVED ' + inputFileNames[1] + ' graph_r_observed graph_r_observed_up graph_r_observed_down kBlack kGray\n')
     cfgFile.write('PRELIMINARY Preliminary\n')
     cfgFile.write('LUMI ' + str(lumi_i) + '\n')
     cfgFile.write('ENERGY 13\n\n')
@@ -1155,8 +1170,8 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
     os.system('mkdir -p ' + outputDirectory)
     os.system('cp Plots/index.php ' + outputDirectory)
     workingDirectory = 'cd ../../../../../CMSSW_8_1_0/src; eval `scramv1 runtime -sh`; cd - ;'
-    os.system(workingDirectory + 'python ../../../PlotsSMS/python/makeSMSplots.py ./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg ' + outputDirectory + cfgFileName) 
-    os.system('rm ./Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg')
+    os.system(workingDirectory + 'python ../../../PlotsSMS/python/makeSMSplots.py ./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg ' + outputDirectory + cfgFileName) 
+    os.system('rm ./Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg')
 
 if __name__ == '__main__':
 

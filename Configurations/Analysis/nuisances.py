@@ -21,6 +21,7 @@ nuisances['stat']  = {
               'removeZeros' : removeZeros,
               'samples' : {}
              }
+if '_NoMCStat' in opt.tag: del nuisances['stat'] 
 
 ### global lnN (luminosity and trigger)
 
@@ -264,6 +265,10 @@ if addMT2Shapes:
                 for cut in list(cuts.keys()):
                     if mt2llregion in cut:
                         nuisances[nuisancekey]['cuts'].append(cut)
+
+                if '_WWcorrSR' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWshape'+year.replace('noHIPM','').replace('HIPM','')
+                elif '_WWcorrYear' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWshape_'+mt2llregion
+                elif '_WWcorr' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWshape'
 
             if isShape or hasattr(opt, 'groups') or hasattr(opt,'skipLNN') or '_WWShapeCorr' in opt.tag:
 

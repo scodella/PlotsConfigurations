@@ -16,6 +16,8 @@ def setAnalysisDefaults(opt):
     opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
     opt.isExotics = True
 
+    if opt.paperStyle and 'SignalRegion' in opt.tag: opt.option += 'cutLabel'
+
     if opt.year.lower()=='run2split': opt.year = '2016HIPM-2016noHIPM-2017-2018'
     elif '2016split' in opt.year: opt.year = opt.year.replace('2016split','2016HIPM-2016noHIPM')
     elif opt.year.lower()=='run2': opt.year = '2016-2017-2018'
@@ -82,9 +84,9 @@ def setAnalysisDefaults(opt):
      
     if len(tagList)>0: opt.tag = '-'.join( tagList )
 
-    if 'group' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsGroup')
-    if 'merge' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsMerge') 
-    opt.tag = opt.tag.replace('StopSignalRegionsMerge','StopSignalRegions')
+    #if 'group' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsGroup')
+    #if 'merge' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsMerge') 
+    #opt.tag = opt.tag.replace('StopSignalRegionsMerge','StopSignalRegions')
     if 'fast' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesULFast')
     if 'reco' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesULFastReco')
     if 'systwz' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesUL_WZbin')
@@ -224,7 +226,7 @@ def mergeSignalToSM(opt):
         for tag in opt.tag.split('-'):
 
             smtag = tag.split('VetoesUL')[0]+'VetoesUL'
-            signaltag = tag.replace('Group','').replace('WWPol1a','').replace('SmtEU','')
+            signaltag = tag.replace('Group','').replace('Other','').replace('WWPol1a','').replace('SmtEU','')
 
             for sigset in getSignalList(opt, opt.sigset, tag):
 
@@ -239,10 +241,13 @@ def mergeSignalToSM(opt):
 
 def mergeGroupsForDatacards(opt):
 
+    groupFlag = 'Other' if 'ttwiso' in opt.option.lower() else 'Group'
+
     inputnuisances = commonTools.getCfgFileName(opt, 'nuisances')
 
     groups = { 'ttbar' : [ 'ttbar', 'ttSemilep' ],
-               'minor' : [ 'Higgs', 'VVV', 'ttW', 'VZ' ] }
+               'minor' : [ 'Higgs', 'VVV', 'VZ' ] }
+    if groupFlag=='Group': groups['minor'].append('ttW')
 
     groupList = []
     for group in groups:
@@ -257,7 +262,7 @@ def mergeGroupsForDatacards(opt):
 
             loopMergeCommandList = mergeCommandList
             loopMergeCommandList.extend([ '--year='+year, '--tag='+tag ])
-            outputtag = tag.replace('FitCR', 'GroupFitCR') if 'FitCR' in tag else tag.replace('VetoesUL', 'GroupVetoesUL')
+            outputtag = tag.replace('FitCR', groupFlag+'FitCR') if 'FitCR' in tag else tag.replace('VetoesUL', groupFlag+'VetoesUL')
             loopMergeCommandList.append('--outputtag='+outputtag)
 
             os.system('mergeSamplesForDatacards.py '+' '.join( loopMergeCommandList))
@@ -291,9 +296,9 @@ def mergeFitCR(opt):
                 os.system('rm -r -f '+outputFile)
 
                 filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'') ]
-                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('SmtEU',''))
+                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('Other','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('WWPhibAll','').replace('WWPhib','').replace('WWPhicAll','').replace('SmtEU','').replace('FXbtv',''))
                 for backcr in opt.backgroundsInFit:
-                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU',''))
+                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU','')) #.replace('WWPhibAll','')
 
                 foundFilesToMerge = True
                 for fileToMerge in filesToMerge:
@@ -447,6 +452,7 @@ def printLimits(opt):
                 tagopt = (tagm+tags)#.replace('WWPol1a','')
                 #tag = opt.tag.replace('Group', tagm+'Group')
                 tag = opt.tag.replace('Group', 'Group'+tagm)
+                tag = opt.tag.replace('Other', 'Other'+tagm)
                 tag += tags
                 outputDir = '/'.join([ opt.limitdir, opt.year, tag, signal ])
                 if not commonTools.isGoodFile(outputDir+'/higgsCombine_Both.AsymptoticLimits.mH120.root', 6000.):
@@ -577,7 +583,190 @@ def plotLimits(opt):
 def plotContours(opt):
 
     exclusionPlot(opt, '1')
+
+# Pulls, impacts, rate parameters
+
+def makeRateParametersTables(opt):
+
+    if 'impacts' in opt.option.lower():
+        rateParams = commonTools.loadRateParamsFromImpacts(opt, jsonName='impacts_final.json')
+    else:
+        rateParams = {}
+        fitoption = 's' if 'postfits' in opt.option.lower() else 'b'
+        fitParams = commonTools.loadFitParams(opt, fitoption=fitoption)
+        for param in fitParams:
+            if 'Topnorm' in param or 'WWnorm' in param or 'CR_' in param:
+                rateParams[param] = { 'fit' : [] }
+                rateParams[param]['fit'] = [ fitParams[param]['value']+fitParams[param]['errorHi'], fitParams[param]['value'], fitParams[param]['value']+fitParams[param]['errorLo'] ]
+
+    backgroundRateParams = { 'Top' : { 'process' : 'ttbar' }, 'WW' : {}, 'WZ' : {}, 'ZZ' : {}, 'ttZ' : {} }
+
+    zeros, outliers = [], []
+    totalPulls, Pulls1, Pulls2, Pulls3 = 0., 0., 0., 0.
     
+    for rateparam in rateParams:
+        if opt.verbose: print(rateparam, rateParams[rateparam]['fit'])
+        rateparams = rateparam.split('_')
+        year = rateparams[-1]
+        if rateparams[0]=='CR': searchRegion = '\\_'.join([rateparams[3].replace('SR','CR'),rateparams[1]])
+        elif 'NoJetRate' in rateparam: searchRegion = rateparams[2]+' no-jet rate'
+        else: searchRegion = rateparams[1]
+        searchRegion = searchRegion.replace('CR34', 'CR3').replace('CR43','CR4')
+        value = round(rateParams[rateparam]['fit'][1],2)
+        error = round((rateParams[rateparam]['fit'][2]-rateParams[rateparam]['fit'][0])/2.,2)
+        errup = round(rateParams[rateparam]['fit'][2]-rateParams[rateparam]['fit'][1],2)
+        errdo = round(rateParams[rateparam]['fit'][1]-rateParams[rateparam]['fit'][0],2)
+        if errup==0. or errdo==0.: zeros.append(rateparam)
+        for background in list(backgroundRateParams.keys()):
+            if background in rateparam or (background=='WW' and 'DibosonBack' in rateparam) or (background=='Top' and 'JetBack' in rateparam):
+                if searchRegion not in backgroundRateParams[background]:
+                    backgroundRateParams[background][searchRegion] = {}
+                backgroundRateParams[background][searchRegion][year] = [ value, error, errup, errdo ]
+
+    SR = 'top squark' if 'Stop' in opt.tag else 'chargino/slepton'
+    SRflag = 'Stop' if 'Stop' in opt.tag else 'Chargino'
+
+    rateParamPull = commonTools.bookHistogram('rateParamPull', (20,-5.,5.))
+    rateParamPullNo2016 = commonTools.bookHistogram('rateParamPullNo2016', (20,-5.,5.))
+    rateParamPullNo2017 = commonTools.bookHistogram('rateParamPullNo2017', (20,-5.,5.))
+    rateParamPullNo2018 = commonTools.bookHistogram('rateParamPullNo2018', (20,-5.,5.))
+
+    listSR = [ 'SR1', 'SR2', 'SR3', 'SR4', 'CR1', 'CR2', 'CR3', 'CR4' ]
+
+    print('')
+    print('')
+
+    for background in backgroundRateParams:
+        backgroundRateParam = backgroundRateParams[background]
+        process = background if 'process' not in backgroundRateParam else backgroundRateParam['process']
+        print('\\begin{table}[ht]')
+        print('  \\centering')
+        print('  \\topcaption{Fitted values of the rate parameters for the normalization of the \\'+process+' background in the '+SR+' SRs.}\\label{tab:'+SRflag+'_RateParams_'+background+'}')
+        #print('  \\cmsTable{')
+        print('  \\begin{tabular}{lccc}')
+        print('  \\hline')
+        print('  Region & 2016 & 2017 & 2018 \\\\')
+        print('  \\hline')
+        for sr in listSR:
+            for searchRegion in backgroundRateParam:
+                if searchRegion=='process': continue
+                if sr not in searchRegion: continue
+                tableLine = '    '+searchRegion
+                for year in opt.year.split('-'):
+                    tableLine += ' & '
+                    if year in backgroundRateParam[searchRegion]:
+                        tableLine += '$'  +str(backgroundRateParam[searchRegion][year][0])
+                        tableLine += '^{+'+str(backgroundRateParam[searchRegion][year][2])+'}'
+                        tableLine += '_{-'+str(backgroundRateParam[searchRegion][year][3])+'}$'
+                        for year2 in opt.year.split('-'):
+                            if year2 in backgroundRateParam[searchRegion] and int(year2)>int(year):
+                                if backgroundRateParam[searchRegion][year][0]>backgroundRateParam[searchRegion][year2][0]:
+                                    pull = commonTools.statisticalCompatibility(backgroundRateParam[searchRegion][year][0],backgroundRateParam[searchRegion][year][3],backgroundRateParam[searchRegion][year2][0],backgroundRateParam[searchRegion][year2][2])
+                                else:
+                                    pull = commonTools.statisticalCompatibility(backgroundRateParam[searchRegion][year][0],backgroundRateParam[searchRegion][year][2],backgroundRateParam[searchRegion][year2][0],backgroundRateParam[searchRegion][year2][3])
+                                totalPulls += 1.
+                                if abs(pull)>1.: Pulls1 += 1.
+                                if abs(pull)>2.: Pulls2 += 1.
+                                if abs(pull)>3.: 
+                                    Pulls3 += 1.
+                                    outliers.append('-'.join([ background, searchRegion, year, year2 ]))
+                                rateParamPull.Fill(pull)
+                                if year=='2016' and year2=='2017': rateParamPullNo2018.Fill(pull)
+                                if year=='2016' and year2=='2018': rateParamPullNo2017.Fill(pull)
+                                if year=='2017' and year2=='2018': rateParamPullNo2016.Fill(pull)
+                                if opt.verbose: print('    ',searchRegion,year,year2,pull)
+                    else: tableLine += ' --- '
+                print(tableLine+' \\\\')
+        print('  \\hline')
+        print('  \\end{tabular}')
+        #print('  }')
+        print('\\end{table}')
+        
+    print('')
+    print('')
+
+    tabSR = 'lcccc' if 'Stop' in opt.tag else 'ccccccc'
+    print('\\begin{table}[ht]')    
+    print('  \\centering') 
+    print('  \\topcaption{Fitted values of the rate parameters for the normalization of the backgrounds in the '+SR+' SRs.}\\label{tab:'+SRflag+'_RateParams}')       
+    #print('  \\cmsTable{')
+    print('  \\begin{tabular}{'+tabSR+'}') 
+    for background in backgroundRateParams:
+        print('  \\hline\\hline')
+        backgroundRateParam = backgroundRateParams[background]    
+        process = background if 'process' not in backgroundRateParam else backgroundRateParam['process']
+        tabLine = '  \\'+process
+        for sr in listSR:
+            for searchRegion in backgroundRateParam:
+                if searchRegion!='process' and sr in searchRegion:
+                    if SRflag=='Chargino' and process=='ttZ' and (sr=='CR1' or sr=='CR2'): tabLine += ' & \\multicolumn{2}{c}{'+searchRegion+'}'
+                    else: tabLine += ' & '+searchRegion
+        tabLine += ' \\\\'
+        print(tabLine)
+        print('  \\hline')
+        for year in opt.year.split('-'):
+            tableLine = '    '+year
+            for sr in listSR:
+                for searchRegion in backgroundRateParam:
+                    if searchRegion!='process' and sr in searchRegion:
+                        tableLine += ' & '
+                        if year in backgroundRateParam[searchRegion]:
+                            multiColumn = SRflag=='Chargino' and process=='ttZ' and (sr=='CR1' or sr=='CR2')
+                            if multiColumn: tableLine += '\\multicolumn{2}{c}{'
+                            tableLine += '$'  +str(backgroundRateParam[searchRegion][year][0]) 
+                            tableLine += '^{+'+str(backgroundRateParam[searchRegion][year][2])+'}'
+                            tableLine += '_{-'+str(backgroundRateParam[searchRegion][year][3])+'}$'
+                            if multiColumn: tableLine += '}'
+                        else: tableLine += ' --- '
+            print(tableLine,' \\\\')
+    print('  \\hline\\hline')
+    print('  \\end{tabular}')       
+    #print('  }')
+    print('\\end{table}')
+
+    print('')
+    print('')
+
+    canvas = commonTools.bookCanvas('canvas',600,400)
+    canvas.cd()
+    plotsDir = '/'.join([ opt.plotsdir, opt.year, 'Impacts', 'RateParameters' ])
+    os.system('mkdir -p '+plotsDir)
+    commonTools.copyIndexForPlots(opt.plotsdir, plotsDir)
+
+    ROOT.gStyle.SetOptFit(1111)
+
+    rateParamPull.Fit('gaus','','',-5.,5.)
+    rateParamPull.SetLineColor(9)
+    rateParamPull.SetFillColor(9)
+    rateParamPull.SetYTitle('Entries')
+    #rateParamPull.SetXTitle('#frac{RP_{year1}-RP_{year2}}{#sqrt{#sigma^{2}_{year1}+#sigma^{2}_{year2}}}')
+    rateParamPull.SetXTitle('(RP_{year1}-RP_{year2})/#sqrt{#sigma^{2}_{year1}+#sigma^{2}_{year2}}')
+    myGaus = rateParamPull.GetListOfFunctions().FindObject("gaus");
+    myMean = round(myGaus.GetParameter(1),2)
+    mySigma = round(myGaus.GetParameter(2),2)
+    tex1 = ROOT.TLatex(2.,0.9*rateParamPull.GetMaximum(),'Mean  = '+str(myMean))
+    tex2 = ROOT.TLatex(2.,0.8*rateParamPull.GetMaximum(),'Sigma = '+str(mySigma))
+    rateParamPull.Draw()
+    tex1.Draw()
+    tex2.Draw()
+    canvas.Print(plotsDir+'/'+opt.tag+'_rateParamPull.png')
+
+    rateParamPullNo2016.Fit('gaus','','',-5.,5.)
+    rateParamPullNo2016.Draw()
+    canvas.Print(plotsDir+'/'+opt.tag+'_rateParamPullNo2016.png')
+
+    rateParamPullNo2017.Fit('gaus','','',-5.,5.)
+    rateParamPullNo2017.Draw()
+    canvas.Print(plotsDir+'/'+opt.tag+'_rateParamPullNo2017.png')
+
+    rateParamPullNo2018.Fit('gaus','','',-5.,5.)
+    rateParamPullNo2018.Draw()
+    canvas.Print(plotsDir+'/'+opt.tag+'_rateParamPullNo2018.png')
+
+    print('zeros:', zeros)
+    print('outliers:', outliers)
+    print('gaus. stat.:', totalPulls, Pulls1, Pulls2, Pulls3, '(', 0.32*totalPulls, 0.05*totalPulls, 0.003*totalPulls, ')')
+
 ### Tools for handling signal mass points
 
 def getMassPointSubset(opt, massPoint):

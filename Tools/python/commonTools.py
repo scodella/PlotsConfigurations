@@ -3,6 +3,8 @@ import glob
 import copy
 import ROOT
 import subprocess
+import json
+import math
 from array import array
 import LatinoAnalysis.ShapeAnalysis.tdrStyle as tdrStyle
 
@@ -39,6 +41,18 @@ def compile(opt):
 def cdWorkDir(opt, workdir = os.getenv('PWD')):
 
     return 'cd '+workdir+'; eval `scramv1 runtime -sh`; cd - '
+
+def loadJSON(jsonFile):
+
+    return json.load(open(jsonFile, 'r'))
+
+### Math formulas
+
+def statisticalCompatibility(a, ea, b, eb):
+
+    diff = a-b
+    errDiff = math.sqrt(ea*ea+eb*eb)
+    return diff/errDiff
 
 ### Plot utilities
 
@@ -455,13 +469,13 @@ def checkProxy(opt):
     proc=subprocess.Popen(cmd, stderr = subprocess.PIPE,stdout = subprocess.PIPE, shell = True)
     out, err = proc.communicate()
 
-    if 'Proxy not found' in err :
+    if 'Proxy not found' in err.decode() :
         print('WARNING: No GRID proxy -> Get one first with:')
         print('voms-proxy-init -voms cms -rfc --valid 168:0')
         exit()
 
     timeLeft = 0
-    for line in out.split("\n"):
+    for line in out.decode().split("\n"):
         if 'timeleft' in line : timeLeft = int(line.split(':')[1])
 
     if timeLeft < 24 :
@@ -732,6 +746,9 @@ def getCombineOutputFileName(opt, signal, year='', tag='', combineAction=''):
     elif combineAction=='impacts':
         combineOutDir = 'impactdir'
         outputFileName = 'impacts.pdf'
+    elif 'impacts' in combineAction:
+        combineOutDir = 'impactdir'
+        outputFileName = combineAction
     else:
         print('Error in getCombineOutputFileName: please speficy if you want the output from a limit or a ML fit')
         exit()
@@ -851,6 +868,50 @@ def postFitYieldsTables(opt, cardNameStructure='cut', masspoints=''):
             if 'nosignal' in opt.option: commandList.append('--nosignal')
 
             os.system('mkPostFitYieldsTables.py '+' '.join(commandList))
+
+def loadImpactsJSON(opt, year = '', tag = '', signal = '', jsonName = 'impacts.json'):
+
+    if signal=='': signal = opt.sigset
+    if year=='': year = opt.year
+    if tag=='': tag = opt.tag
+    return loadJSON(getCombineOutputFileName(opt, signal, year, tag, jsonName))
+
+def loadImpactsParams(opt, year = '', tag = '', signal = '', jsonName = 'impacts.json'):
+
+    impactsJSON = loadImpactsJSON(opt, year, tag, signal, jsonName)
+    return impactsJSON['params']
+
+def loadRateParamsFromImpacts(opt, year = '', tag = '', signal = '', jsonName = 'impacts.json'):
+
+    rateParams = {}
+
+    impactsParams = loadImpactsParams(opt, year, tag, signal, jsonName)
+    for param in range(len(impactsParams)):
+        if impactsParams[param]['type']=='Unconstrained':
+            rateParams[impactsParams[param]['name']] = {}
+            for key in [ 'fit', 'groups', 'impact_r', 'prefit', 'r' ]:
+                rateParams[impactsParams[param]['name']][key] = impactsParams[param][key]
+
+    return rateParams
+
+def loadFitParams(opt, year = '', tag = '', signal = '', fitoption = 'b'):
+
+    fitParams = {}
+     
+    if signal=='': signal = opt.sigset
+    if year=='': year = opt.year
+    if tag=='': tag = opt.tag
+    fitRootFile = openCombineFitFile(opt, signal, year, tag)
+    fitResults = fitRootFile.Get('fit_'+fitoption).floatParsFinal()
+    for param in range(fitResults.getSize()):
+        nuis = fitResults.at(param)
+        fitParams[nuis.GetName()] = {}
+        fitParams[nuis.GetName()]['value'] = nuis.getVal()
+        fitParams[nuis.GetName()]['error'] = nuis.getError()
+        fitParams[nuis.GetName()]['errorHi'] = nuis.getErrorHi()
+        fitParams[nuis.GetName()]['errorLo'] = nuis.getErrorLo()
+
+    return fitParams
 
 ### Methods for computing weights, efficiencies, scale factors, etc.
 

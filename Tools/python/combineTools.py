@@ -142,6 +142,7 @@ def runCombine(opt):
                    impactPlotDir = '/'.join([ opt2.baseDir, opt.plotsdir, year, 'Impacts' ])
                    os.system('mkdir -p '+impactPlotDir)
                    combineCommandList.append('mv impacts.pdf '+impactPlotDir+'/'+outtag+'_MASSPOINT.pdf')
+                if cleanDatacards: combineCommandList.append('rm combinedDatacard.txt')
             combineCommandList.append( 'cd '+opt2.baseDir )
             if cleanDatacards: combineCommandList.append(commonTools.cleanSignalDatacards(opt2, year, outtag, 'MASSPOINT', True))
 

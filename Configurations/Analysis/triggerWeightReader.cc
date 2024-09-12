@@ -125,8 +125,8 @@ void TriggerWeightReader::setValues() {
           }
       }
 
-      if (triggerWeight<=0.) 
-          std::cout << "TriggerWeightReader Error for " << channel << " " << LeadingLeptonPt << " " << TrailingLeptonPt << " " << LeadingLeptonEta << std::endl;
+      //if (triggerWeight<=0.) 
+      //    std::cout << "TriggerWeightReader Error for " << channel << " " << LeadingLeptonPt << " " << TrailingLeptonPt << " " << LeadingLeptonEta << std::endl;
 
       triggerWeightReader.push_back(triggerWeight);
 

@@ -1,18 +1,19 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import ROOT
 import math
 import optparse
+import ctypes
 from array import *
 
 def mergeBins(shape, ibin, fbin):
 
-    shapeerr = ROOT.double()
+    shapeerr = ctypes.c_double()
     shapecon = shape.IntegralAndError(ibin, fbin, shapeerr)
     for ib in range(ibin, fbin+1):
         shape.SetBinContent(ib, shapecon)
-        shape.SetBinError(ib, shapeerr)
+        shape.SetBinError(ib, shapeerr.value)
     return shape
 
 def getBinsToMerge(shape, lastBin, keepSix):
@@ -34,11 +35,11 @@ def getBinsToMerge(shape, lastBin, keepSix):
         mergedUnc = 0.
         for bp in range(0, lastBin-binMax+1):
             for bm in range(0, binMax):
-                shapeerr = ROOT.double()
+                shapeerr = ctypes.c_double()
                 shapecon = shape[nshpMax].IntegralAndError(binMax-bm, binMax+bp, shapeerr)
-                if 100.*abs(shapeerr/shapecon)<uncMax and 100.*abs(shapeerr/shapecon)>mergedUnc:
+                if 100.*abs(shapeerr.value/shapecon)<uncMax and 100.*abs(shapeerr.value/shapecon)>mergedUnc:
                     bP, bM = bp, bm
-                    mergedUnc = 100.*abs(shapeerr/shapecon)
+                    mergedUnc = 100.*abs(shapeerr.value/shapecon)
         binsToMerge.append([binMax-bM, binMax+bP])
         nshpMax, binMax, binMaxUnc = -1, -1, uncMax
         for nshp in range(3):
@@ -200,6 +201,7 @@ if __name__ == '__main__':
         opt.consistenoff = True
 
     if opt.year=='run2split': opt.year = '2016HIPM-2016noHIPM-2017-2018'
+    elif opt.year=='2016split': opt.year = '2016HIPM-2016noHIPM'
 
     yearlist = opt.year.split('-')
 

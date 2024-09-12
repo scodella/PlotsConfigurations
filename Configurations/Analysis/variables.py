@@ -12,6 +12,8 @@ mt2  = '#font[50]{m}_{T2}'
 ptll = pt+'^{'+sll+'}'
 dphill           = '#Delta#phi(lep1,lep2)'
 dphillptmiss     = '#Delta#phi('+sll+','+met+')'
+dphilep0ptmiss = '#Delta#phi(lead. lep,'+met+')'
+dphilep1ptmiss = '#Delta#phi(trai. lep,'+met+')'
 dphiminlepptmiss = '#Delta#phi^{min}(lep,'+met+')'
 dphijetptmiss    = '#Delta#phi(jet,'+met+')'
 dphijet0ptmiss   = '#Delta#phi(lead. jet,'+met+')'
@@ -670,6 +672,14 @@ elif 'Preselection' in opt.tag or 'ControlRegion' in opt.tag or 'Baseline' in op
                                    }
     """
 
+elif 'SignalCR' in opt.tag:
+
+    variables['ptmiss'] = { 'name'  : 'MET_T1Smear_pt',
+                             'range' : ([ 160., 220., 280., 380. ],[1]),        #   variable range
+                             'xaxis' : met + gv,        #   x axis name
+                             'fold'  : overflow         #   fold overflow
+                           }
+
 elif 'ttZNormalization' in opt.tag:
 
     variables['mll'] = {   'name'  : '90.',                #   variable name
@@ -1286,6 +1296,79 @@ elif 'SignalStudies' in opt.tag:
                                      'fold'  : overflow                      #   fold overflow
                                  } 
 
+elif 'BoostedSR4' in opt.tag:
+
+    ptmissBins = 60; jetBins = 30; phiBins = 32
+    if 'Only' in opt.tag or 'Bins' in opt.tag: 
+        ptmissBins = 15
+        jetBins = 10
+        phiBins = 12
+
+    variables['ptmiss']   = {   'name'  : 'ptmiss',                #   variable name
+                                'range' : (  ptmissBins,    0.,  600.),    #   variable range
+                                'xaxis' : met + gv,                #   x axis name
+                                'fold'  : overflow                 #   fold overflow
+                             }
+
+    variables['mt2ll']    = { 'name'  : 'mt2ll',            #   variable name
+                              'range' : ( 40, 0., 200.),    #   variable range
+                              'xaxis' : mt2 + pll + gv,     #   x axis name
+                              'fold'  : overflow            #   fold overflow
+                             }
+
+    variables['mt2llStop']    = { 'name'  : 'mt2ll',            #   variable name
+                              'range' : ([0, 20, 40, 60, 80, 100, 160, 220],[1]),    #   variable range
+                              'xaxis' : mt2 + pll + gv,     #   x axis name
+                              'fold'  : overflow            #   fold overflow
+                             }
+
+    
+    variables['dPhiMinlepptmiss'] = {  'name'  : dPhiMinlepptmiss,    #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphiminlepptmiss,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                      }
+
+
+    variables['dPhilep0ptmiss'] = {  'name'  : dPhilep0ptmiss,    #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphilep0ptmiss,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                      }
+
+
+    variables['dPhilep1ptmiss'] = {  'name'  : dPhilep1ptmiss,    #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphilep1ptmiss,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                      }
+
+
+    variables['dPhillptmiss'] = {  'name'  : dPhillptmiss,    #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphillptmiss,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                      }
+
+    variables['dPhill          '] = {  'name'  : dPhill,    #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphill,    #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                      }
+
+    variables['jetpt']         = {   'name'  : 'CleanJet_pt[0]',       #   variable name
+                                     'range' : (  jetBins,    0.,  300.),   #   variable range
+                                     'xaxis' : 'jet ' + pt + gv,       #   x axis name
+                                     'fold'  : overflow                #   fold overflow
+                                  }
+
+    dPhijet0ptmissSafe = '-1.*(CleanJet_pt[0]<20.)+(CleanJet_pt[0]>=20.)*'+dPhijet0ptmiss
+    variables['dPhijet0ptmiss']   = {  'name'  : dPhijet0ptmissSafe,  #   variable name
+                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                       'xaxis' : dphijet0ptmiss,      #   x axis name
+                                       'fold'  : overflow             #   fold overflow
+                                     }
+
 elif 'Validation' in opt.tag or 'Signal' in opt.tag:
 
     ### Set the mt2ll variable
@@ -1419,7 +1502,55 @@ elif 'Validation' in opt.tag or 'Signal' in opt.tag:
                                                        'CRbins' : [1, 4]
                                                     }
 
-                if 'WZtoWWValidationRegion' in opt.tag:
+                if 'ValidationRegion' in opt.tag and 'BinsShort' in opt.tag:
+
+                    jetBins = 10; phiBins = 12
+                    variables['dPhiMinlepptmiss'] = {  'name'  : dPhiMinlepptmiss,    #   variable name
+                                                       'range' : (  phiBins,    0.,  3.2), #   variable range   
+                                                       'xaxis' : dphiminlepptmiss,    #   x axis name
+                                                       'fold'  : overflow             #   fold overflow 
+                                                       }
+
+                    variables['dPhilep0ptmiss'] = {  'name'  : dPhilep0ptmiss,    #   variable name
+                                                     'range' : (  phiBins,    0.,  3.2), #   variable range
+                                                     'xaxis' : dphilep0ptmiss,    #   x axis name
+                                                     'fold'  : overflow             #   fold overflow
+                                                    }
+
+
+                    variables['dPhilep1ptmiss'] = {  'name'  : dPhilep1ptmiss,    #   variable name
+                                                     'range' : (  phiBins,    0.,  3.2), #   variable range
+                                                     'xaxis' : dphilep1ptmiss,    #   x axis name
+                                                     'fold'  : overflow             #   fold overflow
+                                                    }
+
+
+                    variables['dPhillptmiss'] = {  'name'  : dPhillptmiss,    #   variable name
+                                                   'range' : (  phiBins,    0.,  3.2), #   variable range
+                                                   'xaxis' : dphillptmiss,    #   x axis name
+                                                   'fold'  : overflow             #   fold overflow
+                                                  }
+
+                    variables['dPhill'] = {  'name'  : dPhill,    #   variable name
+                                             'range' : (  phiBins,    0.,  3.2), #   variable range
+                                             'xaxis' : dphill,    #   x axis name
+                                             'fold'  : overflow             #   fold overflow
+                                            }
+
+                    variables['jetpt']         = {   'name'  : 'CleanJet_pt[0]',       #   variable name 
+                                                     'range' : (  jetBins,    0.,  300.),   #   variable range
+                                                     'xaxis' : 'jet ' + pt + gv,       #   x axis name
+                                                     'fold'  : overflow                #   fold overflow
+                                                    }
+                    
+                    dPhijet0ptmissSafe = '-1.*(CleanJet_pt[0]<20.)+(CleanJet_pt[0]>=20.)*'+dPhijet0ptmiss  
+                    variables['dPhijet0ptmiss']   = {  'name'  : dPhijet0ptmissSafe,  #   variable name 
+                                                       'range' : (  phiBins,    0.,  3.2), #   variable range
+                                                       'xaxis' : dphijet0ptmiss,      #   x axis name  
+                                                       'fold'  : overflow             #   fold overflow
+                                                       }
+
+                elif 'WZtoWWValidationRegion' in opt.tag:
 
                     variables['mt2llUni20'] = {   'name'  : mt2ll,          #   variable name
                                                   'range' : (25, 0., 500.), #   variable range

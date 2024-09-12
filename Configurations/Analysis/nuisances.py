@@ -310,6 +310,8 @@ if addMT2Shapes:
                     'type'  : 'shape',
                     'cuts'  : [ ]
             }
+            if 'WZtoWW' in opt.tag and 'WWPol1a' in opt.tag:
+                nuisances[nuisancekey]['samples']['WZ'] = [ WWtailsUp+'/'+WWtails, WWtailsDown+'/'+WWtails ]
             if '_WWcorrSR' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWtails'+year.replace('noHIPM','').replace('HIPM','') 
             elif '_WWcorrYear' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWtails_'+mt2llregion
             elif '_WWcorr' in opt.tag: nuisances[nuisancekey]['correlatedName'] = 'WWtails'
@@ -318,6 +320,52 @@ if addMT2Shapes:
                 if mt2llregion in cut:
                     nuisances[nuisancekey]['cuts'].append(cut)
 
+    if 'WWPhi' in opt.tag:
+        nuisancekey = 'WWphi_SR4'
+        if 'WWPhib' in opt.tag or 'WWPhic' in opt.tag: 
+            if 'WWPhib' in opt.tag:
+                p0, p1, p2 = '(6.23149e-01)', '(4.24170e+01)', '(-3.86854e+00)'
+                p3, p4, p5 = '(5.60494e-01)', '(6.00449e+01)', '(-5.44043e+00)'
+            elif 'WWPhic' in opt.tag:
+                p0, p1, p2 = '(2.52859e-01)', '(7.05954e+01)', '(-6.03146e+00)'
+                p3, p4, p5 = '(2.53251e-01)', '(1.39018e+02)', '(-8.17122e+00)'
+            WWphiUp = '(('+p0+'+'+p1+'*exp('+p2+'*('+dPhiMinlepptmiss+')))/('+p3+'+'+p4+'*exp('+p5+'*('+dPhiMinlepptmiss+'))))'
+        else:
+            WWphiUp = '1.65965+(6.22541e-01)*log(('+dPhiMinlepptmiss+')+0.16)'
+        nuisances[nuisancekey]  = {
+                        'name'  : nuisancekey+year.replace('noHIPM','').replace('HIPM',''),
+                        'samples'  : { 'ttbar' : [ WWphiUp, '1.' ],
+                                       'STtW'  : [ WWphiUp, '1.' ],
+                                       'WW'    : [ WWphiUp, '1.' ] },
+                        'kind'  : 'weight',
+                        'type'  : 'shape',
+                        'cuts'  : [ ]
+        }
+        if ('WWPhibAll' in opt.tag or 'WWPhicAll' in opt.tag) and '_NoWWPhiMinor' not in opt.tag:
+            for sample in samples:
+                if not samples[sample]['isDATA'] and not samples[sample]['isSignal']:
+                    if sample not in nuisances[nuisancekey]['samples']:
+                        nuisances[nuisancekey]['samples'][sample] = [ WWphiUp, '1.' ]
+        for cut in list(cuts.keys()):
+            if 'SR4' in cut or ('CR4' in cut and '_NoWWPhiMinor' not in opt.tag and ('WWPhibAll' or 'WWPhicAll' in opt.tag)):
+                nuisances[nuisancekey]['cuts'].append(cut)
+
+if '_mt2sr4' in opt.tag:
+    WWbunkUp = '(1.*(mt2ll>=80.) + 0.77529412*(mt2ll<20.) + 0.93035294*(mt2ll>=20.)*(mt2ll<40.) + 1.1629412*(mt2ll>=40)*(mt2ll<60.) + 1.9640784*(mt2ll>=60)*(mt2ll<80.))'
+    WWbunkDown = '1.'
+    nuisancekey = 'MT2sr4_'
+    nuisances[nuisancekey]  = {
+                    'name'  : nuisancekey+year.replace('noHIPM','').replace('HIPM',''),
+                    'samples'  : { 'ttbar' : [ WWbunkUp, WWbunkDown ],
+                                   'STtW'  : [ WWbunkUp, WWbunkDown ],
+                                   'WW'    : [ WWbunkUp, WWbunkDown ] },
+                    'kind'  : 'weight',
+                    'type'  : 'shape',
+                    'cuts'  : [ ]
+            }
+    for cut in list(cuts.keys()):
+        if 'SR4' in cut and 'CR' not in cut:
+            nuisances[nuisancekey]['cuts'].append(cut)
 
 # mt2ll top and WW SUS-17-010 style
 #mt2llBins = [ ]
@@ -531,17 +579,27 @@ if '_NoWWRate' not in opt.tag:
     }
 if '_NewBond4' in opt.tag:
     rateparameters['Topnorm']['limits'] = '[0.7,1.3]'
-    rateparameters['WWnorm']['limits'] = '[0.5,1.5.]'
+    rateparameters['WWnorm']['limits'] = '[0.5,1.5]'
+elif '_NewBond5' in opt.tag:
+    rateparameters['Topnorm']['limits'] = '[0.,2.]'
+    rateparameters['WWnorm']['limits'] = '[0.,2.]'
 if '_NoJetBond' not in opt.tag:
-    if '_NewBond3' in opt.tag or '_NewBond4' in opt.tag:
-        rateparameters['NoJetRate_JetBack']['limits'] = '[0.2,2.]'
-        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.2.,2.]'
+    if '_NewBond3' in opt.tag or '_NewBond4' in opt.tag or '_NewBond5' in opt.tag:
+        rateparameters['NoJetRate_JetBack']['limits'] = '[0.2,3.]'
+        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0..,3.]'
     else:
         rateparameters['NoJetRate_JetBack']['limits'] = '[0.5,1.5]'
         rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.7,1.3]'
 if '_KeepVetoNorm' not in opt.tag:
     del rateparameters['JetRate_JetBack']
     del rateparameters['JetRate_DibosonBack']
+
+if '_TopRP2' in opt.tag:
+    rateparameters['Topnormtag'] = {}
+    for key in rateparameters['Topnorm']:
+        rateparameters['Topnormtag'][key] = rateparameters['Topnorm'][key]
+    rateparameters['Topnormtag']['subcuts'] = [ '_Tag_' ]
+    rateparameters['Topnorm']['subcuts'] = [ '_Veto_', '_NoJet_', '_NoTag_' ]
 
 if 'FitCR' in opt.tag:
     backgroundCRs = { 'ttZ' : { 'samples' : [ 'ttZ' ],
@@ -567,12 +625,21 @@ if 'FitCR' in opt.tag:
                 rateparameters['CR'+region+controlregion] = { }
                 rateparameters['CR'+region+controlregion]['samples'] = backgroundCRs[controlregion]['samples']
                 rateparameters['CR'+region+controlregion]['subcuts'] = backgroundCRs[controlregion]['regions'][region]
-                if '_NoCRBond' not in opt.tag: 
-                    if '_NewBond2' in opt.tag or '_NewBond3' in opt.tag or '_NewBond4' in opt.tag: rateparameters['CR'+region+controlregion]['limits'] = '[0.,5.]' 
-                    elif '_NewBond' in opt.tag: rateparameters['CR'+region+controlregion]['limits'] = '[0.2,2.]'
-                    else: rateparameters['CR'+region+controlregion]['limits'] = '[0.3,1.7]'
+                if '_NoCRBond' not in opt.tag:
+                    if '_NewBond2a' in opt.tag or '_NewBond3a' in opt.tag or '_NewBond4a' in opt.tag or '_NewBond5a' in opt.tag:
+                        rateparameters['CR'+region+controlregion]['limits'] = '[-3.,5.]'
+                    elif '_NewBond2b' in opt.tag or '_NewBond3b' in opt.tag or '_NewBond4b' in opt.tag or '_NewBond5b' in opt.tag:
+                        rateparameters['CR'+region+controlregion]['limits'] = '[-3.,7.]'
+                    elif '_NewBond2' in opt.tag or '_NewBond3' in opt.tag or '_NewBond4' in opt.tag or '_NewBond5' in opt.tag: 
+                        rateparameters['CR'+region+controlregion]['limits'] = '[0.,5.]' 
+                    elif '_NewBond' in opt.tag: 
+                        rateparameters['CR'+region+controlregion]['limits'] = '[0.2,2.]'
+                    else: 
+                        rateparameters['CR'+region+controlregion]['limits'] = '[0.3,1.7]'
 
 if hasattr(opt, 'outputDirDatacard'):
+    rateParameterToMerge = []
+    fileIn = ROOT.TFile(opt.inputFile, 'READ')
     for mt2llregion in mt2llRegions: 
         for rateparam in rateparameters: 
             
@@ -585,6 +652,7 @@ if hasattr(opt, 'outputDirDatacard'):
                 if not useControlRegion: continue
 
             rateparamname = rateparam + '_' + mt2llregion
+
             
             for sample in rateparameters[rateparam]['samples']:
 
@@ -609,10 +677,17 @@ if hasattr(opt, 'outputDirDatacard'):
                         for subcut in rateparameters[rateparam]['subcuts']:
                             if subcut in cut:
                                 nuisances[sample+rateparamname]['cuts'].append(cut)
+                                if 'CR' in cut:
+                                    if rateparamname not in rateParameterToMerge:
+                                        for variable in list(variables.keys()):
+                                            if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
+                                                histoData = fileIn.Get(cut+'/'+variable+'/histo_DATA')
+                                                if histoData.Integral()==0.:
+                                                    rateParameterToMerge.append(rateparamname)
                         
                 if 'bondrate' in list(rateparameters[rateparam].keys()):
                                 
-                    fileIn = ROOT.TFile(opt.inputFile, "READ")
+                    #fileIn = ROOT.TFile(opt.inputFile, "READ")
 
                     nuisances[sample+rateparamname]['bond'] = {}
 
@@ -636,7 +711,34 @@ if hasattr(opt, 'outputDirDatacard'):
                             
                             nuisances[sample+rateparamname]['bond'][cut][variable] =  { bond_formula : bond_parameters }
 
-                    fileIn.Close()
+                    #fileIn.Close()
+
+    fileIn.Close()
+
+    if '_mergeRP' in opt.tag:
+        for rateParam in rateParameterToMerge:
+
+            keepRateParam = rateParam.replace('SR3','SR4') if 'SR3' in rateParam else rateParam.replace('SR4','SR3')
+            if keepRateParam==rateParam or keepRateParam in rateParameterToMerge:
+                print('CR rate parameters with empty regions not supported:', rateParam)
+                exit()
+
+            keepSampleRateParams, removeSampleRateParams = [], []
+            for samplerateparam in nuisances:
+                if keepRateParam in samplerateparam:
+                    keepSampleRateParams.append(samplerateparam)
+                    removeSampleRateParams.append(samplerateparam.replace(keepRateParam,rateParam))
+
+            for samplerateparam in keepSampleRateParams:
+                nuisances[samplerateparam]['name'] = nuisances[samplerateparam]['name'].replace('SR3','SR34').replace('SR4','SR43')
+                for cut in nuisances[samplerateparam.replace(keepRateParam,rateParam)]['cuts']:
+                #    if 'CR' not in cut:
+                    nuisances[samplerateparam]['cuts'].append(cut)
+                    #elif cut in cuts:
+                    #    del cuts[cut]
+
+            for samplerateparam in removeSampleRateParams:
+                del nuisances[samplerateparam]
 
 ### Cleaning 
 
@@ -732,6 +834,42 @@ for nuisance in list(nuisances.keys()):
                     if flav in cut or 'CR' in cut: cutToAdd.append(cut)
                 nuisances[nuisance+'__'+flav]['cuts'] = cutToAdd
 
+    if '_SplitMT2tails' in opt.tag and 'WWtails' in nuisance:
+        if '_SplitMT2tailssr' in opt.tag and opt.tag.split('_SplitMT2tails')[1].split('_')[0].upper() in nuisance:
+            nuisanceToRemove.append(nuisance)
+            for smp in [ 'top', 'WW' ]:
+                nuisanceSmp = nuisance.replace('WWtails','WWtails'+'__'+smp)
+                nuisances[nuisanceSmp] = {}
+                for key in nuisances[nuisance]:
+                    if key!='name' and key!='samples':
+                        nuisances[nuisanceSmp][key] = nuisances[nuisance][key]
+                nuisances[nuisanceSmp]['name'] = nuisances[nuisance]['name'].replace('WWtails','WWtails'+'__'+smp) 
+                nuisances[nuisanceSmp]['samples'] = {}
+                if smp=='top': 
+                    nuisances[nuisanceSmp]['samples']['ttbar'] = nuisances[nuisance]['samples']['ttbar']
+                    nuisances[nuisanceSmp]['samples']['STtW']  = nuisances[nuisance]['samples']['STtW']
+                elif smp=='WW':
+                    nuisances[nuisanceSmp]['samples']['WW'] = nuisances[nuisance]['samples']['WW']
+                if 'correlatedName' in nuisances[nuisanceSmp]:
+                    nuisances[nuisanceSmp]['correlatedName'] = nuisances[nuisanceSmp]['correlatedName'].replace('WWtails','WWtails'+'__'+smp)
+
+    if '_SplitWWPhi' in opt.tag:
+        if 'WWphi' in nuisance:
+            nuisanceToRemove.append(nuisance)
+            for smp in [ 'WZ', 'WW' ]:
+                nuisanceSmp = nuisance.replace('WWphi','WWphi__'+smp)
+                nuisances[nuisanceSmp] = {}
+                for key in nuisances[nuisance]:
+                    if key!='name' and key!='samples':
+                        nuisances[nuisanceSmp][key] = nuisances[nuisance][key]
+                nuisances[nuisanceSmp]['name'] = nuisances[nuisance]['name'].replace('WWphi','WWphi__'+smp)
+                nuisances[nuisanceSmp]['samples'] = {}
+            for sample in nuisances[nuisance]['samples']:
+                if sample=='ttbar' or sample=='STtW' or sample=='WW': 
+                    nuisances[nuisance.replace('WWphi','WWphi__WW')]['samples'][sample] = nuisances[nuisance]['samples'][sample]
+                else:
+                    nuisances[nuisance.replace('WWphi','WWphi__WZ')]['samples'][sample] = nuisances[nuisance]['samples'][sample]
+
 for nuisance in nuisanceToRemove:
     if nuisance in nuisances: del nuisances[nuisance]
 
@@ -796,6 +934,12 @@ if '_BTV' in opt.tag:
             if 'mistag' not in nuisances[nuisance]['name'] and 'ctag' not in nuisances[nuisance]['name'] and 'btag' not in nuisances[nuisance]['name']:
                 nuisanceToRemove.append(nuisance)
 
+if '_KillSyst' in opt.tag:
+    for nuisance in nuisances:
+        if nuisance!='stat':
+            if nuisances[nuisance]['type']!='rateParam':
+                nuisanceToRemove.append(nuisance)
+
 for nuisance in nuisanceToRemove:
     del nuisances[nuisance]
 
@@ -804,7 +948,7 @@ if len(yearstaglist)>1:
    nuisanceToRemove = [ ]
 
    for nuisance in nuisances:
-       if 'WWshape' in nuisance or 'WZbin' in nuisance or 'WWtails' in nuisance: continue
+       if 'WWshape' in nuisance or 'WZbin' in nuisance or 'WWtails' in nuisance or 'WWphi' in nuisance: continue
        if 'type' in nuisances[nuisance] and nuisances[nuisance]['type']=='shape':
            if year in nuisances[nuisance]['name']:
                nuisanceToRemove.append(nuisance)
@@ -824,5 +968,4 @@ if len(yearstaglist)>1:
    #       print '             ', nuisances[nuisance]['name']
 
    #exit()
-
 

@@ -624,9 +624,8 @@ def getCrossSection(susyProcess, susyModel, susyMass):
         elif 'WinoC1C1' in susyProcess:
             step = 25
 
-        isusyMass1 = step*(isusyMass/step)
-        isusyMass2 = step*(isusyMass/step+1)
-
+        isusyMass1 = step*int(isusyMass/step)
+        isusyMass2 = step*int(isusyMass/step+1)
         if 'Slepton' in susyProcess:
             if step==60:
                 isusyMass1 =  440
@@ -677,7 +676,8 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
     massPoints = { }
     massLimits = { 'X' : { 'min' : 999999., 'max' : -1. }, 'Y' : { 'min' : 999999., 'max' : -1. } }
 
-    inputDirectory = opt.limitdir+'/'+year+'/'+tag+'/' 
+    inputDirectory = opt.limitdir+'/'+year+'/'+tag+'/'
+    #inputDirectory = 'LimitsPablo/'+year+'/'+tag+'/'
     
     limitType = 'blind' if (limitOption=='Blind') else 'expected'
     for model in signalMassPoints.signalMassPoints:
@@ -808,7 +808,7 @@ def fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
     outputFile.Close()
 
 def makeMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillemptybins, reMakeHistos):
-    if tag!='':
+    if tag!='' and '_Smooth' not in tag:
       
         outputFileName = getFileName('./Limits/' + year + '/' + tag + '/Histograms', 'massScan_' + tag + '_' + sigset + '_' + fileOption)
         if fillemptybins==False:
@@ -818,10 +818,10 @@ def makeMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
             fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillemptybins, outputFileName)
 
 def getMassScanContour(outputFileName, histo):
-
+    print('bs', histo.GetName(), histo.GetBinContent(histo.FindBin(475.,350)))
     if not 'TChipmWW' in outputFileName or 'observed_up' in histo.GetName():
         histo.Smooth(1, "k3a");
-
+    print('as', histo.GetName(), histo.GetBinContent(histo.FindBin(475.,350)))
     x, y, z = array( 'd' ), array( 'd' ), array( 'd' )
 
     minZ = 999.
@@ -913,7 +913,7 @@ def getMassScanContours(outputFileName):
     outputFile.Close()
                 
 def makeMassScanContours(year, tag, sigset, limitOption, fileOption, reMakeContours):
-    if tag!='':
+    if tag!='' and '_Smooth' not in tag:
       
         outputFileName = getFileName('./Limits/' + year + '/' + tag +  '/Contours', 'massScan_' + tag + '_' + sigset + '_' + fileOption)
         if reMakeContours or not fileExist(outputFileName):
@@ -939,6 +939,9 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
             continue
 
         tagFileName = getFileName('./Limits/' + year + '/' + tag + '/' + plotOption, 'massScan_' + tag + '_' + sigset + '_' + fileOption + emptyBinsOption)
+
+        if '_Smooth' in tag: tagFileName = tagFileName.replace('_Smooth', '').replace('.root', '_Smooth.root')
+        print(tagFileName)
 
         if not fileExist(tagFileName):
             print('Error: input file', tagFileName, 'not found')
@@ -1087,33 +1090,42 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
         same = ''
         ntag = 0
 
-        cDone = 'None'
+        switchColor = 3
+        cDone, iDone = 'None', -1
         if 'graph_r_expected_down2' in tagObjName: 
             iobj = tagObjName.index('graph_r_expected_down2')
             tagObj[iobj].Draw(same)
             same = 'same'
             cDone = 'graph_r_expected_down2'
+            iDone = iobj
+            switchColor = 5
         elif 'graph_r_expected_down' in tagObjName:
             iobj = tagObjName.index('graph_r_expected_down')
             tagObj[iobj].Draw(same)
             same = 'same'
             cDone = 'graph_r_expected_down'
+            iDone = iobj
 
-        for obj in sorted(tagObjName):
+        #for obj in sorted(tagObjName):
+        for iobj in range(len(tagObj)):
 
-            if obj==cDone: continue
+            if iobj==iDone and ntag==0: continue
+            #if obj==cDone and ntag==0: continue
 
-            iobj = tagObjName.index(obj)
-            #if iobj>=3:
-            #    tagObj[iobj].SetLineColor(2)
+            #if tagObj[iobj].GetName()!='graph_r_observed_up': continue
+            #iobj = tagObjName.index(obj)
+
+            tagObj[iobj].SetLineColor(1)
+            if iobj>=switchColor:# or ntag>0:
+                tagObj[iobj].SetLineColor(2)
             #if iobj>=6:
             #    tagObj[iobj].SetLineColor(418)
  
             tagObj[iobj].Draw(same)
             same = 'same'
             hname = tagObj[iobj].GetName()
-            if 'down' not in hname and 'up' not in hname: 
-                print(hname, ntag)
+            print(iobj, hname)
+            if 'down' not in hname and 'up' not in hname and ntag<2: 
                 legend.AddEntry(tagObj[iobj],tags[ntag], 'l')
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction applied' if 'WWPol1a' in tags[ntag] else 'No #font[50]{m}_{T2}(#font[12]{ll}) correction applied'
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties correlated across years' if 'WWcorrYear' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully correlated' if 'WWcorr' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully uncorrelated'
@@ -1133,7 +1145,7 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
         inputTag = tag.replace('_Smooth','')
         smoothOption = '_Smooth' 
 
-    inputFileNames = [ getFileName('./Limits/' + year + '/' + inputTag + '/Histograms', 'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption),
+    inputFileNames = [ getFileName('./Limits/' + year + '/' + inputTag + '/Histograms', 'massScan_' + inputTag + '_' + sigset + '_' + fileOption),
                        getFileName('./Limits/' + year + '/' + inputTag + '/Contours',   'massScan_' + inputTag + '_' + sigset + '_' + fileOption + smoothOption) ]
 
     for inputfilename in inputFileNames:
@@ -1165,7 +1177,7 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
     cfgFile.write('ENERGY 13\n\n')
 
     cfgFile.close()
-    os.system('cat '+ './Limits/' + year + '/' + tag + '/' + cfgFileName + '.cfg')
+    os.system('cat '+ './Limits/' + year + '/' + inputTag + '/' + cfgFileName + '.cfg')
     outputDirectory = 'Plots/' + year + '/ExclusionPlots/'
     os.system('mkdir -p ' + outputDirectory)
     os.system('cp Plots/index.php ' + outputDirectory)

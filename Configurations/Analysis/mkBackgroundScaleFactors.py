@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import ROOT
@@ -8,6 +8,7 @@ import optparse
 import json
 import copy
 from array import *
+import ctypes
 
 backgroundProcess = sys.argv[1] if (len(sys.argv)>=2 and sys.argv[1]!='All') else 'ZZ-ttZ-WZW-WZZ-WZ'
 years = sys.argv[2] if len(sys.argv)>=3 else '2016HIPM,2016noHIPM,2017,2018'
@@ -15,7 +16,11 @@ years = sys.argv[2] if len(sys.argv)>=3 else '2016HIPM,2016noHIPM,2017,2018'
 commonFlag = 'VetoesUL'
 plotArea = './PlotsV9ExtraV1/'
 
-if 'WWmt2bin' in backgroundProcess:
+if 'WWmt2sr4' in backgroundProcess or 'WWphisr4' in backgroundProcess: 
+    commonFlag = ''
+    plotArea = './Plots/'
+
+if 'WWmt2bin' in backgroundProcess or 'WWmt2sr4' in backgroundProcess:
     if 'Optim' in backgroundProcess:
         mt2llHistoName = 'mt2llOptimHighExtra'
         mt2llHistoBins = 9
@@ -32,6 +37,16 @@ if 'WWmt2bin' in backgroundProcess:
         mt2llHistoName = 'mt2llUni50'
         mt2llHistoBins = 10
         searchBins = [x*50. for x in range(0,11)]
+    else:
+        mt2llHistoName = 'mt2llOptimHighExtra'
+        mt2llHistoBins = 9
+        searchBins = [0, 20, 40, 60, 80, 100, 160, 240, 370, 500]
+    centerBins = [ (searchBins[x]+searchBins[x+1])/2. for x in range(len(searchBins)-1) ]
+
+if 'WWphisr4' in backgroundProcess:
+    mt2llHistoName = 'dPhiMinlepptmiss'
+    mt2llHistoBins = 12
+    searchBins = [ x*3.2/12. for x in range(13) ]
     centerBins = [ (searchBins[x]+searchBins[x+1])/2. for x in range(len(searchBins)-1) ]
 
 backgroundInfo = { 'ZZ' : { 'validationRegion'   : 'ZZValidationRegion',
@@ -219,8 +234,7 @@ backgroundInfo = { 'ZZ' : { 'validationRegion'   : 'ZZValidationRegion',
                                                                'bin'       : 8,
                                                                'cuts'      : [ 'WZtoWW_Zcut15' ],
                                                                'selection' : '(ptmiss\'+ctrltag+\'>=160 && ptmiss\'+ctrltag+\'<220)' } ,
-                                                     'ww25': { 'plot'      : 'WZtoWW_Zcut15_ptmissSR',
-                                                               'bin'       : 9,
+                                                     'ww25': { 'plot'      : 'WZtoWW_Zcut15_ptmissSR',                                                               'bin'       : 9,
                                                                'cuts'      : [ 'WZtoWW_Zcut15' ],
                                                                'selection' : '(ptmiss\'+ctrltag+\'>=220 && ptmiss\'+ctrltag+\'<280)' } ,
                                                      'ww35': { 'plot'      : 'WZtoWW_Zcut15_ptmissSR',
@@ -261,6 +275,35 @@ if 'WWmt2bin' in backgroundProcess:
         backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2bin'+str(ibin)] = copy.deepcopy(backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2bin1']) 
         backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2bin'+str(ibin)]['bin'] = ibin
 
+if 'WWmt2sr4' in backgroundProcess:
+    backgroundInfo[backgroundProcess] = { 'validationRegion'   : 'WZtoWWValidationRegionBinsWWPol1aVetoesUL',
+                                          'signal'             : 'WZ',
+                                          'exclusiveSelection' : 0,
+                                          'measurementRegions' : { 'wwmt2sr41' : { 'plot'      : 'WZtoWW_Zcut15_ptmiss-380_'+mt2llHistoName,
+                                                                   'bin'       : 1,
+                                                                   'cuts'      : [ 'WZtoWW_Zcut15_ptmiss-380' ],
+                                                                   'selection' : '' } } ,
+                                          'samples'            : [ 'WW' ],
+                                         }
+    for ibin in range(2, mt2llHistoBins+1):
+        backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2sr4'+str(ibin)] = copy.deepcopy(backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2sr41'])
+        backgroundInfo[backgroundProcess]['measurementRegions']['wwmt2sr4'+str(ibin)]['bin'] = ibin
+
+if 'WWphisr4' in backgroundProcess:
+    backgroundInfo[backgroundProcess] = { 'validationRegion'   : 'WZtoWWValidationRegionBinsShortWWPol1aVetoesUL',
+                                          'signal'             : 'WZ',
+                                          'exclusiveSelection' : 0,
+                                          'measurementRegions' : { 'wwphisr41' : { 'plot'      : 'WZtoWW_Zcut15_ptmiss-380_'+mt2llHistoName,
+                                                                   'bin'       : 1,
+                                                                   'cuts'      : [ 'WZtoWW_Zcut15_ptmiss-380' ],
+                                                                   'selection' : '' } } ,
+                                          'samples'            : [ 'WW' ],
+                                         }
+    for ibin in range(2, mt2llHistoBins+1):
+        backgroundInfo[backgroundProcess]['measurementRegions']['wwphisr4'+str(ibin)] = copy.deepcopy(backgroundInfo[backgroundProcess]['measurementRegions']['wwphisr41'])
+        backgroundInfo[backgroundProcess]['measurementRegions']['wwphisr4'+str(ibin)]['bin'] = ibin
+
+
 def getYieldsFromHistogram(histo, binNumber):
 
     if type(binNumber)==list: firstBin, lastBin = binNumber[0], binNumber[1]
@@ -269,8 +312,8 @@ def getYieldsFromHistogram(histo, binNumber):
     if firstBin!=-1. and firstBin==lastBin:
         return histo.GetBinContent(binNumber), histo.GetBinError(binNumber)
     else:
-        integralError = ROOT.double() 
-        return histo.IntegralAndError(firstBin, lastBin, integralError), integralError
+        integralError = ctypes.c_double()  
+        return histo.IntegralAndError(firstBin, lastBin, integralError), integralError.value
 
 def getYieldsFromTGraphAsymmErrors(graph, binNumber):
 
@@ -286,9 +329,9 @@ def getYieldsFromTGraphAsymmErrors(graph, binNumber):
 
     for point in range(graph.GetN()):
         if (point+1)>=firstBin and (point+1)<=lastBin:
-            xP, yP = ROOT.double(), ROOT.double()
+            xP, yP = ctypes.c_double(), ctypes.c_double()
             graph.GetPoint(point, xP, yP)
-            yields += yP
+            yields += yP.value
             yieldsErrorSquared += pow(graph.GetErrorY(point), 2) # that's highly questionable ...
             yieldsErrorHighSquared += pow(graph.GetErrorYhigh(point), 2) # that's highly questionable ...
             yieldsErrorLowSquared += pow(graph.GetErrorYlow(point), 2) # that's highly questionable ...
@@ -325,6 +368,9 @@ def getScaleFactorFromCanvas(fileName, canvasName, dataName, signalName, binNumb
     elif mc==-1. or mcError==-1.: print('getScaleFactorFromCanvas: mc yields not found')
     elif signal>0.:
         bkg = mc - signal
+        #signal *= 0.76759411
+        #signal *=0.72431507
+        signal *= 0.73951049
         #bkgError = bkg*mcError/mc # some assumptions here
         signalError = signal*mcError/mc # some assumptions here
         scaleFactor = (data-bkg)/signal
@@ -342,10 +388,10 @@ if __name__ == '__main__':
         print('\t\tYEAR:'+year+'\n')
         normBackgrounds = {}
 
-        if 'WWmt2' in backgroundProcess:
+        if 'WWmt2' in backgroundProcess or 'WWphi' in backgroundProcess:
             mt2llHisto = ROOT.TH1D('mt2ll','',len(searchBins)-1,array('d',searchBins))
             mt2llHisto.SetMinimum(0.)
-            mt2llHisto.SetMaximum(2.)
+            mt2llHisto.SetMaximum(5.)
             mt2llGraph = ROOT.TGraphAsymmErrors()
             if 'Optim' in backgroundProcess:
                 baseRootFile = ROOT.TFile('./ShapesV9AN/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'/plots_'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'_SM.root', 'read')
@@ -392,10 +438,24 @@ if __name__ == '__main__':
                     mt2llGraph.SetPoint(ib-1, centerBins[ib-1], scaleFactor)
                     mt2llGraph.SetPointError(ib-1, centerBins[ib-1]-searchBins[ib-1], searchBins[ib]-centerBins[ib-1], scaleFactorErrorLow, scaleFactorErrorHigh)
 
+                if 'wwmt2sr4' in meas and scaleFactor>0.:
+                    ib = int(meas.replace('wwmt2sr4',''))
+                    #mt2llHisto.SetBinContent(ib, scaleFactor)
+                    #mt2llHisto.SetBinError(ib, scaleFactorError)
+                    mt2llGraph.SetPoint(ib-1, centerBins[ib-1], scaleFactor)
+                    mt2llGraph.SetPointError(ib-1, centerBins[ib-1]-searchBins[ib-1], searchBins[ib]-centerBins[ib-1], scaleFactorErrorLow, scaleFactorErrorHigh)
+
+                if 'wwphisr4' in meas and scaleFactor>0.:
+                    ib = int(meas.replace('wwphisr4',''))
+                    #mt2llHisto.SetBinContent(ib, scaleFactor)
+                    #mt2llHisto.SetBinError(ib, scaleFactorError)
+                    mt2llGraph.SetPoint(ib-1, centerBins[ib-1], scaleFactor)
+                    mt2llGraph.SetPointError(ib-1, centerBins[ib-1]-searchBins[ib-1], searchBins[ib]-centerBins[ib-1], scaleFactorErrorLow, scaleFactorErrorHigh)
+
             for sample in bkgInfo['samples']:
                 print('\t\tnormBackgrounds[\''+sample+'\'] = '+json.dumps(normBackgrounds[sample]).replace('"','\''))
         
-        if 'WWmt2' in backgroundProcess:
+        if 'WWmt2' in backgroundProcess or 'WWphi' in backgroundProcess:
             ROOT.gStyle.SetOptStat(ROOT.kFALSE)
             plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
             mt2llHisto.Draw()
@@ -404,11 +464,27 @@ if __name__ == '__main__':
             minMT2Fit = 0.
             drawErrors = False
             #mt2llFun = ROOT.TF1('mt2llFun', '[0]+[1]*x+[2]*x*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1))
-            mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 40.; drawErrors = True
+            ##WZ mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 40.; drawErrors = True
             #mt2llFun = ROOT.TF1('mt2llFun', '[0]+[1]*log(x+[3])*log(x+[3])*(3-[2]*log(x+[3]))', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1))
             #mt2llFun = ROOT.TF1('mt2llFun', '[0]*(1.+[1]*x)/(1.+[2]*x)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); mt2llFun.SetParameters(9.06333e-01, 7.05381e-03, 3.33219e-03)
             #mt2llFun = ROOT.TF1('mt2llFun', '[0]*(1.+[1]*x+[3]*x*x)/(1.+[2]*x+[4]*x*x)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); mt2llFun.SetParameters(4.83969e-01, 1.08049e+00, 5.47807e-01, 1.76432e-03, 0.)
-            fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 600.)
+            ##WZ fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 600.)
+            if 'WWmt2' in backgroundProcess:
+                mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
+            else:
+                #mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*log(x+0.16)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
+                #mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*exp([2]*x)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
+                mt2llFun  = ROOT.TF1('mt2llFun',  '([0]+[1]*exp([2]*x))/([3]+[4]*exp([5]*x))', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
+            #mt2llFun.SetParameters(6.80226e-01, 5.48568e+01, -4.18401e+00) #D
+            #mt2llFun.SetParameters(6.23149e-01, 4.24170e+01, -3.86854e+00) #S-MC
+            #mt2llFun.SetParameters(5.60494e-01, 6.00449e+01, -5.44043e+00) #S
+            #mt2llFun.SetParameters(6.23149e-01, 4.24170e+01, -3.86854e+00, 5.60494e-01, 6.00449e+01, -5.44043e+00)
+            #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 1.)
+            #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 10.)
+            #mt2llGraph.SetPointY(7,1.)
+            mt2llFun.SetParameters(2.52859e-01, 7.05954e+01, -6.03146e+00, 2.53251e-01, 1.39018e+02, -8.17122e+00)
+            #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 3.)
+            mt2llFun.Draw('same')
             mt2llGraph.Draw('P0')
             if drawErrors:
                 corMatrix = fitReults.GetCorrelationMatrix()

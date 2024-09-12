@@ -564,6 +564,7 @@ if 'FakeValidationRegion' in opt.tag:
 if 'WZValidationRegion' in opt.tag or 'WZtoWWValidationRegion' in opt.tag:
 
     WZselection = nLooseLepton+'==3 && ' + nTightLepton + '==3 && deltaMassZ'+ctrltag+'<ZCUT && ptmiss'+ctrltag+'>=METCUT'
+    if 'MT01' in opt.tag: WZselection += ' && mt2ll'+ctrltag+'>1.'
 
     if 'TL0' in opt.tag: WZselection = WZselection.replace(nTightLepton + '==3', nTightLepton + '>=0')
     if 'TL1' in opt.tag: WZselection = WZselection.replace(nTightLepton + '==3', nTightLepton + '>=1')
@@ -578,12 +579,33 @@ if 'WZValidationRegion' in opt.tag or 'WZtoWWValidationRegion' in opt.tag:
         if 'WZValidationRegionZLeps' in opt.tag:
             WZselection += ' && (mt2llfake0+mt2llfake1+mt2llfake2-mt2ll_WZ)>0.'
 
-        cuts['WZ_3Lep_']            = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
-        cuts['WZ_3LepZ']            = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
-        cuts['WZ_3Lep_ptmiss-140']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
-        cuts['WZ_3LepZ_ptmiss-140'] = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
-        cuts['WZ_3Lep_ptmiss-160']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
-        cuts['WZ_3LepZ_ptmiss-160'] = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
+        if 'Bins' in opt.tag:
+
+            cuts['WZ_3Lep_ptmiss-100to380']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '100')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+            cuts['WZ_3Lep_ptmiss-160to380']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '160')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+            cuts['WZ_3Lep_ptmiss-380']       = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '380') + ')', 'weight' : btagWeight0tag }
+
+        if 'BinsShort' not in opt.tag:
+
+            cuts['WZ_3Lep_']            = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
+            cuts['WZ_3LepZ']            = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
+            cuts['WZ_3Lep_ptmiss-140']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
+            cuts['WZ_3LepZ_ptmiss-140'] = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
+            cuts['WZ_3Lep_ptmiss-160']  = { 'expr' : '(' + WZselection.replace('ZCUT', '999.').replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
+            cuts['WZ_3LepZ_ptmiss-160'] = { 'expr' : '(' + WZselection.replace('ZCUT',  '15.').replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
+
+    elif 'WZtoWWValidationRegionBins' in opt.tag:
+
+        if 'BinsShort' not in opt.tag:
+            cuts['WZtoWW_Zcut15_ptmiss-100']      = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+')', 'weight' : btagWeight0tag }
+            cuts['WZtoWW_Zcut15_ptmiss-160']      = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+')', 'weight' : btagWeight0tag }
+            cuts['WZtoWW_Zcut15_ptmiss-160to220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+' && ptmiss'+ctrltag+'<220)', 'weight' : btagWeight0tag } 
+            cuts['WZtoWW_Zcut15_ptmiss-220to280'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','220')+' && ptmiss'+ctrltag+'<280)', 'weight' : btagWeight0tag }
+            cuts['WZtoWW_Zcut15_ptmiss-280to380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','280')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+
+        cuts['WZtoWW_Zcut15_ptmiss-100to380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+        cuts['WZtoWW_Zcut15_ptmiss-160to380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+        cuts['WZtoWW_Zcut15_ptmiss-380']      = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','380')+')', 'weight' : btagWeight0tag }
 
     elif 'WZtoWWValidationRegion' in opt.tag:
 
@@ -614,24 +636,38 @@ if 'ttZValidationRegion' in opt.tag or 'ZZValidationRegion' in opt.tag:
     if 'ttZValidationRegion' in opt.tag:
 
         ttZselection = sel4Lep + ' && deltaMassZ'+ctrltag+'<10. && ptmiss'+ctrltag+'>=METCUT && nCleanJet>=2 && CleanJet_pt[1]>='+jetPtCut
-
-        cuts['ttZ_Zcut10']            = { 'expr' : '(' + ttZselection.replace('METCUT',   '0') + ')', 'weight' : btagWeight1tag }
-        cuts['ttZ_Zcut10_ptmiss-140'] = { 'expr' : '(' + ttZselection.replace('METCUT', '140') + ')', 'weight' : btagWeight1tag }
-        cuts['ttZ_Zcut10_ptmiss-160'] = { 'expr' : '(' + ttZselection.replace('METCUT', '160') + ')', 'weight' : btagWeight1tag }
-
         ttZselectionLarge = ttZselection.replace('deltaMassZ'+ctrltag+'<10.', 'deltaMassZ'+ctrltag+'<15.')
 
-        cuts['ttZ_Zcut15']            = { 'expr' : '(' + ttZselectionLarge.replace('METCUT',   '0') + ')', 'weight' : btagWeight1tag }
-        cuts['ttZ_Zcut15_ptmiss-140'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '140') + ')', 'weight' : btagWeight1tag }
-        cuts['ttZ_Zcut15_ptmiss-160'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '160') + ')', 'weight' : btagWeight1tag }
+        if 'Bins' in opt.tag:
+
+            cuts['ttZ_Zcut15_ptmiss-100to380'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '100')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut15_ptmiss-160to380'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '160')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut15_ptmiss-380'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '380') + ')', 'weight' : btagWeight1tag }
+
+        if 'BinsShort' not in opt.tag:
+
+            cuts['ttZ_Zcut10']            = { 'expr' : '(' + ttZselection.replace('METCUT',   '0') + ')', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut10_ptmiss-140'] = { 'expr' : '(' + ttZselection.replace('METCUT', '140') + ')', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut10_ptmiss-160'] = { 'expr' : '(' + ttZselection.replace('METCUT', '160') + ')', 'weight' : btagWeight1tag }
+
+            cuts['ttZ_Zcut15']            = { 'expr' : '(' + ttZselectionLarge.replace('METCUT',   '0') + ')', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut15_ptmiss-140'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '140') + ')', 'weight' : btagWeight1tag }
+            cuts['ttZ_Zcut15_ptmiss-160'] = { 'expr' : '(' + ttZselectionLarge.replace('METCUT', '160') + ')', 'weight' : btagWeight1tag }
 
     elif 'ZZValidationRegion' in opt.tag:
 
         ZZselection = sel4Lep + ' && deltaMassZ'+ctrltag+'<15. && ptmiss'+ctrltag+'>=METCUT'
+  
+        if 'Bins' in opt.tag: 
+            cuts['ZZ_ptmiss-100to380'] = { 'expr' : '(' + ZZselection.replace('METCUT', '100')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+            cuts['ZZ_ptmiss-160to380'] = { 'expr' : '(' + ZZselection.replace('METCUT', '160')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
+            cuts['ZZ_ptmiss-380'] = { 'expr' : '(' + ZZselection.replace('METCUT', '380') + ')', 'weight' : btagWeight0tag }
 
-        cuts['ZZ']            = { 'expr' : '(' + ZZselection.replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
-        cuts['ZZ_ptmiss-140'] = { 'expr' : '(' + ZZselection.replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
-        cuts['ZZ_ptmiss-160'] = { 'expr' : '(' + ZZselection.replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
+        if 'BinsShort' not in opt.tag:
+
+            cuts['ZZ']            = { 'expr' : '(' + ZZselection.replace('METCUT',   '0') + ')', 'weight' : btagWeight0tag }
+            cuts['ZZ_ptmiss-140'] = { 'expr' : '(' + ZZselection.replace('METCUT', '140') + ')', 'weight' : btagWeight0tag }
+            cuts['ZZ_ptmiss-160'] = { 'expr' : '(' + ZZselection.replace('METCUT', '160') + ')', 'weight' : btagWeight0tag }
 
 if 'ttZNormalization' in opt.tag or 'FitCRttZ' in opt.tag:
 
@@ -720,6 +756,76 @@ if 'DYValidationRegion' in opt.tag and 'HighPtMissDY' not in opt.tag:
     cuts['Zpeak_ptmiss-140_nojet']      = '(' + DY + ' && ptmiss>=140 && '+NoJets+')' 
     cuts['Zpeak_ptmiss-160_nojet']      = '(' + DY + ' && ptmiss>=160 && '+NoJets+')' 
 
+if 'BoostedSR4' in opt.tag:
+
+    ptmissCuts = { 'SR4' : ' && ptmiss>=380' }
+    if 'Bins' in opt.tag: 
+        ptmissCuts ['SR1'] = ' && ptmiss>=160. && ptmiss<220'
+        ptmissCuts ['SR2'] = ' && ptmiss>=220. && ptmiss<280'
+        ptmissCuts ['SR3'] = ' && ptmiss>=280. && ptmiss<380'
+        ptmissCuts ['SRC'] = ' && ptmiss>=160. && ptmiss<380'
+    if 'Only' not in opt.tag and 'Bins' not in opt.tag: ptmissCuts ['SRA'] = ' && ptmiss>=160.'
+    if 'Bins' not in opt.tag: mt2bins = { '_all' : '', '_vlw' : ' && mt2ll<1.' }
+    else: mt2bins = { '_all' : '' }
+    isrCuts = { '_all' : '', '_isr' : ' && '+ISRCut }
+    zoneCuts = {}
+    if 'BoostedSR4Zone' in opt.tag:
+        sumPhis = '(acos(cos(ptmiss_phi-Lepton_phi[0]))+acos(cos(ptmiss_phi-Lepton_phi[1])))'
+        deltaPhisLep = '(acos(cos(Lepton_phi[0]-Lepton_phi[1])))'
+        twopi = '2.*acos(-1.)'
+        zone1 = '(abs('+sumPhis+'-'+deltaPhisLep+')<1e-13)'
+        zone4 = '(abs('+sumPhis+'-('+twopi+'-'+deltaPhisLep+'))<1e-12)'
+        zone2 = '!'+zone1+' && ('+sumPhis+'<acos(-1.))'
+        zone3 = '!'+zone4+' && ('+sumPhis+'>acos(-1.))'
+
+        if 'BoostedSR4Zone1M' in opt.tag or 'BoostedSR4Zone2M' in opt.tag or 'BoostedSR4Zone3M' in opt.tag or 'BoostedSR4Zone4M' in opt.tag:
+            zoneCut = zone2
+            zoneName = '_zn2'
+            if 'BoostedSR4Zone3M' in opt.tag:
+                zoneCut = zone3
+                zoneName = '_zn3'
+            if 'BoostedSR4Zone4M' in opt.tag:
+                zoneCut = zone4
+                zoneName = '_zn4'
+            if 'BoostedSR4Zone1M' in opt.tag:
+                zoneCut = zone1
+                zoneName = '_zn1'
+            zonea = zoneCut+' && mt2ll<40.'
+            zoneb = zoneCut+' && mt2ll>=40. && mt2ll<80.'
+            zonec = zoneCut+' && mt2ll>=80. && mt2ll<100.'
+            zoneCuts = { zoneName+'a' : zonea, zoneName+'b' : zoneb, zoneName+'c' : zonec }
+        elif 'BoostedSR4Zone2' in opt.tag:
+            zone2a = zone2+' && '+dPhillptmiss+'<(acos(-1.)/3.)'
+            zone2b = zone2+' && '+dPhillptmiss+'>=(acos(-1.)/3.) && '+dPhillptmiss+'<(2.*acos(-1.)/3.)'
+            zone2c = zone2+' && '+dPhillptmiss+'>=(2.*acos(-1.)/3.)'
+            zoneCuts = { '_zn2a' : zone2a, '_zn2b' : zone2b, '_zn2c' : zone2c }
+        else:
+            zoneCuts = { '_zn1' : zone1, '_zn2' : zone2, '_zn3' : zone3, '_zn4' : zone4 }
+    else:
+        zoneCuts['_all'] = 'ptmiss>0.'
+
+
+    if 'Bins' not in opt.tag and 'BoostedSR4Zone' not in opt.tag:
+        isrCuts['_jpt'] = ' && CleanJet_pt[0]>150.'
+        isrCuts['_jph'] = ' && acos(cos(ptmiss_phi-CleanJet_phi[0]))>2.5' 
+
+    for mt2bin in mt2bins:
+        for ptmisscut in ptmissCuts:
+            for isrcut in isrCuts:
+                for zonecut in zoneCuts:
+                    cutFlag = isrcut+mt2bin+zonecut
+                    ptmissISRcut = ptmissCuts[ptmisscut]+isrCuts[isrcut]+mt2bins[mt2bin]+' && '+zoneCuts[zonecut]
+                    tagWeightCut = btagWeight1tag if isrcut=='_all' else ISRWeightTag
+                    if 'BoostedSR4Unit' not in opt.tag:
+                        cuts[ptmisscut+'_Tag_em' +cutFlag]  = { 'expr' : '(' + OC+' && '+DF+ptmissISRcut+')', 'weight' : tagWeightCut }
+                        cuts[ptmisscut+'_Tag_sf' +cutFlag]  = { 'expr' : '(' + OC+' && '+SF+ptmissISRcut+')', 'weight' : tagWeightCut }
+                        cuts[ptmisscut+'_Veto_em'+cutFlag]  = { 'expr' : '(' + OC+' && '+DF+ptmissISRcut+')', 'weight' : btagWeight0tag }
+                        cuts[ptmisscut+'_Veto_sf'+cutFlag]  = { 'expr' : '(' + OC+' && '+SF+ptmissISRcut+')', 'weight' : btagWeight0tag }
+                    else:
+                        cuts[ptmisscut+'_Tag' +cutFlag]   = { 'expr' : '(' + OC+' && ('+DF+' || '+SF+')'+ptmissISRcut+')', 'weight' : tagWeightCut }
+                        cuts[ptmisscut+'_Veto' +cutFlag]  = { 'expr' : '(' + OC+' && ('+DF+' || '+SF+')'+ptmissISRcut+')', 'weight' : btagWeight0tag }
+                        cuts[ptmisscut+cutFlag]           = { 'expr' : '(' + OC+' && ('+DF+' || '+SF+')'+ptmissISRcut+')', 'weight' : '(1.)' }
+
 if 'SignalRegion' in opt.tag:
 
     nojetcutSR1 = NoJets
@@ -766,9 +872,9 @@ if 'SignalRegion' in opt.tag:
     for sr in SRlist:
         if '_no'+sr in opt.tag:
             del ptmiss_cuts[sr]
-    if '_SR' in opt.tag:
+    if '_SR' in opt.tag.split('qq')[0]:
         for sr in SRlist:
-            if '_'+sr not in opt.tag:
+            if '_'+sr not in opt.tag.split('_Split')[0]:
                 del ptmiss_cuts[sr]
 
     isrRegions = [ ]
@@ -786,7 +892,13 @@ if 'SignalRegion' in opt.tag:
         isrcut, tageventweight = '', btagWeight1tag
         if SR in isrRegions:
             isrcut = ' && '+ISRCut 
-            tageventweight = ISRWeightTag 
+            tageventweight = ISRWeightTag
+            if 'MT05' in opt.tag or 'MT01' in opt.tag:
+                mt2llCut = 'mt2ll'+ctrltag
+                if 'FitCRttZ' in opt.tag:
+                    mt2llCut = '(mt2ll_WZtoWW*('+nLooseLepton+'==3) + mt2ll_ttZ*('+nLooseLepton+'==4))'
+                if 'MT05' in opt.tag and SR=='SR4': isrcut += ' && '+mt2llCut+'>5.'
+                if 'MT01' in opt.tag and SR=='SR4': isrcut += ' && '+mt2llCut+'>1.'
 
         if splitjets is True:
             if   SR == "SR1":
@@ -957,6 +1069,30 @@ if hasattr(opt, 'batchQueue') and not hasattr(opt, 'dryRun'):
 #                    cuts[cut+yearcut][key] = cuts[cut][key]
 #            
 #                del cuts[cut]
+
+if 'SignalCRContamination' in opt.tag: 
+
+     sel2Lep = nLooseLepton+'==2 && '+nTightLepton+'==2 && Lepton_pt[0]>=25. && Lepton_pt[1]>=20. && (Lepton_pdgId[0]*Lepton_pdgId[1])<0'
+     pTmissCut = 'MET_T1Smear_pt>=160'
+     lepCut = 'Lepton_pt[0]>25. && Lepton_pt[1]>20. && Lepton_pt[2]>20.'
+     WZFlavCut = '(Lepton_pdgId[0]==-Lepton_pdgId[1] || Lepton_pdgId[0]==-Lepton_pdgId[2] || Lepton_pdgId[1]==-Lepton_pdgId[2])'
+     ZZFlavCut = '((Lepton_pdgId[0]==-Lepton_pdgId[1] && Lepton_pdgId[2]==-Lepton_pdgId[3]) || (Lepton_pdgId[0]==-Lepton_pdgId[2] && Lepton_pdgId[1]==-Lepton_pdgId[3]) || (Lepton_pdgId[0]==-Lepton_pdgId[3] && Lepton_pdgId[1]==-Lepton_pdgId[2]))'
+     WZselection = nLooseLepton+'==3 && ' + nTightLepton + '==3'
+     sel4Lep = nLooseLepton+'==4 && ' + nTightLepton + '>=3'
+     sel3Lep = nLooseLepton+'>=3 && ' + nTightLepton + '>=3'
+     ttZJets = 'nCleanJet>=2 && CleanJet_pt[1]>=20.'
+     ttZLepB = nTightLepton+'>=3 && (('+btagWeight2tag+')*('+nLooseLepton+'==3) + ('+btagWeight1tag+')*('+nLooseLepton+'==4))'
+
+     cuts['L2V'] = { 'expr' : sel2Lep+' && '+pTmissCut, 'weight' : btagWeight0tag }
+     cuts['L2T'] = { 'expr' : sel2Lep+' && '+pTmissCut, 'weight' : btagWeight1tag }
+     cuts['WZ'] = { 'expr' : WZselection+' && '+lepCut+' && '+WZFlavCut+' && '+pTmissCut, 'weight' : btagWeight0tag }
+     cuts['WZ0'] = { 'expr' : WZselection+' && '+lepCut+' && '+WZFlavCut+' && '+pTmissCut+' && nCleanJet==0', 'weight' : btagWeight0tag }
+     cuts['WZ1'] = { 'expr' : WZselection+' && '+lepCut+' && '+WZFlavCut+' && '+pTmissCut+' && nCleanJet>=1', 'weight' : btagWeight0tag }
+     cuts['ZZ'] = { 'expr' : sel4Lep +' && '+lepCut+' && '+ZZFlavCut+' && '+pTmissCut,    'weight' : btagWeight0tag }
+     cuts['ZZ0'] = { 'expr' : sel4Lep +' && '+lepCut+' && '+ZZFlavCut+' && '+pTmissCut+' && nCleanJet==0',    'weight' : btagWeight0tag }
+     cuts['ZZ1'] = { 'expr' : sel4Lep +' && '+lepCut+' && '+ZZFlavCut+' && '+pTmissCut+' && nCleanJet>=1',    'weight' : btagWeight0tag }
+     cuts['ttZ'] = { 'expr' : sel3Lep +' && '+lepCut+' && '+WZFlavCut+' && '+pTmissCut,   'weight' : ttZLepB }
+
 
 if 'SearchRegion' in opt.tag:
 

@@ -92,6 +92,8 @@ for CR_i in CRs:
         regionName = regionName.replace('reco', 'ctrl')
         ctrltag = '_'+CR_i.replace('FitCR','').replace('Val','').replace('Trigger3Lep','WZ')
 
+if 'SignalCR' in opt.tag: regionName = '/'
+
 if 'FitCR' in opt.tag and ctrltag=='': skipTreesCheck = True
  
 SITE=os.uname()[1]
@@ -330,6 +332,10 @@ MuonSF     = MuonWP.replace('isTightMuon', 'tightMuon')
 lep0idx = '0'
 lep1idx = '1'
 lep2idx = '2'
+if ctrltag!='':
+    lep0idx = 'lep0idx'+ctrltag
+    lep1idx = 'lep1idx'+ctrltag
+    lep2idx = 'lep2idx'+ctrltag
 
 nLooseLepton = 'nLepton'
 nTightLepton = 'Sum$(('+ElectronWP+'+'+MuonWP+')==1)'
@@ -348,7 +354,7 @@ dRll   = 'sqrt('+dPhill+'*'+dPhill+'+'+dEtall+'*'+dEtall+')'
 ptmiss_phi = 'ptmiss_phi'+ctrltag
 if 'MET' in opt.tag:
     ptmiss_phi = 'MET_phi' 
-mTllptmiss       = 'sqrt(2*'+pTll+'*ptmiss*(1.-cos('+phill+'-'+ptmiss_phi+')))'
+mTllptmiss       = 'sqrt(2*'+pTll+'*ptmiss'+ctrltag+'*(1.-cos('+phill+'-'+ptmiss_phi+')))'
 dPhillptmiss     = 'acos(cos('+phill+'-'+ptmiss_phi+'))'
 dPhilep0ptmiss   = 'acos(cos(Lepton_phi['+lep0idx+']-'+ptmiss_phi+'))'
 dPhilep1ptmiss   = 'acos(cos(Lepton_phi['+lep1idx+']-'+ptmiss_phi+'))'
@@ -593,6 +599,7 @@ if 'Trigger' in opt.tag or 'LeptonL2TRate' in opt.tag: TriggerEff = '1.'
 # generation weights
 
 XSWeight       = 'baseW*genWeight*((ptmiss'+ctrltag+'-MET_pt)<10000.)'
+if 'SignalCR' in opt.tag: XSWeight = 'baseW'
 
 # lepton weights
 
@@ -723,6 +730,9 @@ if 'SignalRegions' in opt.tag or hasattr(opt, 'outputDirDatacard'):
     normBackgrounds['ttSemilep'] = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } }
     normBackgrounds['minor']     = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } }
 
+    if '_DYmore' in opt.tag: normBackgrounds['DY']['all']['scalefactor']['1.00'] = '1.00'
+    if '_STtWmore' in opt.tag: normBackgrounds['STtW']['all']['scalefactor']['1.00'] = '1.00'
+
 if 'BackSF' in opt.tag:
 
     if '2016' in yeartag:
@@ -787,6 +797,14 @@ elif 'WWPol1a' in opt.tag:
     WWtailsDown = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.983843148317+0.000353321502166*mt2ll'+ctrltag+'))'
 else:
     WWtails, WWtailsUp, WWtailsDown = '1.', '1.', '1.'
+
+WWphiWeight = '(1.)'
+if 'WWPhiW' in opt.tag:
+    #p0, p1, p2 = '(6.23149e-01)', '(4.24170e+01)', '(-3.86854e+00)'
+    #p3, p4, p5 = '(5.60494e-01)', '(6.00449e+01)', '(-5.44043e+00)'
+    p0, p1, p2 = '(2.52859e-01)', '(7.05954e+01)', '(-6.03146e+00)'
+    p3, p4, p5 = '(2.53251e-01)', '(1.39018e+02)', '(-8.17122e+00)'
+    WWphiWeight = '(('+p0+'+'+p1+'*exp('+p2+'*('+dPhiMinlepptmiss+')))/('+p3+'+'+p4+'*exp('+p5+'*('+dPhiMinlepptmiss+'))))'
 
 ### Data info
 
@@ -926,8 +944,10 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                             }
 
         samples['WZ'] = { 'name'   : getSampleFiles(directoryBkg,'WZTo3LNu',False,treePrefix,skipTreesCheck),
-                          'weight' : XSWeight+'*'+SFweight ,
+                          'weight' : XSWeight+'*'+SFweight+'*'+WWphiWeight ,
                          }
+        if 'WZtoWW' in opt.tag and 'WWPol1a' in opt.tag:
+            samples['WZ']['weight'] += '*'+WWtails 
 
         samples['ZZTo2L2Nu']  = {  'name'   : getSampleFiles(directoryBkg,'ZZTo2L2Nu', False,treePrefix,skipTreesCheck) +
                                               getSampleFiles(directoryBkg,'ggZZ2e2n', False,treePrefix,skipTreesCheck) +
@@ -1296,14 +1316,15 @@ if 'cern' in SITE and not skipTreesCheck:
         for ifile in range(len(samples[sample]['name'])):
             samples[sample]['name'][ifile] = samples[sample]['name'][ifile].replace('root://eoscms.cern.ch/', '')
 
-if 'Group' in opt.tag and ('SM' in opt.sigset or 'Backgrounds' in opt.sigset):
+if ('Group' in opt.tag or 'Other' in opt.tag) and ('SM' in opt.sigset or 'Backgrounds' in opt.sigset):
     if isShape:
-        print('Error: should not use Group string in tag name')
+        print('Error: should not use Group or Other string in tag name')
         exit()
     minorBkgList = []
     for minorBkg in [ 'Higgs', 'VVV', 'VZ', 'ttW', 'ttSemilep' ]:
-        if minorBkg in samples:
-            minorBkgList.append(minorBkg)
+        if minorBkg!='ttW' or 'Group' in opt.tag:
+            if minorBkg in samples:
+                minorBkgList.append(minorBkg)
     if len(minorBkgList)>=1:
         samples['minor'] = {}
         for key in list(samples[minorBkgList[0]].keys()):

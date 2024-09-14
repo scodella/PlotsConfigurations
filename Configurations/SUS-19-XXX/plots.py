@@ -1,7 +1,8 @@
 # plot configuration
 if opt.lumi>100: lumi_i=int(round(opt.lumi, 0))
 else           : lumi_i=round(opt.lumi, 1)
-legend['lumi'] = 'L = '+str(lumi_i)+'/fb'
+#legend['lumi'] = 'L = '+str(lumi_i)+'/fb'
+legend['lumi'] = str(lumi_i)+' fb^{-1} '
 legend['sqrt'] = '#sqrt{s} = 13 TeV'
 
 sl  = '#font[12]{l}'
@@ -51,7 +52,8 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'nameHR' : 'EOY Drell-Yan',
         'nameLatex' : 'EOY \\DY',
         'isSignal' : 0,
-        'color': 418,    # kGreen+2
+        #'color': 418,    # kGreen+2
+        'color' : '#94a4a2',
         'fill' : 3005,
         'samples'  : ['EOYDrellYan']
     }
@@ -71,7 +73,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'color': 802,   # kOrange+2
         'samples'  : ['ttZ'] 
     }
-    
+
     groupPlot['WZ']  = {
         'nameHR' : 'WZ (#rightarrow 3' + sl + ')',
         'nameLatex' : '\\WZ ($\\to 3\\ell\\nu$)',
@@ -89,13 +91,55 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'samples'  : ['EOYVZ']
     }
 
-    groupPlot['Others']  = {  
-        'nameHR' : 'Minor bkg.',
+    useOthers = True
+    ttWOthers = True and useOthers and 'Other' not in opt.tag
+    if useOthers:
+      groupPlot['Others']  = {  
+          'nameHR' : 'Other bkg.',
+          'isSignal' : 0,
+          'color': 394, #  kYellow-6
+          'samples'  : ['VVV', 'Higgs', 'VZ', 'HWW', 'minor' ]
+      }
+      if ttWOthers: groupPlot['Others']['samples'].append('ttW')
+    else:
+      groupPlot['VZ'] = {
+        'nameHR' : 'VZ (#rightarrow 2' + sl + '2q)',
+        'nameLatex' : '\\VZ ($\\to 2\\ell 2\\Pq$)',
+        'color'    : 7, #  kYellow-6
         'isSignal' : 0,
-        'color': 394, #  kYellow-6
-        'samples'  : ['ttW', 'VVV', 'Higgs', 'VZ', 'HWW', 'minor' ]
-    }
-
+        'isData'   : 0,
+        'samples'  : ['VZ' ],
+        'scale'    : 1.0
+      }
+      groupPlot['VVV'] = {
+        'nameHR' : 'VVV',
+        'nameLatex' : '\\VVV',
+        'color'    : 424, #  kYellow-6
+        'isSignal' : 0,
+        'isData'   : 0,
+        'samples'  : ['VVV' ],
+        'scale'    : 1.0
+      }
+      groupPlot['Higgs'] = {
+        'nameHR' : 'H #rightarrow WW/#tau#tau',
+        'nameLatex' : '$\\PH\\to \\WW /\\tautau$',
+        'color'    : 434, #  kYellow-6
+        'isSignal' : 0,
+        'isData'   : 0,
+        'samples'  : ['Higgs' ],
+        'scale'    : 1.0
+      } 
+    if not ttWOthers:
+      groupPlot['ttW'] = {
+        'nameHR' : 't#bar{t}W',
+        'nameLatex' : '\\ttW',
+        'color'    : 394, #  kYellow-6
+        'isSignal' : 0,
+        'isData'   : 0,
+        'samples'  : ['ttW' ],
+        'scale'    : 1.0
+      }
+    
     groupPlot['EOYOthers']  = {
         'nameHR' : 'EOY Minor bkg.',
         'isSignal' : 0,
@@ -171,6 +215,16 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'samples'  : ['EOYWJets']
     }
 
+    if opt.paperStyle:
+        groupPlot['ttbar']['color']  = '#3f90da'
+        groupPlot['WW']['color']     = '#ffa90e'
+        groupPlot['tW']['color']     = '#bd1f01'
+        groupPlot['DY']['color']     = '#94a4a2'
+        groupPlot['ZZ']['color']     = '#832db6'
+        groupPlot['ttZ']['color']    = '#a96b59'
+        groupPlot['WZ']['color']     = '#e76300'
+        groupPlot['Others']['color'] = '#b9ac70'
+
 #plot = {}
 
 # keys here must match keys in samples.py    
@@ -184,7 +238,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'color': 418,    # kGreen+2
         'isSignal' : 0,
         'isData'   : 0, 
-        'scale'    : 1.0   ,
+        'scale'    : 1.   ,
     }
     
     plot['ZZTo2L2Nu'] = { 
@@ -211,7 +265,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
         'color': 798,    # kOrange-2
         'isSignal' : 0,
         'isData'   : 0,
-        'scale'    : 1.0             
+        'scale'    : 1.0 #1.0052546#1.1133904#1.0176622                 
     }
     
     plot['WW']  = {  
@@ -390,9 +444,8 @@ if 'SM' in opt.sigset or 'Data' in opt.sigset:
 # Signal  
 
 signalType = 3 if ('SM' in opt.sigset or 'Backgrounds' in opt.sigset) else 0
-if hasattr(opt,'showDataVsBkgOnly') and not opt.showDataVsBkgOnly: signalType = 1
 
-signalColor = 1 if (hasattr(opt, 'postFit') and opt.postFit=='n') else 880 # kViolet
+signalColor = 1 if (hasattr(opt, 'postFit') and opt.postFit=='n') else '#717581' if opt.paperStyle else 880 # kViolet
 
 LSP = '#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}'
 CHR = '#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}'
@@ -430,7 +483,10 @@ for massPoint in samples:
         }
                 
         signalType = 3
-        signalColor += 1
+        if not opt.paperStyle:
+            signalColor += 1
+
+#
 
 for group in groupPlot:
     cutToRemoveFromGroup = [ ]

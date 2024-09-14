@@ -145,6 +145,9 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     if 'postfit' in opt.option.lower(): plotCommand += ' --postFit=p'
     if 'nostat' in opt.option.lower() : plotCommand += ' --removeMCStat'
     if 'nuisanceVariations' in opt.option: plotCommand += ' --nuisanceVariations'
+    if 'onebin' in opt.option.lower() : plotCommand += ' --mergeBins'
+    if 'cutlabel' in opt.option.lower(): plotCommand += ' --addCutLabels'
+    if opt.paperStyle: plotCommand += ' --paperStyle'
 
     os.system(plotCommand)
 
@@ -366,7 +369,7 @@ def postFitPlots(opt, makePlots=True):
                             os.system('rm -f '+postFitShapeFile)
                             os.system('mkdir -p '+commonTools.getShapeDirName(opt.shapedir, fittedYear, tag, fityearoption))
 
-                            samples, cuts, variables = commonTools.getDictionariesInLoop(opt.configuration, year, tag, sigset, 'variables')
+                            samples, cuts, variables = commonTools.getDictionariesInLoop(opt.configuration, year, tag, sigset, 'variables', 'X')
                             datacardNameStructure = getDatacardNameStructure(len(fittedYear.split('-'))>1, len(cuts.keys())>1, len(variables.keys())>1)
 
                             if len(yearInFitList)>1 and year==fittedYear:

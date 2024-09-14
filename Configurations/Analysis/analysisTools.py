@@ -16,6 +16,8 @@ def setAnalysisDefaults(opt):
     opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
     opt.isExotics = True
 
+    if opt.paperStyle and 'SignalRegions' in opt.tag: opt.option += 'cutLabel'
+
     if opt.year.lower()=='run2split': opt.year = '2016HIPM-2016noHIPM-2017-2018'
     elif '2016split' in opt.year: opt.year = opt.year.replace('2016split','2016HIPM-2016noHIPM')
     elif opt.year.lower()=='run2': opt.year = '2016-2017-2018'
@@ -82,9 +84,9 @@ def setAnalysisDefaults(opt):
      
     if len(tagList)>0: opt.tag = '-'.join( tagList )
 
-    if 'group' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsGroup')
-    if 'merge' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsMerge') 
-    opt.tag = opt.tag.replace('StopSignalRegionsMerge','StopSignalRegions')
+    #if 'group' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsGroup')
+    #if 'merge' in inputTag: opt.tag = opt.tag.replace('SignalRegions','SignalRegionsMerge') 
+    #opt.tag = opt.tag.replace('StopSignalRegionsMerge','StopSignalRegions')
     if 'fast' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesULFast')
     if 'reco' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesULFastReco')
     if 'systwz' in inputTag: opt.tag = opt.tag.replace('VetoesUL','VetoesUL_WZbin')

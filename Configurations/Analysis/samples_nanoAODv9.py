@@ -329,16 +329,21 @@ if 'TriggerLatino' in opt.tag:
 ElectronSF = ElectronWP.replace('isTightElectron', 'tightElectron')
 MuonSF     = MuonWP.replace('isTightMuon', 'tightMuon')
 
+nLooseLepton = 'nLepton'
+nTightLepton = 'Sum$(('+ElectronWP+'+'+MuonWP+')==1)'   
+
 lep0idx = '0'
 lep1idx = '1'
 lep2idx = '2'
-if ctrltag!='':
+if 'FitCRttZ' in opt.tag or 'ttZNormalization' in opt.tag:
+        lep0idx = '(lep0idx_WZtoWW*('+nLooseLepton+'==3)+lep0idx_ttZ*('+nLooseLepton+'==4))'
+        lep1idx = '(lep1idx_WZtoWW*('+nLooseLepton+'==3)+lep1idx_ttZ*('+nLooseLepton+'==4))'
+        lep2idx = '(lep2idx_WZtoWW*('+nLooseLepton+'==3)+lep2idx_ttZ*('+nLooseLepton+'==4))'
+elif ctrltag!='':
     lep0idx = 'lep0idx'+ctrltag
     lep1idx = 'lep1idx'+ctrltag
     lep2idx = 'lep2idx'+ctrltag
 
-nLooseLepton = 'nLepton'
-nTightLepton = 'Sum$(('+ElectronWP+'+'+MuonWP+')==1)'
 nTightMT2Lepton = '((('+ElectronWP+'['+lep1idx+ctrltag+']+'+MuonWP+'['+lep1idx+ctrltag+'])==1)+(('+ElectronWP+'['+lep2idx+ctrltag+']+'+MuonWP+'['+lep2idx+ctrltag+'])==1))'
 #nTightPromptLepton = 'Sum$((('+ElectronWP+'+'+MuonWP+')*Lepton_promptgenmatched)==1)'
 nTightPromptLepton = '(('+ElectronWP+'[0]+'+MuonWP+'[0])*Lepton_promptgenmatched[0]+('+ElectronWP+'[1]+'+MuonWP+'[1])*Lepton_promptgenmatched[1])'
@@ -351,7 +356,10 @@ phill  = 'atan('+pyll+'/'+pxll+')'
 dPhill = 'acos(cos(Lepton_phi['+lep1idx+']-Lepton_phi['+lep0idx+']))'
 dEtall = 'Lepton_eta['+lep1idx+']-Lepton_eta['+lep0idx+']'
 dRll   = 'sqrt('+dPhill+'*'+dPhill+'+'+dEtall+'*'+dEtall+')'
-ptmiss_phi = 'ptmiss_phi'+ctrltag
+if 'FitCRttZ' in opt.tag or 'ttZNormalization' in opt.tag:
+    ptmiss_phi = '(ptmiss_phi_WZtoWW*('+nLooseLepton+'==3)+ptmiss_phi_ttZ*('+nLooseLepton+'==4))'
+else:
+    ptmiss_phi = 'ptmiss_phi'+ctrltag
 if 'MET' in opt.tag:
     ptmiss_phi = 'MET_phi' 
 mTllptmiss       = 'sqrt(2*'+pTll+'*ptmiss'+ctrltag+'*(1.-cos('+phill+'-'+ptmiss_phi+')))'

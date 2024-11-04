@@ -1,7 +1,7 @@
 #!/bin/sh -x
-git checkout base
+git checkout run3base
 git fetch
 #git pull
-git checkout BTagPerf
-git merge origin/base
+git checkout RPLME_ANALYSIS
+git merge origin/run3base
 

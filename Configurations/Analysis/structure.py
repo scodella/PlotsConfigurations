@@ -14,7 +14,3 @@ for sample in samples:
     if 'removeFromCuts' in samples[sample]:
         structure[sample]['removeFromCuts'] = samples[sample]['removeFromCuts']
 
-
-
-
-

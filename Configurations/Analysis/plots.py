@@ -8,7 +8,7 @@
 if opt.lumi>100: lumi_i=int(round(opt.lumi, 0))
 else           : lumi_i=round(opt.lumi, 1)
 legend['lumi'] = 'L = '+str(lumi_i)+'/fb'
-legend['sqrt'] = ' ('+opt.CME+' TeV)'
+legend['sqrt'] = '#sqrt{s} = '+opt.CME+' TeV'
 
 ### groupPlot = {}
 # 
@@ -16,56 +16,14 @@ legend['sqrt'] = ' ('+opt.CME+' TeV)'
 # If not defined, normal plots is used
 #
 
-# ...
+# ... your groupPlot here ...
 
 ## #plot = {}
 
 # keys here must match keys in samples.py    
 #    
 
-if 'SM' in opt.sigset or 'MC' in opt.sigset:
-
-    plot['QCDMu']       = { 'nameHR' : 'QCD MuEnriched',
-                            'nameLatex' : '\\QCDMu',
-                            'color': 4,  
-                            'isSignal' : 0,
-                            'isData'   : 0, 
-                            'scale'    : 1.,
-                           }
-
-    lightName = 'udsg' if 'cjets' in samples else 'udsg + c'
-
-    plot['cjets']       = { 'nameHR' : 'c',
-                            'nameLatex' : 'c',
-                            'color': 418,    # kGreen+2
-                            'isSignal' : 0,
-                            'isData'   : 0,
-                            'scale'    : 1.,
-                           }
-
-    plot['bjets']       = { 'nameHR' : 'b',
-                            'nameLatex' : 'b',
-                            'color': 632, #'kRed',
-                            'isSignal' : 0,
-                            'isData'   : 0,
-                            'scale'    : 1.,
-                           }
-
-    plot['ljets']       = { 'nameHR' : lightName,
-                            'nameLatex' : lightName,
-                            'color': 600, #'kBlue',
-                            'isSignal' : 0,
-                            'isData'   : 0,
-                            'scale'    : 1.,
-                           }
-
-    plot['light']       = { 'nameHR' : lightName,
-                            'nameLatex' : lightName,
-                            'color': 600, #'kBlue',
-                            'isSignal' : 0,
-                            'isData'   : 0,
-                            'scale'    : 1.,
-                           }
+# ... your plot here ...
 
 ### samples and groups to be removed from plots               
 
@@ -90,18 +48,7 @@ for group in groupPlot:
 for group in groupToRemoveFromPlot:
     del groupPlot[group]
 
-### data
-
-if 'SM' in opt.sigset or 'Data' in opt.sigset:
-
-    plot['DATA']             = { 'nameHR' : 'Data',
-                                 'color': 1 ,  
-                                 'isSignal' : 0,
-                                 'isData'   : 1,
-                                 #'isBlind'  : 1
-                                }
-
-### Signal  
+### BSM signals
 
 ### cuts to be removed from group
 

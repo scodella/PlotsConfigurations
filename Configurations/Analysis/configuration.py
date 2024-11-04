@@ -12,8 +12,7 @@ variablesFile = 'variables.py'
 cutsFile = 'cuts.py' 
 
 # file with list of samples
-#amplesFile = 'samples_Run2022-124X.py'
-samplesFile = 'samples_Run2023-130X.py'
+samplesFile = 'samples.py'
 
 # file with list of samples
 plotFile = 'plots.py' 
@@ -35,7 +34,5 @@ nuisancesFile = 'nuisances.py'
 
 # aliases file 
 aliasesFile = 'aliases.py'
-
-# special options
 
 

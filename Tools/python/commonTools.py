@@ -186,7 +186,10 @@ def getDictionaries(optOrig, lastDictionary='nuisances'):
             print('    Error: sample cfg file', dictionaryCfg, 'not found')
             exit()
 
-    optOrig.lumi = opt.lumi
+    for attribute in list(vars(opt).keys()):
+        if not hasattr(optOrig, attribute):
+            setattr(optOrig, attribute, getattr(opt, attribute))
+
     if   lastDictionaryIndex==0: return samples
     elif lastDictionaryIndex==1: return samples, cuts
     elif lastDictionaryIndex==2: return samples, cuts, variables

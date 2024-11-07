@@ -1,14 +1,17 @@
-# plots = {}
-
-
 # plot configuration
 
 ### General parameters
 
 if opt.lumi>100: lumi_i=int(round(opt.lumi, 0))
 else           : lumi_i=round(opt.lumi, 1)
-legend['lumi'] = 'L = '+str(lumi_i)+'/fb'
+#legend['lumi'] = 'L = '+str(lumi_i)+'/fb'
+legend['lumi'] = str(lumi_i)+' fb^{-1} '
 legend['sqrt'] = '#sqrt{s} = '+opt.CME+' TeV'
+
+# CMS colour scheme
+# https://gitlab.cern.ch/cms-analysis/analysisexamples/plotting-demo/-/blob/master/1-tutorial_CAT_recommendations.ipynb
+# petroff6 = ListedColormap(["#5790fc", "#f89c20", "#e42536", "#964a8b", "#9c9ca1", "#7a21dd"])
+# petroff10 = ListedColormap(["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"])
 
 ### groupPlot = {}
 # 
@@ -18,8 +21,8 @@ legend['sqrt'] = '#sqrt{s} = '+opt.CME+' TeV'
 
 # ... your groupPlot here ...
 
-## #plot = {}
-
+### plot = {}
+#
 # keys here must match keys in samples.py    
 #    
 

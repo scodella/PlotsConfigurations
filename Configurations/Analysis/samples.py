@@ -7,7 +7,7 @@ from LatinoAnalysis.Tools.commonTools import *
 ### Generals
 
 opt.CME = 'XXX'
-opt.lumi = 999.6999
+opt.lumi = 999.999
 treePrefix= 'nanoLatino_'
 
 isDatacardOrPlot = hasattr(opt, 'outputDirDatacard') or hasattr(opt, 'postFit') or hasattr(opt, 'skipLNN') or hasattr(opt, 'inputDirMaxFit')
@@ -18,7 +18,7 @@ skipTreesCheck = False
 
 if not isDatacardOrPlot: 
     if skipTreesCheck:
-        print 'Error: it is not allowed to fill shapes and skipping trees check!'
+        print('Error: it is not allowed to fill shapes and skipping trees check!')
         exit()
 
 SITE=os.uname()[1]
@@ -32,7 +32,7 @@ if 'cern' not in SITE and 'ifca' not in SITE and 'cloud' not in SITE: SITE = 'ce
 
 ### Weights and filters
 
-### MC trees
+### Backgrounds
 
 # Common MC keys
 
@@ -48,17 +48,21 @@ for sample in samples:
 
 ### Data
 
+### Signals
+
 ### Files per job
  
 for sample in samples:
-    if 'FilesPerJob' not in samples[sample]:
-        ntrees = len(samples[sample]['name']) 
-        multFactor = 6 if 'JobsPerSample' not in samples[sample] else int(samples[sample]['JobsPerSample'])
-        samples[sample]['FilesPerJob'] = int(math.ceil(float(ntrees)/multFactor))
+    if sample in [ 'sample1', 'sample2', 'sample3' ] or 'FilesPerJob' in samples[sample] or 'JobsPerSample' in samples[sample]: 
+        samples[sample]['split'] = 'AsMuchAsPossible'
+        if 'FilesPerJob' not in samples[sample] and 'JobsPerSample' not in samples[sample]:
+            samples[sample]['JobsPerSample'] = '6'
+    elif sample in [ 'sample4', 'sample5', 'sample6' ]:
+        samples[sample]['split'] = 'Single'
 
 ### Cleaning (a bit analysis dependent, but keep it for the moment)
 
-if opt.sigset.split('-')[0] not in [ 'SM', 'MC', 'Data' ]:
+if opt.sigset.split('-')[0] not in [ 'SM', 'MC', 'Backgrounds', 'Data' ]:
 
     sampleToRemove = [ ]
 
@@ -80,4 +84,5 @@ if 'cern' in SITE:
     for sample in samples:
         for ifile in range(len(samples[sample]['name'])):
             samples[sample]['name'][ifile] = samples[sample]['name'][ifile].replace('root://eoscms.cern.ch/', '')
+
 

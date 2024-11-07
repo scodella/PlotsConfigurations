@@ -54,6 +54,12 @@ def getSplits(opt, year, tag, action):
                 elif 'JobsPerSample' in samples[sample]: jobsForSamples = int(samples[sample]['JobsPerSample']) 
                 if jobsForSamples>0:
                     if commonTools.countedSampleShapeFiles(opt.shapedir, year, tag, sample)==jobsForSamples: continue
+            if 'FilesPerJob' not in samples[sample]:
+                if 'JobsPerSample' not in samples[sample]:
+                    print('Warning:', sample, 'has neither FilesPerJob nor JobsPerSample options')
+                    continue
+                ntrees, multFactor = len(samples[sample]['name']), int(samples[sample]['JobsPerSample'])
+                samples[sample]['FilesPerJob'] = int(math.ceil(float(ntrees)/multFactor))
             splits['AsMuchAsPossible'].append(treeType+sample)
         elif 'shapes' in action:
             if opt.recover and commonTools.foundSampleShapeFile(opt.shapedir, year, tag, sample): continue

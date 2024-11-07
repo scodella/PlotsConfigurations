@@ -103,12 +103,14 @@ def mergeall(opt):
 def remakeMissingShapes(opt, method='resubmit'):
 
     sampleShapeDir = '/'.join([ opt.shapedir, opt.year, opt.tag, 'AsMuchAsPossible' ])
-
+ 
     for shFile in commonTools.getLogFileList(opt, 'sh'):
 
         sample = shFile.split('/')[3]
         if not commonTools.isGoodFile(sampleShapeDir+'/plots_'+opt.year+opt.tag+'_ALL_'+sample+'.root', 0):
+
             missingShape = False
+            if 'force' in opt.option.lower(): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.done'), 0): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.err'), 0) and commonTools.hasString(shFile.replace('.sh','.err'), 'RuntimeError'): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.err'), 0) and commonTools.hasString(shFile.replace('.sh','.err'), 'ImportError'): missingShape = True
@@ -134,13 +136,16 @@ def remakeMissingShapes(opt, method='resubmit'):
                     makeShapeCommand = 'condor_submit '+shFile.replace('.sh','.jds')+' > ' +shFile.replace('.sh','.jid')
 
                 elif method=='recover':
-                    makeShapeCommand = ' ; '.join([ 'cd '+commonTools.getLogDir(opt, opt.year, opt.tag)+'/'+sample+'/', './'+shFile.split('/')[-1], 'c - '  ])
+                    makeShapeCommand = ' ; '.join([ 'cd '+commonTools.getLogDir(opt, opt.year, opt.tag)+'/'+sample+'/', './'+shFile.split('/')[-1], 'cd - ' ])
 
                 print('  Remaking missing shape for', opt.year, opt.tag, sample)
                 if opt.dryRun: print(makeShapeCommand)
                 else: os.system(makeShapeCommand)
             
             elif commonTools.isGoodFile(shFile.replace('.sh','.err'), 0): print('  Job with error to check:', opt.year, opt.tag, sample)
+
+        else:
+            os.system('rm -r '+shFile.replace(shFile.split('/')[-1],''))
 
 ### Plots
 

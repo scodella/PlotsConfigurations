@@ -54,18 +54,12 @@ def getDatacardList(opt, signal):
 
     return datacardList
 
-#def combineDatacards(opt, signal, datacardList, dryRun=False):
 def combineDatacards(opt, signal, dryRun=False):
 
     combineDatacardCommandList = [ commonTools.setupCombineCommand(opt) ]
 
     signalOutputDir = commonTools.getSignalDir(opt, opt.year, opt.tag, signal, 'combineOutDir')
     combineDatacardCommandList.extend([ 'mkdir -p '+signalOutputDir, 'cd '+signalOutputDir ])
-
-    #signalDatacardList = getDatacardList(opt)
-
-    #for datacard in getDatacardList(opt):
-    #    signalDatacardList.append(datacard.replace('MASSPOINT', signal))
 
     combineDatacardCommandList.append('combineCards.py '+' '.join(getDatacardList(opt, signal))+' > combinedDatacard.txt')
 
@@ -87,7 +81,6 @@ def runCombine(opt):
 
     if not opt.interactive and opt.action!='writeDatacards':
         commonTools.checkProxy(opt)
-        #opt.batchQueue = commonTools.batchQueue(opt, opt.batchQueue)
 
     if not hasattr(opt, 'combineAction'):
         if 'limit' in opt.option: limits(opt)
@@ -116,8 +109,6 @@ def runCombine(opt):
 
     opt2.fileset, baseSigset = latinoTools.getPerSignalSigset(opt.fileset, opt.sigset) 
 
-    #samples = commonTools.getSamples(opt)
-
     yearList = opt.year.split('-') if 'split' in opt.option else [ opt.year ]
 
     for year in yearList:
@@ -126,8 +117,6 @@ def runCombine(opt):
 
             outtag = commonTools.getTagForDatacards(tag, opt.sigset)+commonTools.getCombineOptionFlag(opt.option)
             opt2.year, opt2.tag = year, outtag
-            #datacardList = getDatacardList(opt2)
-            #combineJobs = { } 
 
             samples = commonTools.getSamples(opt2)
 
@@ -145,6 +134,7 @@ def runCombine(opt):
                    impactPlotDir = '/'.join([ opt2.baseDir, opt.plotsdir, year, 'Impacts' ])
                    os.system('mkdir -p '+impactPlotDir)
                    combineCommandList.append('mv impacts.pdf '+impactPlotDir+'/'+outtag+'_MASSPOINT.pdf')
+                if cleanDatacards: combineCommandList.append('rm combinedDatacard.txt')
             combineCommandList.append( 'cd '+opt2.baseDir )
             if cleanDatacards: combineCommandList.append(commonTools.cleanSignalDatacards(opt2, year, outtag, 'MASSPOINT', True))
 
@@ -153,7 +143,6 @@ def runCombine(opt):
             for sample in samples:
                 if samples[sample]['isSignal']:
 
-                    #opt2.sigset = baseSigset.replace('MASSPOINT', sample)
                     if runCombineJob:
                         combineOutputFileName = commonTools.getCombineOutputFileName(opt2, sample)
 
@@ -161,12 +150,6 @@ def runCombine(opt):
                             os.system('rm -f '+combineOutputFileName)
                         elif commonTools.isGoodFile(combineOutputFileName, 6000.):
                             continue
-                    #combineCommandList.append(combineDatacards(opt2, sample, datacardList, True))
-                    #if runCombineJob:  combineCommandList.append(' '.join(['combine', opt.combineOption, 'combinedDatacard.txt' ]))
-                    #combineCommandList.append( 'cd '+opt2.baseDir )
-                    #if cleanDatacards: combineCommandList.append(commonTools.cleanSignalDatacards(opt2, year, outtag, sample, True))
-
-                    #combineCommand = '\n'.join(combineCommandList) 
 
                     signalCombineCommand = combineCommand.replace('MASSPOINT', sample)
 
@@ -235,8 +218,10 @@ def getFitOptions(options):
         if 'asimovs' in options: optionList.append('-t -1 --expectSignal  1')
         if 'asimovi' in options: optionList.append('-t -1 --expectSignal 15')
         optionList.append('-n '+commonTools.getCombineOptionFlag(options))
-    if 'autob'   in options: optionList.append('--autoBoundsPOIs="*"')
-    if 'negsign' in options: optionList.append('--rMin -10')
+    if 'useautob' in options: optionList.append('--autoBoundsPOIs="*"')
+    if 'negsign'  in options: optionList.append('--rMin -10')
+    if 'usedms'   in options: optionList.append('--cminDefaultMinimizerStrategy 0')
+    if 'dorobfit' in options: optionList.append('--robustFit 1')
     return ' '.join(optionList)
 
 def goodnessOfFit(opt):
@@ -253,8 +238,9 @@ def goodnessOfFit(opt):
 def mlfits(opt):
 
     opt.combineAction = 'mlfits'
+    if 'nodms' not in opt.option.lower(): opt.option += 'usedms'
     fitOptions = getFitOptions(opt.option.lower())
-    opt.combineCommand = ' '.join(['combine -M FitDiagnostics', fitOptions, '--cminDefaultMinimizerStrategy 0	combinedDatacard.txt' ])
+    opt.combineCommand = ' '.join(['combine -M FitDiagnostics', fitOptions, 'combinedDatacard.txt' ])
     opt.combineOutDir = opt.mlfitdir
 
     runCombine(opt)
@@ -263,17 +249,25 @@ def impactsPlots(opt):
 
     opt.combineAction = 'impacts'
     opt.option += 'noshapes'
+    if 'noautob' not in opt.option.lower(): opt.option += 'useautob'
+    if 'norobust' not in opt.option.lower(): opt.option += 'dorobust'
     fitOptions = getFitOptions(opt.option.lower())
     stepList = [ 'text2workspace.py combinedDatacard.txt']
-    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doInitialFit --robustFit 1 '+fitOptions)
-    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --robustFit 1 --doFits --parallel 100 '+fitOptions)
+    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doInitialFit '+fitOptions)
+    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doFits --parallel 100 '+fitOptions)
     stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 -o impacts.json '+fitOptions)
-    stepList.append('sed "s/Smooth//g" impacts.json > impacts_final.json')
-    stepList.append('plotImpacts.py -i impacts_final.json -o impacts')
+    stepList.append('plotImpacts.py -i impacts.json -o impacts')
     opt.combineCommand = ' ; '.join(stepList)
     opt.combineOutDir = opt.impactdir
 
     runCombine(opt)
+
+def saveNuisancesPlots(opt):
+
+    plotRootFile = commonTools.openRootFile(commonTools.getSignalDir(opt,opt.year,opt.tag,opt.sigset,'mlfitdir')+'/plots'+commonTools.getCombineOptionFlag(opt.option)+'.root')
+    for canvasName in [ 'asdf', 'nuisances', 'post_fit_errs' ]:
+        nuisancePlot = plotRootFile.Get(canvasName)
+        nuisancePlot.Print('/'.join([ opt.plotsdir, opt.year, 'Impacts', 'Nuisances', '' ])+'_'.join([ opt.tag, opt.sigset, canvasName ])+'.png')
 
 def diffNuisances(opt):
 
@@ -281,15 +275,26 @@ def diffNuisances(opt):
     commandList = [ commonTools.setupCombineCommand(opt, ' ; ') ]
     nuisCommand = 'python $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/test/diffNuisances.py  -a fitDiagnostics.root -g plots.root > diffNuisances.txt'
     outputString = commonTools.getCombineOptionFlag(opt.option)
+    if 'skipfitb' in opt.option.lower(): nuisCommand = nuisCommand.replace(' > ', ' --skipFitB > ')
+    if 'skipfits' in opt.option.lower(): nuisCommand = nuisCommand.replace(' > ', ' --skipFitS > ')
     nuisCommand = nuisCommand.replace('.root', outputString+'.root').replace('.txt', outputString+'.txt')
+    plotCommandList = [ commonTools.cdWorkDir(opt) ]
 
     yearList = opt.year.split('-') if 'split' in opt.option else [ opt.year ]
     for year in yearList:
+
+        plotOutputDir = '/'.join([ opt.plotsdir, year, 'Impacts', 'Nuisances', '' ])
+        os.system('mkdir -p '+plotOutputDir)
+        commonTools.copyIndexForPlots(opt.plotsdir, plotOutputDir)
+
         for tag in opt.tag.split('-'):
-            
+
             signals = commonTools.getSignals(opt)
             for signal in signals:
-                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])               
 
-    os.system(' ; '.join(commandList))
+                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])
+
+                plotCommandList.append('./runAnalysis.py --action=saveNuisancesPlots --year='+year+' --tag='+tag+' --sigset='+signal)
+
+    os.system(' ; '.join(commandList+plotCommandList))
 

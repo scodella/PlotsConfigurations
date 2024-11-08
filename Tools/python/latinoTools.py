@@ -114,7 +114,9 @@ def remakeMissingShapes(opt, method='resubmit'):
 
         sample = shFile.split('/')[3]
         if not commonTools.isGoodFile(sampleShapeDir+'/plots_'+opt.year+opt.tag+'_ALL_'+sample+'.root', 0):
+
             missingShape = False
+            if 'force' in opt.option.lower(): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.done'), 0): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.err'), 0) and commonTools.hasString(shFile.replace('.sh','.err'), 'RuntimeError'): missingShape = True
             if commonTools.isGoodFile(shFile.replace('.sh','.err'), 0) and commonTools.hasString(shFile.replace('.sh','.err'), 'ImportError'): missingShape = True
@@ -140,13 +142,16 @@ def remakeMissingShapes(opt, method='resubmit'):
                     makeShapeCommand = 'condor_submit '+shFile.replace('.sh','.jds')+' > ' +shFile.replace('.sh','.jid')
 
                 elif method=='recover':
-                    makeShapeCommand = ' ; '.join([ 'cd '+commonTools.getLogDir(opt, opt.year, opt.tag)+'/'+sample+'/', './'+shFile.split('/')[-1], 'c - '  ])
+                    makeShapeCommand = ' ; '.join([ 'cd '+commonTools.getLogDir(opt, opt.year, opt.tag)+'/'+sample+'/', './'+shFile.split('/')[-1], 'cd - ' ])
 
                 print('  Remaking missing shape for', opt.year, opt.tag, sample)
                 if opt.dryRun: print(makeShapeCommand)
                 else: os.system(makeShapeCommand)
             
             elif commonTools.isGoodFile(shFile.replace('.sh','.err'), 0): print('  Job with error to check:', opt.year, opt.tag, sample)
+
+        else:
+            os.system('rm -r '+shFile.replace(shFile.split('/')[-1],''))
 
 ### Plots
 
@@ -193,6 +198,9 @@ def mkPlot(opt, year, tag, sigset, nuisances, fitoption='', yearInFit='', extraO
     if 'postfit' in opt.option.lower(): plotCommand += ' --postFit=p'
     if 'nostat' in opt.option.lower() : plotCommand += ' --removeMCStat'
     if 'nuisanceVariations' in opt.option: plotCommand += ' --nuisanceVariations'
+    if 'onebin' in opt.option.lower() : plotCommand += ' --mergeBins'
+    if 'cutlabel' in opt.option.lower(): plotCommand += ' --addCutLabels'
+    if opt.paperStyle: plotCommand += ' --paperStyle'
 
     os.system(plotCommand)
 
@@ -209,14 +217,31 @@ def plotNuisances(opt):
    opt.samplesFile = commonTools.getCfgFileName(opt, 'samples')
    opt.option += 'keepratioplots'
 
-   for year in opt.year.split('-'):
+   yearList = opt.year.split('-') if 'merge' not in opt.option else [ opt.year ]
+
+   for year in yearList:
        for tag in opt.tag.split('-'):
 
            opt2 = copy.deepcopy(opt)
            opt2.year, opt2.tag = year, tag
-           samples, cuts, variables, nuisances = commonTools.getDictionaries(opt2)
      
            singleNuisances = {}
+
+           if year.split('-')>1:
+
+               outputNuisances =  '_'.join([ 'nuisances', year, tag, opt.sigset+'.py' ])
+               commonTools.mergeDataTakingPeriodShapes(opt, year, tag, opt.fileset[1:], '', 'None', commonTools.getCfgFileName(opt, 'nuisances'), outputNuisances, opt.verbose)
+
+               samples, cuts, variables = commonTools.getDictionaries(opt2, 'variables')
+               nuisances = {}
+               handle = open(outputNuisances,'r')
+               exec(handle)
+               handle.close()
+               os.system('rm -f '+outputNuisances)
+
+           else:
+
+               samples, cuts, variables, nuisances = commonTools.getDictionaries(opt2)
 
            for nuisance in nuisances:
                if nuisance=='stat' or ('type' in nuisances[nuisance] and nuisances[nuisance]['type']=='shape'):
@@ -310,6 +335,7 @@ def mkPostFitPlot(opt, fitoption, fittedYear, year, tag, cut, variable, signal, 
     postFitPlotCommandList.append('--inputFile='+commonTools.getShapeFileName(opt.shapedir, year, tag.split('_')[0], opt.sigset, opt.fileset))
     postFitPlotCommandList.append('--outputFile='+commonTools.getShapeFileName(opt.shapedir, fittedYear, tag, sigset, '', tagoption))
     if 'asimov' in opt.option.lower(): postFitPlotCommandList.append('--getDataFromCombine')
+    postFitPlotCommandList.append('--getDataFromCombine') # Check this
 
     os.system('mkPostFitPlot.py '+' '.join(postFitPlotCommandList))
 
@@ -397,7 +423,7 @@ def postFitPlots(opt, makePlots=True):
                             os.system('rm -f '+postFitShapeFile)
                             os.system('mkdir -p '+commonTools.getShapeDirName(opt.shapedir, fittedYear, tag, fityearoption))
 
-                            samples, cuts, variables = commonTools.getDictionariesInLoop(opt.configuration, year, tag, sigset, 'variables')
+                            samples, cuts, variables = commonTools.getDictionariesInLoop(opt.configuration, year, tag, sigset, 'variables', 'X')
                             datacardNameStructure = getDatacardNameStructure(len(fittedYear.split('-'))>1, len(list(cuts.keys()))>1, len(list(variables.keys()))>1)
 
                             if len(yearInFitList)>1 and year==fittedYear:
@@ -412,7 +438,7 @@ def postFitPlots(opt, makePlots=True):
                                         if len(yearInFitList)==1 or year!=fittedYear:
                                             mkPostFitPlot(opt, combinedataset+'/'+fitoption, fittedYear, year, tag, cut, variable, signal, sigset, datacardNameStructure)
 
-                                        else: 
+                                        elif cut not in samples[signal]['removeFromCuts']: # Check this
                                             opt2 = copy.deepcopy(opt)
                                             opt2.year, opt2.tag, opt2.sigset, opt2.baseDir = year, combinetag, sigset, os.getenv('PWD')
                                             postFitShapeFileFullPath = commonTools.mergeDirPaths(opt2.baseDir, postFitShapeFile)
@@ -502,7 +528,7 @@ def submitJobs(opt, jobName, jobTag, targetList, splitBatch, jobSplit, nThreads)
     jobs = batchJobs(jobName,jobTag,['ALL'],list(targetList.keys()),splitBatch,'',JOB_DIR_SPLIT_READY=jobSplit)
     jobs.nThreads = nThreads
 
-    for signal in targetList: 
+    for signal in targetList:
         jobs.Add('ALL', signal, targetList[signal])
 
     if not opt.dryRun:

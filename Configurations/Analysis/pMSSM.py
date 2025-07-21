@@ -6,7 +6,7 @@ import os
 import math 
 
 massZ = 91.1876
-btagwp = "btagWeight_1tag_deepjet_M_1c"
+btagwp = "btagWeight_1tag_deepcsv_M_1c"
 
 #Binning for pMSSM IDs
 pMSSMid1_nbins = 600
@@ -136,76 +136,126 @@ def get_CRbin(ptmiss, njets):
     if ptmiss_bin>=2: return ptmiss_bin+2
     return 2*ptmiss_bin+(njets>0)
 
+def getBinContent4Weight(histo, valx, valy, sys="unknown", var=0):
+
+  xmin = histo.GetXaxis().GetXmin()
+  xmax = histo.GetXaxis().GetXmax()
+  ymin = histo.GetYaxis().GetXmin()
+  ymax = histo.GetYaxis().GetXmax()
+
+  if xmin>=0: valx = abs(valx)
+  if valx<xmin: valx = xmin + 0.001
+  if valx>xmax: valx = xmax - 0.001
+  if ymin>=0: valy = abs(valy)
+  if valy<ymin: valy = ymin + 0.001
+  if valy>ymax: valy = ymax - 0.001
+
+  this_weight = histo.GetBinContent(histo.FindBin(valx,valy))
+
+  if var!=0:
+      histoError = histo.GetBinError(histo.FindBin(valx,valy))
+      if sys=="trigger" or sys=="fastsim":
+          weightError = math.sqrt( (0.02*this_weight)*(0.02*this_weight) + (histoError*histoError) )
+      else:
+          weightError = histoError
+      this_weight += sys*weightError
+  
+  return this_weight
+
+def printEvent(pmssid1, pmssid2, region, srbin, weight, lepton_flavor, njets): 
+
+    print( 
+        f"pmssid1: {pmssid1}, "
+        f"pmssid2: {pmssid2}, "
+        f"Region: {region}, "
+        f"srbin: {srbin}, "
+        f"Weight: {weight}, "
+        f"Flavor: {lepton_flavor}, "
+        f"jets: {njets}"
+    )
+
 if __name__ == '__main__':
 
     usage = 'usage: %prog [options]'
     parser = optparse.OptionParser(usage)
 
-    parser.add_option('--year'    , dest='year'       , help='year'  , default=-1)
-    parser.add_option('--sample'  , dest='sample'     , help='sample'  , default=-1)
+    parser.add_option('--year'    , dest='year'       , help='year'  , default="")
+    parser.add_option('--sample'  , dest='sample'     , help='sample'  , default="")
+    parser.add_option('--syst'    , dest='syst'       , help='syst'  , default="Nominal")
     parser.add_option('--events'  , dest='events'     , help='events to scan'  , default=-1, type=int)
     parser.add_option('--ptmiss'  , dest='ptmiss'     , help='ptmiss cut'  , default=100, type=float)
-    parser.add_option("--total"   , dest='total' , default=False, help="Total", action='store_true')
+    parser.add_option("--level"   , dest='level' , default="Full", help="Level")
     parser.add_option("--splitmtll", dest='splitmtll' , default=False, help="Split SRs in mtll bins", action='store_true')
     parser.add_option("--addcr"   , dest='addcr' , default=False, help="Add CRs", action='store_true')
     parser.add_option("--verbose" , dest='verbose' , default=False, help="Verbose", action='store_true')
     parser.add_option("--job"     , dest='job' , default="all", help="Sample tree")
     parser.add_option("--debug"   , dest='debug' , default=False, help="Debug", action='store_true')
+    parser.add_option("--debugcr"   , dest='debugcr' , default=False, help="Debug CR", action='store_true')
+    parser.add_option("--noweight"   , dest='noweight' , default=False, help="No weight", action='store_true')
     (opt, args) = parser.parse_args()
 
-    if opt.total:
+    #if opt.total:
+    #    bins = numpy.intc([pMSSMid1_nbins, pMSSMid2_nbins])
+    #    lowedges = numpy.float64([pMSSMid1_low, pMSSMid2_low])
+    #    upedges = numpy.float64([pMSSMid1_up, pMSSMid2_up])
+    #    thnsparse = ROOT.THnSparseD("Total","Total",2,bins,lowedges,upedges)
 
-        bins = numpy.intc([pMSSMid1_nbins, pMSSMid2_nbins])
-        lowedges = numpy.float64([pMSSMid1_low, pMSSMid2_low])
-        upedges = numpy.float64([pMSSMid1_up, pMSSMid2_up])
-        thnsparse = ROOT.THnSparseD("Total","Total",2,bins,lowedges,upedges)
+    # Binning for signal regionssr_nbins
+    sr_nbins = 20 if not opt.splitmtll else (6*7+(6+4)*8+4*9)
+    cr_nbins = 16 if opt.addcr else 0
+    total_nbins = 1 + sr_nbins + cr_nbins
+    sr_low = -0.5
+    sr_up = sr_low + total_nbins
 
-    else:
+    # Binning into arrays for THnSparse
+    bins = numpy.intc([pMSSMid1_nbins, pMSSMid2_nbins, total_nbins])
+    lowedges = numpy.float64([pMSSMid1_low, pMSSMid2_low, sr_low])
+    upedges = numpy.float64([pMSSMid1_up, pMSSMid2_up, sr_up])
+    thnsparse = ROOT.THnSparseD(opt.syst,opt.syst,3,bins,lowedges,upedges)  
 
-        # Binning for signal regionssr_nbins
-        sr_nbins = 20 if not opt.splitmtll else (6*7+(6+4)*8+4*9)
-        cr_nbins = 16 if opt.addcr else 0
-        sr_low = 0.5
-        sr_up = sr_low + sr_nbins + cr_nbins
+    thnsparse.Sumw2()
 
-        # Binning into arrays for THnSparse
-        bins = numpy.intc([pMSSMid1_nbins, pMSSMid2_nbins, sr_nbins+cr_nbins])
-        lowedges = numpy.float64([pMSSMid1_low, pMSSMid2_low, sr_low])
-        upedges = numpy.float64([pMSSMid1_up, pMSSMid2_up, sr_up])
-        thnsparse = ROOT.THnSparseD("Selected","Selected",3,bins,lowedges,upedges)  
-
-    chain = ROOT.TChain('Events')
-
-    signalDir = '/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21ULYEARFS_106X_nAODv9_FullYEARv8/'
-    if opt.total: signalDir += 'susyGen__susyW/'
-    else: signalDir += 'susyGen__susyW__FSSusyYEARv8__FSSusyCorrYEARv8__FSSusyNominYEARv8__susyMT2fastSmear/'
-    signalDir = signalDir.replace('YEAR', opt.year).replace('UL20', 'UL').replace('noHIPM','').replace('HIPM','')
-    if not opt.total:
-        if opt.year=='2016noHIPM': 
-            signalDir = signalDir.replace('Corr2016v8','Corr2016v8noHIPM').replace('__susyMT2','noHIPM__susyMT2')
+    totalDir = "/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21ULYEARFS_106X_nAODv9_FullYEARv8/susyGen__susyW"
+    totalDir = totalDir.replace('YEAR', opt.year).replace('UL20', 'UL').replace('noHIPM','').replace('HIPM','')
+    srDir = totalDir + "__FSSusyYEARv8__FSSusyCorrYEARv8__FSSusyNominYEARv8__susyMT2fastSmear"
+    srDir = srDir.replace('YEAR', opt.year).replace('noHIPM','').replace('HIPM','')
+    if opt.year=='2016noHIPM': 
+            srDir = srDir.replace('Corr2016v8','Corr2016v8noHIPM').replace('__susyMT2','noHIPM__susyMT2')
         elif opt.year=='2016HIPM':
-            signalDir = signalDir.replace('Corr2016v8','Corr2016v8HIPM').replace('__susyMT2','HIPM__susyMT2')
+            srDir = srDir.replace('Corr2016v8','Corr2016v8HIPM').replace('__susyMT2','HIPM__susyMT2')
+    crDir = srDir.replace('fast','crfs')
 
     samplePart = '__part*' if opt.job=='all' else '__part'+opt.job
 
-    print('Opening input file', signalDir+'nanoLatino_'+opt.sample+samplePart+'.root')
+    if not opt.debugcr and (opt.level=="total" or opt.level=="full"):
 
-    chain.Add(signalDir+'nanoLatino_'+opt.sample+samplePart+'.root')
+        chainTT = ROOT.TChain('Events')
+        print('Opening input file', totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        chainTT.Add(totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
 
-    if not opt.total and opt.addcr:
-        chain.Add(signalDir.replace('fast','crfs')+'nanoLatino_'+opt.sample+samplePart+'.root')
+    if not opt.debugcr (opt.level=="sr" or opt.level=="full"):
 
-    outputDirectory = '/'.join([ './THnSparse', opt.year, opt.sample, 'split/' ])
-    outputFileNameList = [ opt.sample, opt.year ]
-    if opt.total: outputFileNameList.append('Total')
-    else: outputFileNameList.append('SR')
-    if opt.addcr: outputFileNameList.append('CR')
-    if opt.splitmtll: outputFileNameList.append('mt2ll')
-    if opt.job!='all': outputFileNameList.append('part'+opt.job)
-    outputFileName = outputDirectory+"_".join(outputFileNameList)+".root"
+        chain = ROOT.TChain('Events')
+        print('Opening input file', srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        chain.Add(srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+
+    if not opt.level=="total" and opt.addcr:
+        print('Opening input file', crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        chain.Add(crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
 
     count = 0  # number of events passing the ptmiss cut
     
+    if not opt.debugcr and (opt.level=="total" or opt.level=="full"):
+
+        for ev in range(chainTT.GetEntries()):
+
+            chain.GetEntry(ev)
+
+            coordinates = numpy.float64([ chain.pMSSMid1, chain.pMSSMid2, 0 ])
+            thnsparse.Fill(coordinates, 1.)
+
+    count = 0  # number of events passing the ptmiss cut
+
     results = []
 
     summary = {
@@ -220,21 +270,40 @@ if __name__ == '__main__':
     "SR40tag": {"SF": 0, "DF": 0},
     "CR4tags": {"SF": 0, "DF": 0}
     }
+     
+    if   '2016HIPM'   in opt.year: nonpromptLep = { 'rate' : 1.18, 'rateUp' : 0.88, 'rateDown' : 1.48 }
+    elif '2016noHIPM' in opt.year: nonpromptLep = { 'rate' : 1.10, 'rateUp' : 0.70, 'rateDown' : 1.50 }
+    elif '2017'       in opt.year: nonpromptLep = { 'rate' : 1.38, 'rateUp' : 1.09, 'rateDown' : 1.67 }
+    elif '2018'       in opt.year: nonpromptLep = { 'rate' : 1.36, 'rateUp' : 1.11, 'rateDown' : 1.61 }
+    else:
+        print("pMSSM: year "+opt.year+" unknown")
+        exit()
 
-    for ev in range(chain.GetEntries()): 
+    localDir = "/afs/cern.ch/work/s/scodella/SUSY/CMSSW_13_3_1/src/PlotsConfigurations/Configurations/Analysis/"
+
+    triggerFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/TriggerEfficiencies_UL"+opt.year+".root","read")
+    triggerEfficiency = { "121" : triggerFile.Get("Leptonpt1pt2/ee/efficiency_MET_full_met_both"),
+                          "143" : triggerFile.Get("Leptonpt1pt2/em/efficiency_MET_full_met_both"),
+                          "169" : triggerFile.Get("Leptonpt1pt2/mm/efficiency_MET_full_met_both") }
+
+    fastsimFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/fastsimLeptonWeights_UL_DY.root","read")
+    fastsimScaleFactor = { "11" : fastsimFile.Get("Ele_tight_fullsim"), "13" : fastsimFile.Get("Muo_tight_fullsim") }
+
+    additionalSFDir = localDir+"../../../LatinoAnalysis/NanoGardener/python/data/scale_factor/Full"+opt.year.replace("noHIPM","").replace("HIPM","")+"v8/"
+    AdditionalElectronScaleFactorFile = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Ele_v2.root","read")
+    AdditionalMuonScaleFactorFile     = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Muon.root","read")
+    additionalScaleFactor = { "11" : AdditionalElectronScaleFactorFile.Get("hSFDataMC_central"), "13" : AdditionalMuonScaleFactorFile.Get("hSFDataMC_central") }
+
+    
+    srEntries = chain.GetEntries() if opt.level!="total" else -1
+    for ev in range(srEntries): 
 
         if count >= opt.events and opt.events>0:
             break
 
         chain.GetEntry(ev)
 
-        if opt.total:
-
-            coordinates = numpy.float64([ chain.pMSSMid1, chain.pMSSMid2 ])
-            thnsparse.Fill(coordinates, 1.)
-            count += 1
-
-        elif opt.addcr or chain.nLepton == 2:
+        if opt.addcr or chain.nLepton == 2:
         
             # Extract pMSSM IDs
             pmssid1 = chain.pMSSMid1
@@ -246,18 +315,30 @@ if __name__ == '__main__':
             nobtagweight=1-btagweight
 
             # Weights
+            if opt.year=="2017":
+                sumPtEENoise = 0
+                for ijet in range(chain.nJet):
+                    if abs(chain.Jet_eta[ijet])>2.650 and abs(chain.Jet_eta[ijet])<3.139 and chain.Jet_pt[ijet]*(1.-chain.Jet_rawFactor[ijet])<50.:
+                        sumPtEENoise += chain.Jet_pt[ijet]
+                if sumPtEENoise>=60.: continue
+
             weight = ((chain.MET_T1Smear_pt-chain.MET_pt)<10000.)*chain.puWeight*chain.Flag_goodVertices*chain.Flag_globalSuperTightHalo2016Filter*chain.Flag_HBHENoiseFilter*chain.Flag_HBHENoiseIsoFilter*chain.Flag_EcalDeadCellTriggerPrimitiveFilter*chain.Flag_BadPFMuonFilter*chain.Flag_BadPFMuonDzFilter
             if opt.year=="2017" or opt.year=="2018": weight *= chain.Flag_ecalBadCalibFilter
 
-            Lepton_RecoSF[0]*Lepton_RecoSF[1]*Lepton_tightElectron_cutBasedMediumPOG_IdIsoSF[0]*Lepton_tightElectron_cutBasedMediumPOG_IdIsoSF[1]*Lepton_tightMuon_mediumRelIsoTight_IdIsoSF[0]*Lepton_tightMuon_mediumRelIsoTight_IdIsoSF[1]
-
-            ( Lepton_promptgenmatched[0]*Lepton_promptgenmatched[1] + (1. - Lepton_promptgenmatched[0]*Lepton_promptgenmatched[1])*1.36)
-
-            (((Sum$(Electron_pt>30. && Electron_eta>-3.0 && Electron_eta<-1.4 && Electron_phi>-1.57 && Electron_phi<-0.87)==0) && (Sum$(Jet_pt>30. && Jet_eta>-3.2 && Jet_eta<-1.2 && Jet_phi>-1.77 && Jet_phi<-0.67)==0)) + (1.-((Sum$(Electron_pt>30. && Electron_eta>-3.0 && Electron_eta<-1.4 && Electron_phi>-1.57 && Electron_phi<-0.87)==0) && (Sum$(Jet_pt>30. && Jet_eta>-3.2 && Jet_eta<-1.2 && Jet_phi>-1.77 && Jet_phi<-0.67)==0)))*0.35225285)
-
-            triggerWeight[1]
-            fastsimLeptonWeight
-            additionalLeptonWeight[1]             
+            if opt.year!="2018":
+                weight *= chain.PrefireWeight
+            else:
+                failHEMVeto = False
+                for iele in range(chain.nElectron):
+                    if chain.Electron_pt[iele]>30. and chain.Electron_eta[iele]>-3.0 and chain.Electron_eta[iele]<-1.4 and chain.Electron_phi[iele]>-1.57 and chain.Electron_phi[iele]<-0.87:
+                        failHEMVeto = True
+                        break
+                if not failHEMVeto:
+                    for ijet in range(chain.nJet):
+                        if chain.Jet_pt[ijet]>30. and  chain.Jet_eta[ijet]>-3.2 and chain.Jet_eta[ijet]<-1.2 and chain.Jet_phi[ijet]>-1.77 and chain.Jet_phi[ijet]<-0.67: 
+                            failHEMVeto = True
+                            break
+                if failHEMVeto: weight *= 0.35225285
 
             if chain.nLepton==2:
 
@@ -286,7 +367,6 @@ if __name__ == '__main__':
                 isDF = lepton_flavor == "emu"
                 isSF = lepton_flavor in ["ee", "mumu"]
             
-            
                 #Tight cuts
                 #electron tight -> Lepton_isTightElectron_cutBasedMediumPOG
                 #moun tight -> Lepton_isTightMuon_mediumRelIsoTight
@@ -311,7 +391,7 @@ if __name__ == '__main__':
 
                 #pass_mll = (not is_sf) or (abs(chain.mll - massZ) > 15)
                 # Z-veto: only applied for SF (ee or mumu)
-                pass_mll = isDF or abs(chain.mll - massZ) > 15
+                pass_mll = isDF or abs(chain.mll - massZ) > 15.
 
                 if selection_cuts and pass_mll:
                     #flavor = get_flavor(chain.Lepton_pdgId[0], chain.Lepton_pdgId[1])
@@ -333,50 +413,61 @@ if __name__ == '__main__':
                 if region == "other":
                     continue
 
-                weight = 1.0
+                isNonPrompt = False
+                for ilep in range(2): # Here we selected nLepton==2 and nTightLepton==2
+                    thisLepSF = chain.Lepton_RecoSF[ilep]
+                    if abs(chain.Lepton_pdgId[ilep])==11:
+                        thisLepSF *= chain.Lepton_tightElectron_cutBasedMediumPOG_IdIsoSF[ilep]
+                        thisLepSF *= getBinContent4Weight(fastsimScaleFactor["11"], chain.Lepton_eta[ilep], chain.Lepton_pt[ilep],  "fastsim", 0)
+                    elif abs(chain.Lepton_pdgId[ilep])==13:
+                        thisLepSF *= chain.Lepton_tightMuon_mediumRelIsoTight_IdIsoSF[ilep]
+                        thisLepSF *= getBinContent4Weight(fastsimScaleFactor["13"], chain.Lepton_pt[ilep],  chain.Lepton_eta[ilep], "fastsim", 0)
+                    thisLepSF *= getBinContent4Weight(additionalScaleFactor[str(abs(chain.Lepton_pdgId[ilep]))], chain.Lepton_eta[ilep], chain.Lepton_pt[ilep],  "additional", 0)
+                    weight *= thisLepSF
+                    if chain.Lepton_promptgenmatched[ilep]!=1: isNonPrompt = True
+                if isNonPrompt: weight *= nonpromptLep["rate"]
+
+                weight *= getBinContent4Weight(triggerEfficiency[str(abs(pdg0)*abs(pdg1))], chain.Lepton_pt[0], chain.Lepton_pt[1], "trigger", 0)
+
+                if opt.noweight: weight = 1.
+
                 srbin = get_srbin(region, isDF, mt2ll)
 
                 if srbin >= 0:
                     if njets == 0:
-                        coordinates = numpy.float64([pmssid1, pmssid2, srbin])
+                        coordinates = numpy.float64([pmssid1, pmssid2, srbin+1])
                         thnsparse.Fill(coordinates, weight)
+                        if opt.verbose: printEvent(pmssid1, pmssid2, region, srbin, weight * nobtagweight, lepton_flavor, njets)
 
                     else:
                         # CASE 1: For no btag in jets
-                        coordinates_jets = numpy.float64([pmssid1, pmssid2, srbin])
+                        coordinates_jets = numpy.float64([pmssid1, pmssid2, srbin+1])
                         thnsparse.Fill(coordinates_jets, weight * nobtagweight)
+                        if opt.verbose: printEvent(pmssid1, pmssid2, region, srbin, weight * nobtagweight, lepton_flavor, njets)
 
                         # CASE 2: Btag found
-                        if "jets" in region:
-                            region_tag = region.replace("jets", "tags")
-                            srbin_tag = get_srbin(region_tag, isDF, mt2ll)
+                        if btagweight>0.:
+                            if "jets" in region:
+                                region_tag = region.replace("jets", "tags")
+                                srbin_tag = get_srbin(region_tag, isDF, mt2ll)
 
-                            if srbin_tag >= 0:
-                                coordinates = numpy.float64([pmssid1, pmssid2, srbin_tag])
-                                thnsparse.Fill(coordinates, weight * btagweight)
+                                if srbin_tag >= 0:
+                                    coordinates = numpy.float64([pmssid1, pmssid2, srbin_tag+1])
+                                    thnsparse.Fill(coordinates, weight * btagweight)
+                                    if opt.verbose: printEvent(pmssid1, pmssid2, region_tag, srbin_tag, weight * btagweight, lepton_flavor, njets)
     
-                        elif "0tag" in region:
-                            region_tag = region.replace("0tag", "tags")
-                            srbin_tag = get_srbin(region_tag, isDF, mt2ll)
+                            elif "0tag" in region:
+                                region_tag = region.replace("0tag", "tags")
+                                srbin_tag = get_srbin(region_tag, isDF, mt2ll)
 
-                            if srbin_tag >= 0:
-                                coordinates = numpy.float64([pmssid1, pmssid2, srbin_tag])
-                                thnsparse.Fill(coordinates, weight * btagweight)
-
-                        if opt.verbose:
-                            print(
-                                    f"Region: {region_tag}, "
-                                    f"srbin: {srbin_tag}, "
-                                    f"Weight: {btagweight}, "
-                                    f"Flavor: {lepton_flavor}, "
-                                    f"jets: {njets}"
-                            )
-
-
+                                if srbin_tag >= 0:
+                                    coordinates = numpy.float64([pmssid1, pmssid2, srbin_tag+1])
+                                    thnsparse.Fill(coordinates, weight * btagweight)
+                                    if opt.verbose: printEvent(pmssid1, pmssid2, region_tag, srbin_tag, weight * btagweight, lepton_flavor, njets)
 
                 if opt.verbose:
 
-                    #Store even:wqt result in the SF/DF channel
+                    #Store event result in the SF/DF channel
                     if lepton_flavor in ["ee", "mumu", "emu"]:
                         results.append({
                             "channel": lepton_flavor,
@@ -403,21 +494,50 @@ if __name__ == '__main__':
 
                     if nTightLepton>=3:
 
-                        weight = 1.0
-                        crbin = -1.
+                        isNonPrompt = False
+                        allTightWeight = 1.
+                        totalLeptonScaleFactor = []
+                        for ilep in range(chain.nLepton):
+                            thisLepSF = chain.Lepton_RecoSF[ilep]
+                            if chain.Lepton_isTightElectron_cutBasedMediumPOG[ilep]:
+                                thisLepSF *= chain.Lepton_tightElectron_cutBasedMediumPOG_IdIsoSF[ilep]
+                                thisLepSF *= getBinContent4Weight(fastsimScaleFactor["11"], chain.Lepton_eta[ilep], chain.Lepton_pt[ilep],  "fastsim", 0)
+                                thisLepSF *= getBinContent4Weight(additionalScaleFactor["11"], chain.Lepton_eta[ilep], chain.Lepton_pt[ilep],  "additional", 0)
+                            elif chain.Lepton_isTightMuon_mediumRelIsoTight[ilep]:
+                                thisLepSF *= chain.Lepton_tightMuon_mediumRelIsoTight_IdIsoSF[ilep]
+                                thisLepSF *= getBinContent4Weight(fastsimScaleFactor["13"], chain.Lepton_pt[ilep],  chain.Lepton_eta[ilep], "fastsim", 0)
+                                thisLepSF *= getBinContent4Weight(additionalScaleFactor["13"], chain.Lepton_eta[ilep], chain.Lepton_pt[ilep],  "additional", 0)
+                            totalLeptonScaleFactor.append(thisLepSF)
+                            allTightWeight *= thisLepSF
+                            if chain.Lepton_promptgenmatched[ilep]!=1: isNonPrompt = True
+
+                        if isNonPrompt: weight *= nonpromptLep["rate"]
+
+                        if nTightLepton==3: 
+                            weight *= allTightWeight
+                        elif nTightLepton==4:
+                            minusOneTightWeight = 0.
+                            for ilep in range(chain.nLepton):
+                                if chain.Lepton_isTightElectron_cutBasedMediumPOG[ilep] or chain.Lepton_isTightMuon_mediumRelIsoTight[ilep]:
+                                    minusOneTightWeight += allTightWeight*(1.-totalLeptonScaleFactor[ilep])/totalLeptonScaleFactor[ilep]
+                            weight *= (allTightWeight+minusOneTightWeight)
+
+                        if opt.noweight: weight = 1.
+
+                        crbin = -1
 
                         if chain.nLepton==3 and nTightLepton==3 and chain.deltaMassZ_WZ<999. and chain.ptmiss_WZ>=160.:
 
                             crbin = get_CRbin(chain.ptmiss_WZ, njets)
                             if crbin>=0:
-                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+crbin])
+                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+crbin+1])
                                 thnsparse.Fill(coordinates_cr, weight * nobtagweight)
 
                         if chain.nLepton==4 and nTightLepton>=3 and chain.deltaMassZ_ZZ<15.  and chain.ptmiss_ZZ>=160.:
 
                             crbin = get_CRbin(chain.ptmiss_ZZ, njets)
                             if crbin>=0:
-                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+6+crbin])
+                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+6+crbin+1])
                                 thnsparse.Fill(coordinates_cr, weight * nobtagweight)
 
                         if chain.nLepton>=3 and nTightLepton>=3 and njets>=2 and (chain.ptmiss_WZ>=0. or chain.ptmiss_ttZ>=0):
@@ -438,12 +558,24 @@ if __name__ == '__main__':
                                 crbin = get_CRbin(ptmiss_ttZ3Lep, -1)
 
                             if crbin>=0:
-                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+12+crbin])
+                                coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+12+crbin+1])
                                 thnsparse.Fill(coordinates_cr, weight * btagweight)
 
                         if crbin>=0: count += 1
 
-    if not opt.debug and opt.events<0:
+    if not opt.debug:
+
+        outputDirectory = '/'.join([ './THnSparse', opt.year, opt.sample, 'split/' ])
+        outputFileNameList = [ opt.sample, opt.year ]
+        if opt.level=="total": outputFileNameList.append('Total')
+        elif opt.level=="full": outputFileNameList.append('Full')
+        else: outputFileNameList.append('SR')
+        if opt.addcr: outputFileNameList.append('CR')
+        if opt.splitmtll: outputFileNameList.append('mt2ll')
+        if opt.noweight: outputFileNameList.append('noweight')
+        if opt.events>0: outputFileNameList.append('evt'+str(opt.events))
+        if opt.job!='all': outputFileNameList.append('part'+opt.job)
+        outputFileName = outputDirectory+"_".join(outputFileNameList)+".root"
 
         os.system("mkdir -p "+outputDirectory)
 

@@ -11,13 +11,13 @@ ulimit -c 0
 cd $TMPDIR
 pwd
 
-outputFileLocal=THnSparse/YEAR/SAMPLE/split/SAMPLE_YEARTOTALNAMECRNAMEMTLLNAME_partPART.root
+outputFileLocal=THnSparse/YEAR/SAMPLE/split/SAMPLE_YEARTOTALNAMECRNAMEMTLLNAMEWEIGHTNAME_partPART.root
 outputFile=$CMSSWDIR/src/PlotsConfigurations/Configurations/Analysis/$outputFileLocal
 if [ -f "$outputFile" ]; then
     echo The output file already exists.
 else
     echo Producing THnSparse for YEAR, SAMPLE, partPART, ISTOTAL, ISCR ISMTLL.
-    python3 $CMSSWDIR/src/PlotsConfigurations/Configurations/Analysis/pMSSM.py --year=YEAR --sample=SAMPLE --job=PART ISTOTAL ISCR ISMTLL 
+    python3 $CMSSWDIR/src/PlotsConfigurations/Configurations/Analysis/pMSSM.py --year=YEAR --sample=SAMPLE --job=PART ISTOTAL ISCR ISMTLL ISNOWEIGHT
     minimumsize=MINSIZE
     actualsize=$(wc -c <"$outputFileLocal")
     if [ $actualsize -ge $minimumsize ]; then

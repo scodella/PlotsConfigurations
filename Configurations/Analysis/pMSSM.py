@@ -184,7 +184,7 @@ if __name__ == '__main__':
     parser.add_option('--syst'    , dest='syst'       , help='syst'  , default="Nominal")
     parser.add_option('--events'  , dest='events'     , help='events to scan'  , default=-1, type=int)
     parser.add_option('--ptmiss'  , dest='ptmiss'     , help='ptmiss cut'  , default=100, type=float)
-    parser.add_option("--level"   , dest='level' , default="Full", help="Level")
+    parser.add_option("--level"   , dest='level' , default="full", help="Level")
     parser.add_option("--splitmtll", dest='splitmtll' , default=False, help="Split SRs in mtll bins", action='store_true')
     parser.add_option("--addcr"   , dest='addcr' , default=False, help="Add CRs", action='store_true')
     parser.add_option("--verbose" , dest='verbose' , default=False, help="Verbose", action='store_true')
@@ -220,41 +220,48 @@ if __name__ == '__main__':
     srDir = totalDir + "__FSSusyYEARv8__FSSusyCorrYEARv8__FSSusyNominYEARv8__susyMT2fastSmear"
     srDir = srDir.replace('YEAR', opt.year).replace('noHIPM','').replace('HIPM','')
     if opt.year=='2016noHIPM': 
-            srDir = srDir.replace('Corr2016v8','Corr2016v8noHIPM').replace('__susyMT2','noHIPM__susyMT2')
-        elif opt.year=='2016HIPM':
-            srDir = srDir.replace('Corr2016v8','Corr2016v8HIPM').replace('__susyMT2','HIPM__susyMT2')
+        srDir = srDir.replace('Corr2016v8','Corr2016v8noHIPM').replace('__susyMT2','noHIPM__susyMT2')
+    elif opt.year=='2016HIPM':
+        srDir = srDir.replace('Corr2016v8','Corr2016v8HIPM').replace('__susyMT2','HIPM__susyMT2')
     crDir = srDir.replace('fast','crfs')
 
     samplePart = '__part*' if opt.job=='all' else '__part'+opt.job
 
-    if not opt.debugcr and (opt.level=="total" or opt.level=="full"):
+    if not opt.debugcr and opt.level!="sr":
 
         chainTT = ROOT.TChain('Events')
         print('Opening input file', totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
         chainTT.Add(totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
 
-    if not opt.debugcr (opt.level=="sr" or opt.level=="full"):
-
+    if opt.level!="total":
         chain = ROOT.TChain('Events')
+
+    if not opt.debugcr and opt.level!="total":
+
         print('Opening input file', srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
         chain.Add(srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
 
-    if not opt.level=="total" and opt.addcr:
+    if opt.level!="total" and opt.addcr:
         print('Opening input file', crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
         chain.Add(crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
 
-    count = 0  # number of events passing the ptmiss cut
+    count = 0
     
     if not opt.debugcr and (opt.level=="total" or opt.level=="full"):
 
         for ev in range(chainTT.GetEntries()):
 
-            chain.GetEntry(ev)
+            if count >= opt.events and opt.events>0:
+                break
 
-            coordinates = numpy.float64([ chain.pMSSMid1, chain.pMSSMid2, 0 ])
+            chainTT.GetEntry(ev)
+
+            coordinates = numpy.float64([ chainTT.pMSSMid1, chainTT.pMSSMid2, 0 ])
             thnsparse.Fill(coordinates, 1.)
 
-    count = 0  # number of events passing the ptmiss cut
+            count += 1
+
+    count = 0  
 
     results = []
 
@@ -294,8 +301,8 @@ if __name__ == '__main__':
     AdditionalMuonScaleFactorFile     = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Muon.root","read")
     additionalScaleFactor = { "11" : AdditionalElectronScaleFactorFile.Get("hSFDataMC_central"), "13" : AdditionalMuonScaleFactorFile.Get("hSFDataMC_central") }
 
-    
-    srEntries = chain.GetEntries() if opt.level!="total" else -1
+    if opt.level=="total": srEntries = -1    
+    else: srEntries = chain.GetEntries()
     for ev in range(srEntries): 
 
         if count >= opt.events and opt.events>0:
@@ -474,8 +481,8 @@ if __name__ == '__main__':
                             "ptmiss": ptmiss,
                             "njets": chain.nJet,
                             "region": region,
-                            "pMSSMid1": chain.pMSSMid1,
-                            "pMSSMid2": chain.pMSSMid2
+                            "pMSSMid1": pMSSMid1,
+                            "pMSSMid2": pMSSMid2
                         })
 
                     #flavor = "SF" if is_sf else "DF"
@@ -485,7 +492,12 @@ if __name__ == '__main__':
 
             elif opt.addcr and chain.nLepton>=3:
 
-                if chain.ptmiss_WZ>=160. or chain.ptmiss_WZ>=160. or chain.ptmiss_WZ>=0. or chain.ptmiss_ttZ>=0:
+                ptmiss_WZ  = chain.ptmiss_WZ_reco
+                ptmiss_ZZ  = chain.ptmiss_ZZ_reco
+                ptmiss_ttZ = chain.ptmiss_ttZ_reco
+                ptmiss_phi_WZ = chain.ptmiss_phi_WZ_reco
+
+                if ptmiss_WZ>=160. or ptmiss_WZ>=160. or ptmiss_WZ>=0. or ptmiss_ttZ>=0:
 
                     nTightLepton = 0
                     for ilep in range(chain.nLepton):
@@ -526,30 +538,31 @@ if __name__ == '__main__':
 
                         crbin = -1
 
-                        if chain.nLepton==3 and nTightLepton==3 and chain.deltaMassZ_WZ<999. and chain.ptmiss_WZ>=160.:
+                        if chain.nLepton==3 and nTightLepton==3 and chain.deltaMassZ_WZ<999. and ptmiss_WZ>=160.:
 
-                            crbin = get_CRbin(chain.ptmiss_WZ, njets)
+                            crbin = get_CRbin(ptmiss_WZ, njets)
                             if crbin>=0:
                                 coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+crbin+1])
                                 thnsparse.Fill(coordinates_cr, weight * nobtagweight)
 
-                        if chain.nLepton==4 and nTightLepton>=3 and chain.deltaMassZ_ZZ<15.  and chain.ptmiss_ZZ>=160.:
+                        if chain.nLepton==4 and nTightLepton>=3 and chain.deltaMassZ_ZZ<15.  and ptmiss_ZZ>=160.:
 
-                            crbin = get_CRbin(chain.ptmiss_ZZ, njets)
+                            crbin = get_CRbin(ptmiss_ZZ, njets)
                             if crbin>=0:
                                 coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+6+crbin+1])
                                 thnsparse.Fill(coordinates_cr, weight * nobtagweight)
 
-                        if chain.nLepton>=3 and nTightLepton>=3 and njets>=2 and (chain.ptmiss_WZ>=0. or chain.ptmiss_ttZ>=0):
+                        if chain.nLepton>=3 and nTightLepton>=3 and njets>=2 and (ptmiss_WZ>=0. or ptmiss_ttZ>=0):
 
                             crbin = -1
+                            btagweight_ttZ = btagweight if chain.nLepton==4 else getattr(chain,btagwp.replace('_1tag_', '_2tag_'))
 
-                            if chain.nLepton==4 and chain.deltaMassZ_ttZ<15. and chain.deltaMassZ_ttZ>=0. and chain.ptmiss_ttZ>160.: 
-                                crbin = get_CRbin(chain.ptmiss_ttZ, -1)
+                            if chain.nLepton==4 and chain.deltaMassZ_ttZ<15. and chain.deltaMassZ_ttZ>=0. and ptmiss_ttZ>160.: 
+                                crbin = get_CRbin(ptmiss_ttZ, -1)
 
-                            if chain.nLepton==3 and chain.deltaMassZ_WZ<15. and chain.deltaMassZ_WZ>=0. and chain.ptmiss_WZ>=0.:
-                                ptxGhost = chain.ptmiss_WZ*math.cos(chain.ptmiss_phi_WZ)
-                                ptyGhost = chain.ptmiss_WZ*math.sin(chain.ptmiss_phi_WZ)
+                            if chain.nLepton==3 and chain.deltaMassZ_WZ<15. and chain.deltaMassZ_WZ>=0. and ptmiss_WZ>=0.:
+                                ptxGhost = ptmiss_WZ*math.cos(ptmiss_phi_WZ)
+                                ptyGhost = ptmiss_WZ*math.sin(ptmiss_phi_WZ)
                                 for ilep in [ chain.lep0idx_WZ, chain.lep1idx_WZ, chain.lep2idx_WZ ]:
                                     if (chain.Lepton_pdgId[ilep]*chain.Lepton_pdgId[chain.lep2idx_WZ])<0 or ilep==chain.lep2idx_WZ:
                                         ptxGhost += chain.Lepton_pt[ilep]*math.cos(chain.Lepton_phi[ilep])
@@ -559,7 +572,7 @@ if __name__ == '__main__':
 
                             if crbin>=0:
                                 coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+12+crbin+1])
-                                thnsparse.Fill(coordinates_cr, weight * btagweight)
+                                thnsparse.Fill(coordinates_cr, weight * btagweight_ttZ)
 
                         if crbin>=0: count += 1
 
@@ -574,6 +587,7 @@ if __name__ == '__main__':
         if opt.splitmtll: outputFileNameList.append('mt2ll')
         if opt.noweight: outputFileNameList.append('noweight')
         if opt.events>0: outputFileNameList.append('evt'+str(opt.events))
+        if opt.debugcr: outputFileNameList.append('debugcr') 
         if opt.job!='all': outputFileNameList.append('part'+opt.job)
         outputFileName = outputDirectory+"_".join(outputFileNameList)+".root"
 

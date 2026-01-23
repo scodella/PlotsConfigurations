@@ -174,7 +174,7 @@ def plotNuisances(opt):
 
            singleNuisances = {}
 
-           if year.split('-')>1:
+           if len(year.split('-'))>1:
 
                outputNuisances =  '_'.join([ 'nuisances', year, tag, opt.sigset+'.py' ])
                commonTools.mergeDataTakingPeriodShapes(opt, year, tag, opt.fileset[1:], '', 'None', commonTools.getCfgFileName(opt, 'nuisances'), outputNuisances, opt.verbose)

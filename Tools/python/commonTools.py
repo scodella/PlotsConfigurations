@@ -835,14 +835,18 @@ def postFitYieldsTables(opt, cardNameStructure='cut', masspoints=''):
         for tag in opt.tag.split('-'):
 
             commandList = [ '--tag='+tag, '--year='+year, '--fit='+fittype, '--cardName='+cardNameStructure, '--masspoints='+masspoints ]
-            commandList.append('--outputTableDir='+'/'.join([ opt.tabledir, year, tag ]))
-            
+            commandList.append('--outputTableDir='+'/'.join([ opt.tabledir, year, tag ])) 
+            if opt.fileset!='': commandList.append('--shapefile='+opt.fileset)
+
             if 'fromshapes' in opt.option:
                 commandList.append('--fromshapes')
                 if 'merged' in opt.option: commandList.append('--mergedyears')
                 dataflag = 'AsimovB' if 'asimovb' in opt.option else 'AsimovS' if 'asimovs' in opt.option else 'FitsToData'
                 yearFlag = year if len(yearList)>1 else ''
-                commandList.append('--inputDir='+'/'.join([ opt.shapedir, year, tag.split('_')[0], dataflag, fittype+yearFlag ]))
+                if 'fromshapesnofit' in opt.option:
+                    commandList.append('--inputDir='+'/'.join([ opt.shapedir, year, tag.split('_')[0] ]))
+                else:
+                    commandList.append('--inputDir='+'/'.join([ opt.shapedir, year, tag.split('_')[0], dataflag, fittype+yearFlag ]))
             else:
                 dataflag = '_asimovB' if 'asimovb' in opt.option else '_asimovS' if 'asimovs' in opt.option else ''
                 commandList.append('--inputDirMaxFit='+'/'.join([ opt.mlfitdir, year, tag+dataflag ]))

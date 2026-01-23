@@ -708,7 +708,7 @@ if 'WJetsCorr' in opt.sigset: # not updated to UL with no EOY mix
         normBackgrounds['WJetsCorr']      = { 'nojet'   : { 'scalefactor' : { '1.34' : '0.' }, 'cuts' : [ '_NoJet', '_Veto' ], 'selection' : '(nCleanJet==0)' },
                                               'notag'   : { 'scalefactor' : { '1.25' : '0.' }, 'cuts' : [ '_NoTag', '_Veto' ], 'selection' : '(nCleanJet>=1)' } }
 
-if 'SignalRegions' in opt.tag or hasattr(opt, 'outputDirDatacard'):
+if 'SignalRegions' in opt.tag or 'SearchRegion' in opt.tag or hasattr(opt, 'outputDirDatacard') or 'ValidationRegionX' in opt.tag:
 
     normBackgrounds['STtW']      = { 'all'   : { 'scalefactor' : { '1.00' : '0.10' }, 'selection' : '1.' } }
     normBackgrounds['ttW']       = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } } 
@@ -1001,7 +1001,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                     addSampleWeight(samples,'ZZTo4L','ZZTo4L', kZZvariable.replace('kZZ', 'kZZ_'))
 
         nameWJets = 'WJetsToLNu'
-        if 'SameSignValidationRegion' in opt.tag or 'DYMeasurements' in opt.tag or 'WJets' in opt.sigset:
+        if ('SameSign' in opt.tag and 'ValidationRegion' in opt.tag) or 'DYMeasurements' in opt.tag or 'WJets' in opt.sigset:
             
             if 'WJetsCorr' in opt.sigset: nameWJets = 'WJetsCorr'
 

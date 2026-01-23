@@ -52,6 +52,7 @@ if __name__ == '__main__':
     parser.add_option('--unblind'         , dest='unblind'         , help='Unblind data'                           , default=False, action='store_true')
     parser.add_option('--nosignal'        , dest='nosignal'        , help='Do not write signal yields'             , default=False, action='store_true')
     parser.add_option('--fromshapes'      , dest='fromshapes'      , help='Use processe shapes'                    , default=False, action='store_true')
+    parser.add_option('--shapefile'       , dest='shapefile'       , help='Shape file'                             , default='')
     parser.add_option('--mergedyears'     , dest='mergedyears'     , help='mergedyears'                            , default=False, action='store_true')
     parser.add_option('--maxsignallines'  , dest='maxsignallines'  , help='Maximum number of lines for signals'    , default=5)
     parser.add_option('--minsignalyields' , dest='minsignalyields' , help='Minimal signal yields for tables'       , default=0.6)
@@ -67,9 +68,10 @@ if __name__ == '__main__':
     inputFiles = { }
     if opt.fromshapes:
         opt.sigset = 'SM-'+opt.masspoints
-        refmasspoint = opt.masspoints
+        refmasspoint = opt.masspoints.split(',')[0]
         for masspoint in opt.masspoints.split(','):
-            inputFiles[masspoint] = ROOT.TFile(opt.inputDir+'/plots_'+opt.tag+'_SM-'+masspoint+'.root', 'READ')
+            masspointfile = 'SM-'+masspoint if opt.shapefile=='' else opt.shapefile
+            inputFiles[masspoint] = ROOT.TFile(opt.inputDir+'/plots_'+opt.tag+'_'+masspointfile+'.root', 'READ')
     else:
         if opt.masspoints=='':
             inputFiles['SM'] = ROOT.TFile(opt.inputDirMaxFit+'/fitDiagnostics.root', 'READ')
@@ -79,8 +81,8 @@ if __name__ == '__main__':
             opt.sigset = 'SM-'+opt.masspoints
             for masspoint in opt.masspoints.split(','):
                 if masspoint=='TChipmSlepSnu_mC-1150_mX-1':
-                    if os.path.isfile('/'.join([ './MaxLikelihoodFits/2016-2017-2018/CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3', masspoint, 'fitDiagnostics.root' ])):
-                       inputFiles[masspoint] = ROOT.TFile('/'.join([ './MaxLikelihoodFits/2016-2017-2018/CharginoSignalRegionsMergeWWPol1aGroupSmtEUFitCRVetoesULSigV6_NewBond3', masspoint, 'fitDiagnostics.root' ]))
+                    if os.path.isfile('/'.join([ opt.inputDirMaxFit, masspoint, 'fitDiagnostics.root' ])):
+                       inputFiles[masspoint] = ROOT.TFile('/'.join([ opt.inputDirMaxFit, masspoint, 'fitDiagnostics.root' ]))
                        refmasspoint = masspoint
                 elif masspoint=='T2tt_mS-525_mX-438': 
                     if os.path.isfile('/'.join([ 'MaxLikelihoodFits/2016-2017-2018/StopSignalRegionsFXbtvWWPol1aGroupSmtEUFitCRVetoesULFast_NewBond2', masspoint, 'fitDiagnostics.root' ])):
@@ -89,7 +91,7 @@ if __name__ == '__main__':
                 else:
                     if os.path.isfile('/'.join([ opt.inputDirMaxFit, masspoint, 'fitDiagnostics.root' ])):
                         inputFiles[masspoint] = ROOT.TFile('/'.join([ opt.inputDirMaxFit, masspoint, 'fitDiagnostics.root' ]), 'READ')
-                        #refmasspoint = masspoint 
+                        #refmasspoint = masspoint
 
     opt.tag = opt.year+opt.tag
     samples = { }
@@ -121,7 +123,7 @@ if __name__ == '__main__':
 
             if opt.globaltable:
 
-                opt.maxsignallines = 1
+                opt.maxsignallines = 2
 
                 tableName = opt.outputTableDir+'/Yields_'+fittype+'_global.tex'
                 table = open(tableName , 'w')
@@ -180,7 +182,7 @@ if __name__ == '__main__':
                         else:
                             histoprefix = ''
                             inDir = 'shapes_'+fittype.lower().replace('postfit','_fit_') + '/' + cardName
-                            inDirRef = 'shapes_'+fittype.lower().replace('postfit','_fit_') + '/' + cardName + '_' + year
+                            inDirRef = 'shapes_'+fittype.lower().replace('postfit','_fit_') + '/' + cardName #+ '_' + year
                         #if not inputFiles[refmasspoint].GetListOfKeys().Contains(inDir):
                         #    print 'warning: missing directory', inDir, 'in', inputFiles[refmasspoint].GetName()
                         #    continue
@@ -227,9 +229,8 @@ if __name__ == '__main__':
                             table.write(' & $\\ge '+str(variableEdges[nBins-1])+'$')
 
                             table.write(' \\\\\n')
-
+                        
                         refDir = inputFiles[refmasspoint].Get(inDirRef)
-                     
 
                         SMyields = [ ]
                         signalPoint = [ ]
@@ -267,6 +268,7 @@ if __name__ == '__main__':
                                     sampleYields, maxYields, maxSignificance = getSampleYields(sample, shape, nBins, SMyields, sampleName)
 
                                     if iteration!=3:
+
                                         table.write(processStart+sampleName+sampleYields+' \\\\\n')
                                         if iteration==1:
                                             for ibin in range(1, nBins+1):
@@ -277,14 +279,16 @@ if __name__ == '__main__':
                                         signalYields[sampleName] = sampleYields             
                                         signalMaximum[sampleName] = maxYields
                                         signalSignificance[sampleName] = maxSignificance
- 
-                        for s1 in range(len(signalPoint)):
-                            for s2 in range(s1+1, len(signalPoint)):
-                                #if signalMaximum[signalPoint[s2]]>signalMaximum[signalPoint[s1]]:
-                                if signalSignificance[signalPoint[s2]]>signalSignificance[signalPoint[s1]]:
-                                    saveSignalName = signalPoint[s1]
-                                    signalPoint[s1] = signalPoint[s2]
-                                    signalPoint[s2] = saveSignalName
+
+                        orderBySignificance = False
+                        if orderBySignificance:
+                            for s1 in range(len(signalPoint)):
+                                for s2 in range(s1+1, len(signalPoint)):
+                                    #if signalMaximum[signalPoint[s2]]>signalMaximum[signalPoint[s1]]:
+                                    if signalSignificance[signalPoint[s2]]>signalSignificance[signalPoint[s1]]:
+                                        saveSignalName = signalPoint[s1]
+                                        signalPoint[s1] = signalPoint[s2]
+                                        signalPoint[s2] = saveSignalName
 
                         for siter in range(len(signalPoint)):
                             if siter<opt.maxsignallines:

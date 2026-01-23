@@ -72,8 +72,8 @@ for background in normBackgroundNuisances:
             for globalNuisance in globalNuisances: 
                 if background in nuisances[globalNuisance]['samples']:
                     del nuisances[globalNuisance]['samples'][background]
-            if background in nuisances['triggerStat']['samples']:
-                    del nuisances['triggerStat']['samples'][background]
+            if background in nuisances['trigger']['samples']:
+                    del nuisances['trigger']['samples'][background]
 
 ### shapes
 
@@ -736,7 +736,7 @@ nuisanceToRemove = [ ]
 
 if 'SignalRegion' in opt.tag or 'ValidationRegion' in opt.tag or 'ttZNormalization' in opt.tag or 'SearchRegion' in opt.tag:
         
-    if 'SignalRegion' not in opt.tag and 'SearchRegion' not in opt.tag:
+    if 'SignalRegion' not in opt.tag and 'SearchRegion' not in opt.tag and 'ValidationRegion' not in opt.tag:
         for nuisance in nuisances:
             if nuisance!='stat' and 'norm' in nuisances[nuisance]['name']:
                 nuisanceToRemove.append(nuisance)
@@ -801,6 +801,12 @@ if '_BTV' in opt.tag:
     for nuisance in nuisances:
         if 'name' in nuisances[nuisance]:
             if 'mistag' not in nuisances[nuisance]['name'] and 'ctag' not in nuisances[nuisance]['name'] and 'btag' not in nuisances[nuisance]['name']:
+                nuisanceToRemove.append(nuisance)
+
+if 'SameSignInclusive' in opt.tag:
+    for nuisance in nuisances:
+        if 'name' in nuisances[nuisance]:
+            if 'btag' in nuisances[nuisance]['name'] or 'mistag' in nuisances[nuisance]['name']:
                 nuisanceToRemove.append(nuisance)
 
 for nuisance in nuisanceToRemove:

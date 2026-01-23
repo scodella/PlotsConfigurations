@@ -216,8 +216,10 @@ def getFitOptions(options):
         if 'asimovs' in options: optionList.append('-t -1 --expectSignal  1')
         if 'asimovi' in options: optionList.append('-t -1 --expectSignal 15')
         optionList.append('-n '+commonTools.getCombineOptionFlag(options))
-    if 'autob'   in options: optionList.append('--autoBoundsPOIs="*"')
-    if 'negsign' in options: optionList.append('--rMin -10')
+    if 'useautob' in options: optionList.append('--autoBoundsPOIs="*"')
+    if 'negsign'  in options: optionList.append('--rMin -10')
+    if 'usedms'   in options: optionList.append('--cminDefaultMinimizerStrategy 0')
+    if 'dorobfit' in options: optionList.append('--robustFit 1')
     return ' '.join(optionList)
 
 def goodnessOfFit(opt):
@@ -234,8 +236,10 @@ def goodnessOfFit(opt):
 def mlfits(opt):
 
     opt.combineAction = 'mlfits'
+    if 'nodms' not in opt.option.lower(): opt.option += 'usedms'
+    #if 'norobust' not in opt.option.lower(): opt.option += 'dorobfit'
     fitOptions = getFitOptions(opt.option.lower())
-    opt.combineCommand = ' '.join(['combine -M FitDiagnostics', fitOptions, '--cminDefaultMinimizerStrategy 0	combinedDatacard.txt' ])
+    opt.combineCommand = ' '.join(['combine -M FitDiagnostics', fitOptions, 'combinedDatacard.txt' ])
     opt.combineOutDir = opt.mlfitdir
 
     runCombine(opt)
@@ -244,10 +248,12 @@ def impactsPlots(opt):
 
     opt.combineAction = 'impacts'
     opt.option += 'noshapes'
+    if 'noautob' not in opt.option.lower(): opt.option += 'useautob'
+    if 'norobust' not in opt.option.lower(): opt.option += 'dorobust'
     fitOptions = getFitOptions(opt.option.lower())
     stepList = [ 'text2workspace.py combinedDatacard.txt']
-    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doInitialFit --robustFit 1 '+fitOptions)
-    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --robustFit 1 --doFits --parallel 100 '+fitOptions)
+    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doInitialFit '+fitOptions)
+    stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 --doFits --parallel 100 '+fitOptions)
     stepList.append('combineTool.py -M Impacts -d combinedDatacard.root -m 125 -o impacts.json '+fitOptions)
     stepList.append('sed "s/Smooth//g" impacts.json > impacts_final.json')
     stepList.append('plotImpacts.py -i impacts_final.json -o impacts')
@@ -286,7 +292,8 @@ def diffNuisances(opt):
             signals = commonTools.getSignals(opt)
             for signal in signals:
 
-                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])               
+                commandList.extend([ 'cd '+commonTools.getSignalDir(opt,year,tag,signal,'mlfitdir'), nuisCommand, 'cd -' ])
+
                 plotCommandList.append('./runAnalysis.py --action=saveNuisancesPlots --year='+year+' --tag='+tag+' --sigset='+signal)
 
     os.system(' ; '.join(commandList+plotCommandList))

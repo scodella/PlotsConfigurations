@@ -14,7 +14,7 @@ backgroundProcess = sys.argv[1] if (len(sys.argv)>=2 and sys.argv[1]!='All') els
 years = sys.argv[2] if len(sys.argv)>=3 else '2016HIPM,2016noHIPM,2017,2018'
 
 commonFlag = 'VetoesUL'
-plotArea = './PlotsV9ExtraV1/'
+plotArea = './Plots/' #V9ExtraV1/'
 
 if 'WWmt2sr4' in backgroundProcess or 'WWphisr4' in backgroundProcess: 
     commonFlag = ''
@@ -262,12 +262,12 @@ backgroundInfo = { 'ZZ' : { 'validationRegion'   : 'ZZValidationRegion',
                   }
 
 if 'WWmt2bin' in backgroundProcess:
-    backgroundInfo[backgroundProcess] = { 'validationRegion'   : 'WZtoWWValidationRegionNormWZ',
+    backgroundInfo[backgroundProcess] = { 'validationRegion'   : 'WZtoWWValidationRegion', #NormWZ',
                                           'signal'             : 'WZ',
                                           'exclusiveSelection' : 0,
-                                          'measurementRegions' : { 'wwmt2bin1' : { 'plot'      : 'WZtoWW_Zcut15_ptmiss-100_'+mt2llHistoName,
+                                          'measurementRegions' : { 'wwmt2bin1' : { 'plot'      : 'WZtoWW_Zcut10_ptmiss-160_'+mt2llHistoName,
                                                                    'bin'       : 1,
-                                                                   'cuts'      : [ 'WZtoWW_Zcut15_ptmiss-100' ],
+                                                                   'cuts'      : [ 'WZtoWW_Zcut10_ptmiss-160' ],
                                                                    'selection' : '' } } ,
                                           'samples'            : [ 'WW' ],
                                          }
@@ -370,7 +370,8 @@ def getScaleFactorFromCanvas(fileName, canvasName, dataName, signalName, binNumb
         bkg = mc - signal
         #signal *= 0.76759411
         #signal *=0.72431507
-        signal *= 0.73951049
+        #signal *= 0.73951049 # wwphi  <--
+        signal *= 1.045
         #bkgError = bkg*mcError/mc # some assumptions here
         signalError = signal*mcError/mc # some assumptions here
         scaleFactor = (data-bkg)/signal
@@ -391,10 +392,11 @@ if __name__ == '__main__':
         if 'WWmt2' in backgroundProcess or 'WWphi' in backgroundProcess:
             mt2llHisto = ROOT.TH1D('mt2ll','',len(searchBins)-1,array('d',searchBins))
             mt2llHisto.SetMinimum(0.)
-            mt2llHisto.SetMaximum(5.)
+            mt2llHisto.SetMaximum(2.)
             mt2llGraph = ROOT.TGraphAsymmErrors()
             if 'Optim' in backgroundProcess:
-                baseRootFile = ROOT.TFile('./ShapesV9AN/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'/plots_'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'_SM.root', 'read')
+                print('./Shapes/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'/plots_'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'_SM.root')
+                baseRootFile = ROOT.TFile('./Shapes/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'/plots_'+backgroundInfo[backgroundProcess]['validationRegion'].replace('NormWZ','')+commonFlag+'_SM.root', 'read')
                 baseWZHistoUni20 = baseRootFile.Get('WZtoWW_Zcut15_ptmiss-100/mt2llUni20/histo_WZ')
                 for ib in range(len(searchBins)-1):
                     wgtm, wgt = 0., 0.
@@ -457,9 +459,12 @@ if __name__ == '__main__':
         
         if 'WWmt2' in backgroundProcess or 'WWphi' in backgroundProcess:
             ROOT.gStyle.SetOptStat(ROOT.kFALSE)
-            plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 1200, 900)
+            plotCanvas = ROOT.TCanvas( 'plotCanvas', '', 796, 772)
             mt2llHisto.Draw()
-            mt2llHisto.SetXTitle('#font[50]{m}_{T2}(#font[12]{ll}) [GeV]')
+            if 'WWmt2' in backgroundProcess:
+                mt2llHisto.SetXTitle('#font[50]{m}_{T2}(#font[12]{ll}) [GeV]')
+            elif 'WWphi' in backgroundProcess:
+                mt2llHisto.SetXTitle('#Delta#phi^{min}(lep,#font[50]{p}_{T}^{miss})')
             mt2llHisto.SetYTitle('(Data-Back.)/WZ')
             minMT2Fit = 0.
             drawErrors = False
@@ -470,7 +475,8 @@ if __name__ == '__main__':
             #mt2llFun = ROOT.TF1('mt2llFun', '[0]*(1.+[1]*x+[3]*x*x)/(1.+[2]*x+[4]*x*x)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); mt2llFun.SetParameters(4.83969e-01, 1.08049e+00, 5.47807e-01, 1.76432e-03, 0.)
             ##WZ fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 600.)
             if 'WWmt2' in backgroundProcess:
-                mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
+                #mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 40.; drawErrors = True #False
+                mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*x', 40.,  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 40.; drawErrors = True #False
             else:
                 #mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*log(x+0.16)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
                 #mt2llFun  = ROOT.TF1('mt2llFun',  '[0]+[1]*exp([2]*x)', mt2llHisto.GetBinLowEdge(1),  mt2llHisto.GetBinLowEdge(mt2llHisto.GetNbinsX()+1)); minMT2Fit = 0.; drawErrors = False
@@ -482,8 +488,9 @@ if __name__ == '__main__':
             #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 1.)
             #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 10.)
             #mt2llGraph.SetPointY(7,1.)
-            mt2llFun.SetParameters(2.52859e-01, 7.05954e+01, -6.03146e+00, 2.53251e-01, 1.39018e+02, -8.17122e+00)
+            #wwphi --> mt2llFun.SetParameters(2.52859e-01, 7.05954e+01, -6.03146e+00, 2.53251e-01, 1.39018e+02, -8.17122e+00)
             #fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 3.)
+            fitReults = mt2llGraph.Fit(mt2llFun, 'S', '', minMT2Fit, 1000.)
             mt2llFun.Draw('same')
             mt2llGraph.Draw('P0')
             if drawErrors:
@@ -493,9 +500,11 @@ if __name__ == '__main__':
                 slopeUp  = mt2llFun.GetParameter(1)+mt2llFun.GetParError(1)
                 #offsetUp = mt2llFun.GetParameter(0)-mt2llFun.GetParError(0)
                 offsetUp = 1. - slopeUp*x1
+                offsetUp = mt2llFun.GetParameter(0)+45.*(mt2llFun.GetParameter(1)-slopeUp)
                 slopeDo  = mt2llFun.GetParameter(1)-mt2llFun.GetParError(1)
                 #offsetDo = mt2llFun.GetParameter(0)+mt2llFun.GetParError(0)
                 offsetDo = 1. - slopeDo*x1
+                offsetDo = mt2llFun.GetParameter(0)+45.*(mt2llFun.GetParameter(1)-slopeDo)
                 print(x1, mt2llFun.GetParameter(0), mt2llFun.GetParameter(1), offsetUp, slopeUp, offsetDo, slopeDo)
                 fitC  = ROOT.TLine(minMT2Fit, mt2llFun.GetParameter(0)+minMT2Fit*mt2llFun.GetParameter(1), 500., mt2llFun.GetParameter(0)+500.*mt2llFun.GetParameter(1))
                 fitUp = ROOT.TLine(minMT2Fit, offsetUp+minMT2Fit*slopeUp, 500., offsetUp+500.*slopeUp)
@@ -524,4 +533,4 @@ if __name__ == '__main__':
                 fitUpA.SetLineColor(4); fitUpA.SetLineStyle(2); fitUp.Draw(); fitUpA.Draw();
                 fitDoA.SetLineColor(4); fitDoA.SetLineStyle(2); fitDo.Draw(); fitDoA.Draw();
             plotCanvas.Print('./Plots/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion']+commonFlag+'/fit_'+backgroundProcess.replace('WWmt2bin','')+'_full.png')
-            
+            plotCanvas.Print('./Plots/'+year+'/'+backgroundInfo[backgroundProcess]['validationRegion']+commonFlag+'/fit_'+backgroundProcess.replace('WWmt2bin','')+'_full.pdf')

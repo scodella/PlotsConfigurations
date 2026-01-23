@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import timeit
 import optparse
 import json
@@ -41,13 +41,16 @@ if __name__ == '__main__':
 
     theoryNormalizations = { }
 
-    for sam_k, sam_v in samples.iteritems():
+    for sam_k, sam_v in samples.items():
+
+        print(sam_k, sam_v)
+        if len(sam_v['name'])==0: continue
 
         if not sam_v['isFastsim']: # Background samples + reference mass point samples
 
             expectedScaleWeights = 9
 
-            print 'Deriving theory normalizations for sample', sam_k
+            print('Deriving theory normalizations for sample', sam_k)
 
             subSamples = {}
 
@@ -62,7 +65,7 @@ if __name__ == '__main__':
 
             for subSample in subSamples:
 
-                if opt.verbose>=1: print ' Deriving theory normalizations for subsample', subSample
+                if opt.verbose>=1: print(' Deriving theory normalizations for subsample', subSample)
 
                 qcdStatus = 3
                 pdfStatus = 3
@@ -79,7 +82,7 @@ if __name__ == '__main__':
 
                 underscore = ''
                 expectedPdfWeights = expectedMinPdfWeights
-    	        pdfWeightWarning = False
+                pdfWeightWarning = False
                 lastnLHEPdfSumw_ = -999
 
                 for ev in range(chain.GetEntries()):
@@ -94,7 +97,7 @@ if __name__ == '__main__':
 
                     if hasattr(chain, 'nLHEPdfSumw'+underscore):
                         if ev>0 and lastnLHEPdfSumw_!=getattr(chain, 'nLHEPdfSumw'+underscore) and not pdfWeightWarning:
-                            print '   Error', sam_k, subSample, 'trees have different PDF sets'
+                            print('   Error', sam_k, subSample, 'trees have different PDF sets')
                             pdfWeightWarning = True
                         expectedPdfWeights = max(expectedPdfWeights, getattr(chain, 'nLHEPdfSumw'+underscore))
                         lastnLHEPdfSumw_ = getattr(chain, 'nLHEPdfSumw'+underscore)
@@ -110,19 +113,19 @@ if __name__ == '__main__':
 
                     if not hasattr(chain, 'genEventSumw'+underscore):
                         if opt.verbose>=2:
-                            print 'Error:', sam_k, subSample, 'tree does not have gen event weight information'
+                            print('Error:', sam_k, subSample, 'tree does not have gen event weight information')
                         qcdStatus = 0
                         pdfStatus = 0
                         break
 
                     if not hasattr(chain, 'nLHEScaleSumw'+underscore):
                         if opt.verbose>=2:
-                            print 'Error:', sam_k, subSample, 'tree does not have qcd scale information'
-	                qcdStatus = 0
+                            print('Error:', sam_k, subSample, 'tree does not have qcd scale information')
+                    qcdStatus = 0
                 
                     if not hasattr(chain, 'nLHEPdfSumw'+underscore):
                         if opt.verbose>=2:     
-                            print 'Error:', sam_k, subSample, 'tree does not have pdf scale information'
+                            print('Error:', sam_k, subSample, 'tree does not have pdf scale information')
                         pdfStatus = 0
 
                     genWeight += getattr(chain, 'genEventSumw'+underscore)
@@ -132,7 +135,7 @@ if __name__ == '__main__':
                         if getattr(chain, 'nLHEScaleSumw'+underscore)==expectedScaleWeights:
 
                             LHECentralSumw = chain.LHEScaleSumw_[4] if underscore=='_' else chain.LHEScaleSumw[4]
-                            if abs(LHECentralSumw-1.)>1.e-04: print 'Warning:', sam_k, 'LHEScaleSumw_[4] different from 1', LHECentralSumw                       
+                            if abs(LHECentralSumw-1.)>1.e-04: print('Warning:', sam_k, 'LHEScaleSumw_[4] different from 1', LHECentralSumw)                       
                      
                             for iqcd in range(getattr(chain, 'nLHEScaleSumw'+underscore)):
                                 eventWeight = chain.LHEScaleSumw_[iqcd] if underscore=='_' else chain.LHEScaleSumw[iqcd]
@@ -141,7 +144,7 @@ if __name__ == '__main__':
                         else: 
 
                             if opt.verbose>=2:
-                                print 'Warning:', sam_k, subSample, 'tree with nLHEScaleSumw', getattr(chain, 'nLHEScaleSumw'+underscore)
+                                print('Warning:', sam_k, subSample, 'tree with nLHEScaleSumw', getattr(chain, 'nLHEScaleSumw'+underscore))
                             for iqcd in range(expectedScaleWeights):   
                                 qcdWeights[iqcd] += getattr(chain, 'genEventSumw'+underscore)
   
@@ -150,7 +153,7 @@ if __name__ == '__main__':
                     else: 
                         qcdStatus = 0
 
-	    	    if pdfStatus and (getattr(chain, 'nLHEPdfSumw'+underscore)==0 or getattr(chain, 'nLHEPdfSumw'+underscore)>=expectedMinPdfWeights):  
+                    if pdfStatus and (getattr(chain, 'nLHEPdfSumw'+underscore)==0 or getattr(chain, 'nLHEPdfSumw'+underscore)>=expectedMinPdfWeights):  
 
                         if getattr(chain, 'nLHEPdfSumw'+underscore)>=expectedMinPdfWeights:
                        
@@ -159,18 +162,18 @@ if __name__ == '__main__':
                                     eventWeight = chain.LHEPdfSumw_[ipdf] if underscore=='_' else chain.LHEPdfSumw[ipdf]
                                     pdfWeights[ipdf] += eventWeight*getattr(chain, 'genEventSumw'+underscore)
                                     if eventWeight<0 and not negativeErrorAlarmGiven: 
-                                        print '  Error:', sam_k, subSample, 'tree has negative pdf weights'
+                                        print('  Error:', sam_k, subSample, 'tree has negative pdf weights')
                                         negativeErrorAlarmGiven = True
                                         pdfStatus = 2
                                 else:
                                     pdfWeights[ipdf] += getattr(chain, 'genEventSumw'+underscore) 
-                                    print 'Error: this should never happen!'
+                                    print('Error: this should never happen!')
                                     if pdfStatus>2: pdfStatus = 2   
 
                         else:
 
                             if opt.verbose>=2:
-                               print 'Warning:', sam_k, subSample, 'tree with nLHEPdfSumw', getattr(chain, 'nLHEPdfSumw'+underscore)
+                               print('Warning:', sam_k, subSample, 'tree with nLHEPdfSumw', getattr(chain, 'nLHEPdfSumw'+underscore))
                             for ipdf in range(expectedPdfWeights):
                                 pdfWeights[ipdf] += getattr(chain, 'genEventSumw'+underscore)
 
@@ -187,29 +190,29 @@ if __name__ == '__main__':
                         qcdWeights[iqcd] /= genWeight
                     subSamples[subSample]['qcdScale'] = qcdWeights
                 elif opt.verbose>=2:
-                    print 'Error: no qcd scale weights for sample', sam_k, subSample
+                    print('Error: no qcd scale weights for sample', sam_k, subSample)
 
                 if pdfStatus:
                     for ipdf in range(len(pdfWeights)):
                         pdfWeights[ipdf] /= genWeight
                     subSamples[subSample]['pdf'] = pdfWeights
                 elif opt.verbose>=2:
-                    print 'Error: no pdf weights for sample', sam_k, subSample
+                    print('Error: no pdf weights for sample', sam_k, subSample)
 
             if opt.verbose>=1:
                 for subSample in subSamples:
-                    print subSample, subSamples[subSample]['baseW']
-                    print ' qcdScaleStatus', subSamples[subSample]['qcdScaleStatus']
-                    if opt.verbose>=2: print ' qcdScale      ', subSamples[subSample]['qcdScale']
-                    print ' pdfStatus     ', subSamples[subSample]['pdfStatus']
-                    print ' n pdf         ', len(subSamples[subSample]['pdf'])
-                    if opt.verbose>=2: print ' pdf           ', subSamples[subSample]['pdf']
+                    print(subSample, subSamples[subSample]['baseW'])
+                    print(' qcdScaleStatus', subSamples[subSample]['qcdScaleStatus'])
+                    if opt.verbose>=2: print(' qcdScale      ', subSamples[subSample]['qcdScale'])
+                    print(' pdfStatus     ', subSamples[subSample]['pdfStatus'])
+                    print(' n pdf         ', len(subSamples[subSample]['pdf']))
+                    if opt.verbose>=2: print(' pdf           ', subSamples[subSample]['pdf'])
           
             for subSample1 in subSamples:
                 for subSample2 in subSamples:
                     if subSample1!=subSample2:
                         if (abs((subSamples[subSample1]['baseW']/subSamples[subSample2]['baseW'])-1.)<1.e-04):
-                            print '  Warning:', subSample1, 'and', subSample2, 'have close baseW ratio:', subSamples[subSample1]['baseW']/subSamples[subSample2]['baseW']
+                            print('  Warning:', subSample1, 'and', subSample2, 'have close baseW ratio:', subSamples[subSample1]['baseW']/subSamples[subSample2]['baseW'])
 
             theoryNormalizations[sam_k] = { }
 
@@ -228,7 +231,7 @@ if __name__ == '__main__':
                             qcdScaleNormalization += '+(abs((baseW/'+str(subSamples[subSample]['baseW'])+')-1.)<1.e-05)*('+str(subSamples[subSample]['qcdScale'][iqcd])+'-1.)'
                     theoryNormalizations[sam_k]['qcdScale'].append(qcdScaleNormalization+')')
             elif opt.verbose>=2:                                                     
-                print 'Error: no qcd scale weights for sample', sam_k
+                print('Error: no qcd scale weights for sample', sam_k)
 
             if theoryNormalizations[sam_k]['pdfStatus']==3:
                 theoryNormalizations[sam_k]['pdf'] = []		
@@ -239,7 +242,7 @@ if __name__ == '__main__':
                             pdfNormalization += '+(abs((baseW/'+str(subSamples[subSample]['baseW'])+')-1.)<1.e-05)*('+str(subSamples[subSample]['pdf'][ipdf])+'-1.)'
                     theoryNormalizations[sam_k]['pdf'].append(pdfNormalization+')')
             elif opt.verbose>=2:                           
-                print 'Error: no pdf weights for sample', sam_k
+                print('Error: no pdf weights for sample', sam_k)
 
             if sam_v['isSignal']:
                 del theoryNormalizations[sam_k]['pdfStatus']
@@ -258,7 +261,7 @@ if __name__ == '__main__':
             qcdWeights = [ ]
 
             for iqcd in range(expectedScaleWeights):
-		qcdWeights.append(0.)
+                qcdWeights.append(0.)
 
             baseTreeName = sam_v['name'][0]
 
@@ -278,8 +281,7 @@ if __name__ == '__main__':
             treeList = glob.glob(baseTreeName)
 
             for treeName in treeList: #sam_v['name']:
-
-		chain = ROOT.TChain('Runs')
+                chain = ROOT.TChain('Runs')
                 if 'rootd' not in treeName:
                     treeName = treeName.replace('###', '')
                 treeName = treeName.replace('root://eoscms.cern.ch/', '')		
@@ -305,22 +307,22 @@ if __name__ == '__main__':
 
                                 qcdStatus = 3
 
-                            else: print 'Error: sample', sam_j, 'has float LHEScaleSumw_'
+                            else: print('Error: sample', sam_j, 'has float LHEScaleSumw_')
 
             theoryNormalizations[sam_k] = { }
 
             theoryNormalizations[sam_k]['qcdScaleStatus'] = qcdStatus
                                                                 
             if qcdStatus:
-                if opt.verbose>=1: print 'Got qcd scale weights for sample', sam_k
+                if opt.verbose>=1: print('Got qcd scale weights for sample', sam_k)
                 theoryNormalizations[sam_k]['qcdScale'] = []
                 for iqcd in range(len(qcdWeights)):  
                     qcdWeights[iqcd] /= genWeight
                     theoryNormalizations[sam_k]['qcdScale'].append(str(qcdWeights[iqcd]))
                 if opt.verbose>=2:             
-                    print sam_k, genWeight 
+                    print(sam_k, genWeight) 
             else:
-                print 'Error: no qcd scale weights for sample', sam_k 
+                print('Error: no qcd scale weights for sample', sam_k) 
                   
     with open('./theoryNormalizations/theoryNormalizations'+recoFlag+'_'+opt.year+'_'+opt.sigset+'.py', 'w') as file:
         if opt.sigset=='Backgrounds':

@@ -101,6 +101,19 @@ for sample in samples:
         aliases['fastsimLeptonWeight']['samples'].append(sample)
         samples[sample]['weight'] = samples[sample]['weight'].replace(LepWeightFS, 'fastsimLeptonWeight')
 
+## ISR variables
+
+if 'ISRControlRegions' in opt.tag:
+
+    aliases['isrProducer'] = {
+        'linesToAdd': [ 'gSystem->AddIncludePath("-I%s/src/");' % os.getenv('CMSSW_RELEASE_BASE'), '.L '+os.getenv('PWD')+'/isrProducer.cc+' ],
+        'class': 'ISRProducer',
+        'args': ( float(bTagCut) ),
+        'samples': [ ]
+    }
+    for sample in samples:
+        aliases['isrProducer']['samples'].append(sample)
+
 ## d_xy/d_z/noLostHits scale factors
 
 if 'nanoAODv9' in opt.samplesFile and 'ExtraV1' not in opt.tag:
@@ -143,7 +156,8 @@ elif 'nanoAODv6' in opt.samplesFile or 'TestExtraV6' in opt.tag:
             aliases['zerohitLeptonWeight']['samples'].append(sample)
             samples[sample]['weight'] = samples[sample]['weight'].replace(EleWeight, EleWeight+'*zerohitLeptonWeight')
 
-if 'SearchRegionKinematics' in opt.tag:
+#if 'SearchRegionKinematics' in opt.tag:
+if 'SearchRegion' in opt.tag:
 
     aliases['btagWeightNtag'] = {
         'linesToAdd': [ 'gSystem->AddIncludePath("-I%s/src/");' % os.getenv('CMSSW_RELEASE_BASE'), '.L '+os.getenv('PWD')+'/btagWeightNtag.cc+' ],
@@ -176,6 +190,4 @@ if recoFlag=='_UL' and 'JPUW' in opt.tag:
         if not samples[sample]['isDATA']:
             aliases['jetPUIDweight']['samples'].append(sample)
             #samples[sample]['weight'] += '*jetPUIDweight'
-
-
 

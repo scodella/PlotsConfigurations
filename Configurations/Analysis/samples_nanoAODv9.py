@@ -64,6 +64,8 @@ isFillShape = isShape and not opt.doHadd
 isShapeOrPlot = isShape or hasattr(opt, 'postFit') or hasattr(opt, 'skipLNN')
 isShapeOrDatacardOrPlot = isShape or isDatacardOrPlot
 
+if 'pmssm' in opt.sigset and isShape: opt.lumi = 1.
+
 if isShapeOrPlot:
     print('Value of lumi set to', opt.lumi)
 
@@ -130,10 +132,13 @@ elif '2018' in yeartag :
     ProductionSig  = 'Spring21UL18FS_106X_nAODv9_Full2018v8/susyGen__susyW__FSSusy2018v8__FSSusyCorr2018v8__hadd__FSSusyNomin2018v8'
     ProductionData = 'Run2018_106X_nAODv9_Full2018v8/DATASusy2018v8__hadd'
 
+if 'pmssm' in opt.sigset:
+    ProductionSig = ProductionSig.replace('__hadd','')
+
 if 'EOY' in opt.sigset:
     if '2016' in yeartag :   ProductionSig = 'Summer16FS_102X_nAODv6_Full2016v6loose/hadd__susyGen__susyW__FSSusy2016v6loose__FSSusyCorr2016v6loose__FSSusyNomin2016v6loose'
-    elif '2017' in yeartag : ProductionSig ='Fall2017FS_102X_nAODv6_Full2017v6loose/hadd__susyGen__susyW__FSSusy2017v6loose__FSSusyCorr2017v6loose__FSSusyNomin2017v6loose'
-    elif '2018' in yeartag : ProductionSig ='Autumn18FS_102X_nAODv6_Full2018v6loose/hadd__susyGen__susyW__FSSusy2018v6loose__FSSusyCorr2018v6loose__FSSusyNomin2018v6loose'
+    elif '2017' in yeartag : ProductionSig = 'Fall2017FS_102X_nAODv6_Full2017v6loose/hadd__susyGen__susyW__FSSusy2017v6loose__FSSusyCorr2017v6loose__FSSusyNomin2017v6loose'
+    elif '2018' in yeartag : ProductionSig = 'Autumn18FS_102X_nAODv6_Full2018v6loose/hadd__susyGen__susyW__FSSusy2018v6loose__FSSusyCorr2018v6loose__FSSusyNomin2018v6loose'
 
 fastsimSignal = False if ('S2tt' in opt.sigset or 'SChipm' in opt.sigset) else True
 signalReco = 'fast' if fastsimSignal else 'reco'
@@ -144,8 +149,12 @@ if 'Fast' in opt.tag:
     fastsimMetType = 'reco' if 'FastReco' in opt.tag else 'acceptance'
 
 directoryBkg  = treeBaseDirMC   + ProductionMC   + regionName
-directorySig  = treeBaseDirSig  + ProductionSig  + regionName.replace('reco',  signalReco)
+directorySig  = treeBaseDirSig  + ProductionSig  + regionName.replace('reco',  signalReco).replace('ctrl',  'crfs')
 directoryData = treeBaseDirData + ProductionData + regionName.replace('Smear', 'Nomin')
+
+if not fastsimSignal and 'FastVsFull' in opt.tag:
+    directorySig += regionName.replace('reco',  'fast')
+    directorySig = directorySig.replace('/__','__')
 
 if 'LeptonL2TRate' in opt.tag:
     directoryBkg  = treeBaseDirMC   + ProductionMC.split('/')[0] + '/MCSusyFakeLepton__MCSusyFakeLeptonWeight/'
@@ -259,10 +268,13 @@ elif metnom=='Smear':
         treeNuisances['nosmear']  = { 'name' : metsmr,                    'onesided' : True  }
     treeNuisances[SmtEU+'jesTotal']  = { 'name' : 'SJS',  'jetname' : 'JES', 'onesided' : False }
     treeNuisances[SmtEU+'unclustEn'] = { 'name' : 'SMT',                     'onesided' : False }
+    if 'FastJEC' in opt.tag:
+        treeNuisances[SmtEU+'jesTotalV2']  = { 'name' : 'SJS',  'jetname' : 'JES', 'onesided' : False }
+        treeNuisances[SmtEU+'jesTotalV3']  = { 'name' : 'SJS',  'jetname' : 'JES', 'onesided' : False }
 
 for treeNuisance in treeNuisances:
     treeNuisances[treeNuisance]['year']     = False # ???
-    treeNuisances[treeNuisance]['BkgToSig'] = True if not fastsimSignal else True # ???
+    treeNuisances[treeNuisance]['BkgToSig'] = True if not fastsimSignal else False if '_JESFS' in opt.tag and 'jesTotal' in treeNuisance else True # ???
 
 treeNuisanceDirs = { }
 treeNuisanceSuffix = '__hadd' if ('cern' in SITE and 'EOY' in opt.sigset) else ''
@@ -283,6 +295,23 @@ for treeNuisance in treeNuisances:
         if 'jetname' in treeNuisances[treeNuisance]:
             directoryBkgTemp = directoryBkgTemp.replace('SusyNomin', 'Susy'+treeNuisances[treeNuisance]['jetname']+'variation')
             directorySigTemp = directorySigTemp.replace('SusyNomin', 'Susy'+treeNuisances[treeNuisance]['jetname']+'variation') 
+            if 'FastJEC' in opt.tag:
+                if 'jesTotalV' in treeNuisance:
+                     hipmFlag = yeartag.replace('2016', '') if '2016' in yeartag else ''
+                     pureYear = yeartag.replace(hipmFlag, '')
+                     corrString = 'FSSusyCorr'+pureYear+'v8'+hipmFlag
+                     jeuVersion = 'JMEUncertUL'+pureYear.replace('20','')
+                     if 'jesTotalV2' in treeNuisance: jeuVersion += 'FSV2'+hipmFlag
+                     elif 'jesTotalV3' in treeNuisance: jeuVersion += 'FSV3'+hipmFlag
+                     directorySigTemp = directorySigTemp.replace(corrString,corrString+'__'+jeuVersion)
+            elif 'JES' in directorySigTemp and ('FastVsFullFSMoreV2' in opt.tag or 'FastVsFullFSMoreV3' in opt.tag or 'FastV2' in opt.tag or 'FastV3' in opt.tag):
+                hipmFlag = yeartag.replace('2016', '') if '2016' in yeartag else ''
+                pureYear = yeartag.replace(hipmFlag, '')
+                corrString = 'FSSusyCorr'+pureYear+'v8'+hipmFlag
+                jeuVersion = 'JMEUncertUL'+pureYear.replace('20','')+'FSVXXX'+hipmFlag
+                if 'FastVsFullFSMoreV2' in opt.tag or 'FastV2' in opt.tag: jeuVersion = jeuVersion.replace('FSVXXX','FSV2')
+                elif 'FastVsFullFSMoreV3' in opt.tag or 'FastV3' in opt.tag: jeuVersion = jeuVersion.replace('FSVXXX','FSV3')
+                directorySigTemp = directorySigTemp.replace(corrString,corrString+'__'+jeuVersion)
         for variation in [ 'Down', 'Up' ]:
             treeNuisanceDirs[treeNuisance]['Bkg'][variation]  = directoryBkgTemp.replace('variation', variation[:2])
             treeNuisanceDirs[treeNuisance]['Sig'][variation]  = directorySigTemp.replace('variation', variation[:2])
@@ -336,13 +365,13 @@ lep0idx = '0'
 lep1idx = '1'
 lep2idx = '2'
 if 'FitCRttZ' in opt.tag or 'ttZNormalization' in opt.tag:
-        lep0idx = '(lep0idx_WZtoWW*('+nLooseLepton+'==3)+lep0idx_ttZ*('+nLooseLepton+'==4))'
-        lep1idx = '(lep1idx_WZtoWW*('+nLooseLepton+'==3)+lep1idx_ttZ*('+nLooseLepton+'==4))'
-        lep2idx = '(lep2idx_WZtoWW*('+nLooseLepton+'==3)+lep2idx_ttZ*('+nLooseLepton+'==4))'
+        lep0idx = '(abs(lep0idx_WZtoWW*('+nLooseLepton+'==3)+lep0idx_ttZ*('+nLooseLepton+'==4)))'
+        lep1idx = '(abs(lep1idx_WZtoWW*('+nLooseLepton+'==3)+lep1idx_ttZ*('+nLooseLepton+'==4)))'
+        lep2idx = '(abs(lep2idx_WZtoWW*('+nLooseLepton+'==3)+lep2idx_ttZ*('+nLooseLepton+'==4)))'
 elif ctrltag!='':
-    lep0idx = 'lep0idx'+ctrltag
-    lep1idx = 'lep1idx'+ctrltag
-    lep2idx = 'lep2idx'+ctrltag
+    lep0idx = '(abs(lep0idx'+ctrltag+'))'
+    lep1idx = '(abs(lep1idx'+ctrltag+'))'
+    lep2idx = '(abs(lep2idx'+ctrltag+'))'
 
 nTightMT2Lepton = '((('+ElectronWP+'['+lep1idx+ctrltag+']+'+MuonWP+'['+lep1idx+ctrltag+'])==1)+(('+ElectronWP+'['+lep2idx+ctrltag+']+'+MuonWP+'['+lep2idx+ctrltag+'])==1))'
 #nTightPromptLepton = 'Sum$((('+ElectronWP+'+'+MuonWP+')*Lepton_promptgenmatched)==1)'
@@ -384,6 +413,11 @@ HTForwardSoft = 'Sum$(Jet_pt*(abs(Jet_eta)>2.650 && abs(Jet_eta)<3.139 && Jet_pt
 HTRawForward  = 'Sum$(Jet_pt*(1.-Jet_rawFactor)*(abs(Jet_eta)>2.650 && abs(Jet_eta)<3.139))'
 HTRawForwardSoft = 'Sum$(Jet_pt*(1.-Jet_rawFactor)*(abs(Jet_eta)>2.650 && abs(Jet_eta)<3.139 && Jet_pt*(1.-Jet_rawFactor)<50.))'
 jetpteenoisedphi = '(Jet_pt*(2*(Jet_pt*(1.-Jet_rawFactor)<50. && abs(Jet_eta)>2.650 && abs(Jet_eta)<3.139 && acos(cos(Jet_phi-'+ptmiss_phi+'))<0.96)-1))'
+if 'FastVsFull' in opt.tag:
+    pxHad  = '(-Lepton_pt['+lep0idx+']*cos(Lepton_phi['+lep0idx+'])-Lepton_pt['+lep1idx+']*cos(Lepton_phi['+lep1idx+'])-ptmiss_reco*cos(ptmiss_phi_reco))'
+    pyHad  = '(-Lepton_pt['+lep0idx+']*sin(Lepton_phi['+lep0idx+'])-Lepton_pt['+lep1idx+']*sin(Lepton_phi['+lep1idx+'])-ptmiss_reco*sin(ptmiss_phi_reco))'
+    phiHad = 'atan('+pyHad+'/'+pxHad+')'
+    dPhiHadptmiss = 'acos(cos('+phiHad+'-ptmiss_phi_reco))'
 
 ptmissNano = 'MET_pt'
 if 'Data' not in opt.sigset: # data do not have pt_nom, but it's equal to pt as the JEC in central production were the final ones
@@ -608,6 +642,7 @@ if 'Trigger' in opt.tag or 'LeptonL2TRate' in opt.tag: TriggerEff = '1.'
 
 XSWeight       = 'baseW*genWeight*((ptmiss'+ctrltag+'-MET_pt)<10000.)'
 if 'SignalCR' in opt.tag: XSWeight = 'baseW'
+if 'pmssm' in opt.sigset: XSWeight = '((ptmiss'+ctrltag+'-MET_pt)<10000.)'
 
 # lepton weights
 
@@ -694,6 +729,7 @@ if '2018' in yeartag and 'HEM' in DataQualityCuts:
 SFweight       = SFweightCommon + '*' + METFilters_MC
 SFweightFS     = SFweightCommon + '*' + METFilters_FS + '*' + LepWeight['Lep']['FastSim'] + '*isrW'
 if 'noLepFS' in opt.tag: SFweightFS = SFweightCommon + '*' + METFilters_FS + '*isrW'
+if 'NoISRW' in  opt.tag or 'pmssm' in opt.sigset: SFweightFS = SFweightFS.replace('*isrW','')
     
 ### Special weights
 
@@ -737,6 +773,13 @@ if 'SignalRegions' in opt.tag or hasattr(opt, 'outputDirDatacard'):
     normBackgrounds['DY']        = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } }
     normBackgrounds['ttSemilep'] = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } }
     normBackgrounds['minor']     = { 'all'   : { 'scalefactor' : { '1.00' : '0.50' }, 'selection' : '1.' } }
+
+    if '_doubLN' in opt.tag:
+        normBackgrounds['minor']['all']['scalefactor'] = { '1.00' : '1.00' }
+        normBackgrounds['DY']['all']['scalefactor']    = { '1.00' : '1.00' }
+    elif '_halfLN' in opt.tag:
+        normBackgrounds['minor']['all']['scalefactor'] = { '1.00' : '0.25' }
+        normBackgrounds['DY']['all']['scalefactor']    = { '1.00' : '0.25' }
 
     if '_DYmore' in opt.tag: normBackgrounds['DY']['all']['scalefactor']['1.00'] = '1.00'
     if '_STtWmore' in opt.tag: normBackgrounds['STtW']['all']['scalefactor']['1.00'] = '1.00'
@@ -789,6 +832,10 @@ if 'BackSF' in opt.tag:
 Top_pTrw = '(TMath::Sqrt( TMath::Exp(0.0615-0.0005*topGenPt) * TMath::Exp(0.0615-0.0005*antitopGenPt) ) )'
 centralTopPt = Top_pTrw 
 systematicTopPt = '1.'
+if 'NoTopPt' in opt.tag:
+    centralTopPt = '1.'
+    systematicTopPt = Top_pTrw
+
 
 # ww tails
 
@@ -803,6 +850,14 @@ elif 'WWPol1a' in opt.tag:
     WWtails     = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.913922462096+0.00188236208333*mt2ll' +ctrltag+'))'
     WWtailsUp   = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.844001775876+0.0034114026645*mt2ll'  +ctrltag+'))'
     WWtailsDown = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.983843148317+0.000353321502166*mt2ll'+ctrltag+'))'
+elif 'WWPol1b' in opt.tag:
+    WWtails     = '1.'
+    WWtailsUp   = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.913922462096+0.00188236208333*mt2ll' +ctrltag+'))'
+    WWtailsDown = '(1./'+WWtailsUp+')'
+elif 'WWPol1u' in opt.tag:
+    WWtails     = '1.'
+    WWtailsUp   = '((mt2ll'+ctrltag+'<50.)+(mt2ll'+ctrltag+'>=50.)*(0.8976055+0.00204789*mt2ll' +ctrltag+'))'
+    WWtailsDown = '(1./'+WWtailsUp+')'
 else:
     WWtails, WWtailsUp, WWtailsDown = '1.', '1.', '1.'
 
@@ -952,7 +1007,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                             }
 
         samples['WZ'] = { 'name'   : getSampleFiles(directoryBkg,'WZTo3LNu',False,treePrefix,skipTreesCheck),
-                          'weight' : XSWeight+'*'+SFweight+'*'+WWphiWeight ,
+                          'weight' : XSWeight+'*'+SFweight ,
                          }
         if 'WZtoWW' in opt.tag and 'WWPol1a' in opt.tag:
             samples['WZ']['weight'] += '*'+WWtails 
@@ -1033,7 +1088,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                     addSampleWeight(samples,'ZZTo4L','ZZTo4L', kZZvariable.replace('kZZ', 'kZZ_'))
 
         nameWJets = 'WJetsToLNu'
-        if 'SameSignValidationRegion' in opt.tag or 'DYMeasurements' in opt.tag or 'WJets' in opt.sigset:
+        if ('SameSign' in opt.tag and 'ValidationRegion' in opt.tag) or 'DYMeasurements' in opt.tag or 'WJets' in opt.sigset:
             
             if 'WJetsCorr' in opt.sigset: nameWJets = 'WJetsCorr'
 
@@ -1049,7 +1104,7 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                                    'weight' : XSWeight+'*'+SFweight.replace('*' + nonpromptLepSF, '') ,
                                    #'isControlSample' : 1,
                                   }
-            addSampleWeight(samples,nameWJets,'WJetsToLNu-LO', '(LHE_HT>0.)*(genWeight<20.)')
+            addSampleWeight(samples,nameWJets,'WJetsToLNu-LO', '(LHE_HT<70.)*(genWeight<20.)')
 
             if 'AppWJetsSplit' in opt.tag:
 
@@ -1071,6 +1126,34 @@ if 'SM' in opt.sigset or 'Backgrounds' in opt.sigset:
                                  #'isControlSample' : 1,
                                 }
 
+if 'JZW' in opt.tag:
+    for sample in samples:
+        if 'ttbar' in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.1545066*(nCleanJet==0))'
+        if 'WW'    in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0070658*(nCleanJet==0))'
+        if 'STtW'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0342004*(nCleanJet==0))'
+        if 'DY'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0194479*(nCleanJet==0))'
+        if 'ZZTo2L2Nu'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0017871*(nCleanJet==0))'
+        if 'ttZ'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.3142944*(nCleanJet==0))'
+        if 'WZ'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0080815*(nCleanJet==0))'
+        if 'ttW'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.4792016*(nCleanJet==0))'
+        if 'Higgs'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0157464*(nCleanJet==0))'
+        if 'VVV'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0063484*(nCleanJet==0))'
+        if 'VZ'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.0913518*(nCleanJet==0))'
+        if 'ttSemilep'  in sample: samples[sample]['weight'] += '*0.99939155*(1.+0.2131773*(nCleanJet==0))'
+elif 'JZZ' in opt.tag:
+    for sample in samples:
+        if 'ttbar' in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.1246593*(nCleanJet==0))'
+        if 'WW'    in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0057009*(nCleanJet==0))'
+        if 'STtW'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0275937*(nCleanJet==0))'
+        if 'DY'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+*0.0156911(nCleanJet==0))'
+        if 'ZZTo2L2Nu'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0014419*(nCleanJet==0))'
+        if 'ttZ'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.2535804*(nCleanJet==0))'
+        if 'WZ'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0065203*(nCleanJet==0))'
+        if 'ttW'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.3866315*(nCleanJet==0))'
+        if 'Higgs'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0127046*(nCleanJet==0))'
+        if 'VVV'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0051221*(nCleanJet==0))'
+        if 'VZ'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.0737048*(nCleanJet==0))'
+        if 'ttSemilep'  in sample: samples[sample]['weight'] += '*0.99950903*(1.+0.1719967*(nCleanJet==0))'
 if 'Backgrounds' in opt.sigset and opt.sigset not in 'Backgrounds' and 'Backgrounds-' not in opt.sigset:
 
     shortset = opt.sigset.split('-')[0]
@@ -1102,6 +1185,8 @@ for sample in samples:
         samples[sample]['split'] = 'AsMuchAsPossible'
     elif 'BackSF' in opt.tag and sample in [ 'WZ', 'ttZ' ]:
         samples[sample]['split'] = 'Single'
+    if 'WWPhiW' in opt.tag:
+        samples[sample]['weight'] += '*'+WWphiWeight
 
 ### Data
 
@@ -1291,10 +1376,26 @@ for sigSetItem in sigSetList:
         isrObservable = 'ptISR' if ('T2' not in model and 'S2' not in model and '2016' in opt.tag) else 'njetISR'
         XSWeightModel = XSWeight+'*0.10497000068426132' if (isFillShape and 'T2' in model and 'EOY' not in opt.sigset) else XSWeight
 
-        for massPoint in signalMassPoints.signalMassPoints[model]:
-            if signalMassPoints.massPointInSignalSet(massPoint, sigSetItem):
+        massPointList = []
+
+        if 'pmssm' in sigSetItem:
+            massPointList = signalMassPoints.setPMSSMMassPoints(sigSetItem)
+        else:
+            for massPoint in signalMassPoints.signalMassPoints[model]:
+                if signalMassPoints.massPointInSignalSet(massPoint, sigSetItem):
+                    massPointList.append(massPoint)
+
+        if len(massPointList)>0:
+            for massPoint in massPointList:
 
                 if isFillShape and '2016' in yeartag and 'EOY' not in opt.sigset and fastsimSignal: opt.lumi = 36.33
+
+                if 'SYSTJESUP' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'jesTotal']['Sig']['Up']
+                if 'SYSTJESDO' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'jesTotal']['Sig']['Down']
+                if 'SYSTJERUP' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'jer']['Sig']['Up']
+                if 'SYSTJERDO' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'jer']['Sig']['Down']
+                if 'SYSTUNEUP' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'unclustEn']['Sig']['Up']
+                if 'SYSTUNEDO' in opt.tag: directorySig = treeNuisanceDirs[SmtEU+'unclustEn']['Sig']['Down']
 
                 massPointName = SigVer+massPoint
                 samples[massPointName] = { 'name'   : getSampleFiles(directorySig,signalMassPoints.signalMassPoints[model][massPoint]['massPointDataset'],False,treePrefix,skipTreesCheck),
@@ -1307,15 +1408,38 @@ for sigSetItem in sigSetList:
                                        'isSignal'  : 1,
                                        'isDATA'    : 0,
                                      }
-                  
+
+                if 'FilesPerJob' in signalMassPoints.signalMassPoints[model][massPoint]:
+                    samples[massPointName]['split'] = 'AsMuchAsPossible'
+                    samples[massPointName]['FilesPerJob'] = signalMassPoints.signalMassPoints[model][massPoint]['FilesPerJob']
+
                 if fastsimSignal:
                     signalWeight = SFweightFS
                     samples[massPointName]['isFastsim'] = 1
                 else:
-                    signalWeight = SFweight+'*isrW'
+                    signalWeight = SFweight+'*isrW' if ('NoISRW' not in opt.tag and 'pmssm' not in massPointName) else SFweight
                     samples[massPointName]['isFastsim'] = 0
                 if 'NoSFs' in opt.tag: signalWeight = '1.'
-                samples[massPointName]['weight']    = XSWeightModel+'*'+signalWeight+'*'+signalMassPoints.signalMassPoints[model][massPoint]['massPointCut']
+                samples[massPointName]['weight']       = XSWeightModel+'*'+signalWeight+'*'+signalMassPoints.signalMassPoints[model][massPoint]['massPointCut']
+                samples[massPointName]['massPointCut'] = signalMassPoints.signalMassPoints[model][massPoint]['massPointCut']
+
+                if 'NoWeight' in opt.tag:
+                    samples[massPointName]['weight'] = signalMassPoints.signalMassPoints[model][massPoint]['massPointCut']
+
+if 'SYSTJESDO' in  opt.tag or 'SYSTJESUP' in  opt.tag or 'SYSTJERDO' in  opt.tag or 'SYSTJERUP' in  opt.tag or 'SYSTUNEDO' in  opt.tag or 'SYSTUNEUP' in  opt.tag:
+    wholeSignal = opt.sigset
+    if ":" in wholeSignal: wholeSignal = opt.sigset.split(':')[1]
+    wholeSignal = wholeSignal.split(',')[0]
+    wholeSignal = wholeSignal.split("_")[0]+"_"+wholeSignal.split("_")[1]
+    keySample = ''
+    for sample in samples:
+        if samples[sample]['isSignal']:
+            keySample = sample
+            break
+    samples[wholeSignal] = {}
+    for key in samples[keySample]:
+        samples[wholeSignal][key] = samples[keySample][key]
+    samples[wholeSignal]['weight'] = samples[keySample]['weight'].replace('*'+samples[keySample]['massPointCut'],'')
 
 ### Nasty clean up for eos
 

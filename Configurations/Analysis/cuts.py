@@ -134,7 +134,33 @@ if 'InclusiveJetUncertainties' in opt.tag:
     cuts['TwoLep_em'] = OC+' && '+DF
     cuts['TwoLep_ee'] = OC+' && '+EE
     cuts['TwoLep_mm'] = OC+' && '+MM
-    
+
+if 'FastVsFull' in opt.tag:
+
+    cuts['TwoLep'] = OC
+    #cuts['TwoLep_sf'] = OC+' && '+SF
+    #cuts['TwoLep_em'] = OC+' && '+DF
+
+    jetCutForFastVsFull = ' && Sum$(CleanJet_pt)>=50.'
+    cuts['TwoLep_jets'] = OC+jetCutForFastVsFull
+    #cuts['TwoLep_jets_sf'] = OC+' && '+SF+jetCutForFastVsFull
+    #cuts['TwoLep_jets_em'] = OC+' && '+DF+jetCutForFastVsFull
+
+    if 'EOY' in opt.tag: dPhiHadptmiss = dPhiHadptmiss.replace('ptmiss_phi_reco','ptmiss_reco_phi')
+    cuts['TwoLep_had'] = OC+' && '+dPhiHadptmiss+'>(acos(-1.)/2.)'
+    cuts['TwoLep_lep'] = OC+' && '+dPhiHadptmiss+'<(acos(-1.)/2.)'
+
+    cuts['TwoLep_SR1reco'] = OC+' && ptmiss_reco>=160. && ptmiss_reco<220'
+    cuts['TwoLep_SR2reco'] = OC+' && ptmiss_reco>=220. && ptmiss_reco<280'   
+    cuts['TwoLep_SR3reco'] = OC+' && ptmiss_reco>=280. && ptmiss_reco<380'   
+    cuts['TwoLep_SR4reco'] = OC+' && ptmiss_reco>=380.'   
+
+    cuts['TwoLep_SR1gen']  = OC+' && ptmiss_gen>=160.  && ptmiss_gen<220'
+    cuts['TwoLep_SR2gen']  = OC+' && ptmiss_gen>=220.  && ptmiss_gen<280'
+    cuts['TwoLep_SR3gen']  = OC+' && ptmiss_gen>=280.  && ptmiss_gen<380'
+    cuts['TwoLep_SR4gen']  = OC+' && ptmiss_gen>=380.'
+    print("ww")
+
 if 'PV35' in opt.tag:
 
     cuts['TwoLep_em_PVm35'] = OC+' && '+DF+' && PV_npvs<35'
@@ -278,17 +304,17 @@ if 'VetoNoiseEE' in opt.tag and not 'HTFCut' in opt.tag:
 
     if 'Zpeak' not in opt.tag:      
         cuts['Veto0_Tag']             = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+')', 'weight' : btagWeight1tag }
-        cuts['Veto0_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+' && '+ptm+')', 'weight' : btagWeight1tag }
-        cuts['Veto1_Tag']             = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+')', 'weight' : btagWeight1tag }
-        cuts['Veto1_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+' && '+ptm+')', 'weight' : btagWeight1tag }
-        cuts['Veto2_Tag']             = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+')', 'weight' : btagWeight1tag }
-        cuts['Veto2_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+' && '+ptm+')', 'weight' : btagWeight1tag }
-        cuts['Veto0_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+')', 'weight' : btagWeight0tag }
-        cuts['Veto0_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+' && '+ptm+')', 'weight' : btagWeight0tag }
-        cuts['Veto1_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+')', 'weight' : btagWeight0tag }
-        cuts['Veto1_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+' && '+ptm+')', 'weight' : btagWeight0tag }
-        cuts['Veto2_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+')', 'weight' : btagWeight0tag }
-        cuts['Veto2_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+' && '+ptm+')', 'weight' : btagWeight0tag }
+        #cuts['Veto0_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+' && '+ptm+')', 'weight' : btagWeight1tag }
+        #cuts['Veto1_Tag']             = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+')', 'weight' : btagWeight1tag }
+        #cuts['Veto1_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+' && '+ptm+')', 'weight' : btagWeight1tag }
+        #cuts['Veto2_Tag']             = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+')', 'weight' : btagWeight1tag }
+        #cuts['Veto2_Tag_highptmiss']  = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+' && '+ptm+')', 'weight' : btagWeight1tag }
+        #cuts['Veto0_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+')', 'weight' : btagWeight0tag }
+        #cuts['Veto0_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto0+' && '+ptm+')', 'weight' : btagWeight0tag }
+        #cuts['Veto1_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+')', 'weight' : btagWeight0tag }
+        #cuts['Veto1_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto1+' && '+ptm+')', 'weight' : btagWeight0tag }
+        #cuts['Veto2_Veto']            = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+')', 'weight' : btagWeight0tag }
+        #cuts['Veto2_Veto_highptmiss'] = { 'expr' : '('+channelCut+' && '+EENoiseVeto2+' && '+ptm+')', 'weight' : btagWeight0tag }
     elif 'ZpeakValid' in opt.tag:
         cuts['Veto0_Valid_Zpeak'] = { 'expr' : '('+OC+' && '+LL+' && '+Zcut.replace('ZCUT',  '15.')+' && '+EENoiseVeto0+' && '+ptm+')', 'weight' : btagWeight0tag }
         cuts['Veto1_Valid_Zpeak'] = { 'expr' : '('+OC+' && '+LL+' && '+Zcut.replace('ZCUT',  '15.')+' && '+EENoiseVeto1+' && '+ptm+')', 'weight' : btagWeight0tag }
@@ -374,7 +400,14 @@ if 'HMControlRegion' in opt.tag:
     cuts['Top_em'] = { 'expr' : '(' + OC+' && '+DF+' && MET_significance>12  && CleanJet_pt[1]>=30. && '+dPhijet0ptmiss+'>0.64 && '+dPhijet1ptmiss+'>0.25)', 'weight' : btagWeight1tag }
     cuts['Top_sf'] = { 'expr' : '(' + OC+' && '+SF+' && MET_significance>12  && CleanJet_pt[1]>=30. && '+dPhijet0ptmiss+'>0.64 && '+dPhijet1ptmiss+'>0.25)', 'weight' : btagWeight1tag }
     cuts['Top_hm'] = { 'expr' : '(' + OC+' && '+ZVeto+' && MET_significance>12  && CleanJet_pt[1]>=30. && '+dPhijet0ptmiss+'>0.64 && '+dPhijet1ptmiss+'>0.25)', 'weight' : btagWeight1tag }
-    
+   
+if 'ISRControlRegions' in opt.tag:
+
+    nbjets = 'Sum$(CleanJet_pt>='+bTagPtCut+' && abs(CleanJet_eta)<'+bTagEtaMax+' && Jet_'+btagDisc+'[CleanJet_jetIdx]>='+bTagCut+')'
+    cuts['ttbar']     = { 'expr' : '('+OC+' && ('+DF+' || '+SF+') && '+nbjets+'==2)',                           'weight' : btagWeight2tag }
+    cuts['ttbar_met'] = { 'expr' : '('+OC+' && ('+DF+' || '+SF+') && '+nbjets+'==2 && ptmiss>50.)',             'weight' : btagWeight2tag }
+    cuts['DY']        = { 'expr' : '('+OC+' && '+LL+' && '+Zcut.replace('ZCUT', '10.')+' && Lepton_pt[0]>40.)', 'weight' : '1.' }
+
 if 'WWControlRegion' in opt.tag:
     if 'Latino' in opt.tag:
         print("im doing latinos")
@@ -427,11 +460,11 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
 
     if 'HighPtMissDY' in opt.tag: SF = LL
 
-    if not hasattr(opt, 'outputDirDatacard'):
+    if not hasattr(opt, 'outputDirDatacard') and not hasattr(opt, 'combineAction'):
 
-        cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
-        cuts['VR1_em']   = { 'expr' : OC+' && '+DF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
-        cuts['VR1_sf']   = { 'expr' : OC+' && '+SF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        #cuts['VR1']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        #cuts['VR1_em']   = { 'expr' : OC+' && '+DF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        #cuts['VR1_sf']   = { 'expr' : OC+' && '+SF   +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
 
         cuts['VR1_Veto_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight0tag }
         cuts['VR1_Veto_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight0tag }
@@ -439,10 +472,10 @@ if 'HighPtMissControlRegion' in opt.tag or 'HighPtMissValidationRegion' in opt.t
     cuts['VR1_Tag_em']   = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight1tag }
     cuts['VR1_Tag_sf']   = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight1tag }
 
-    cuts['VR1_NoTag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag+'*'+HasJetWeight }
-    cuts['VR1_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag+'*'+HasJetWeight }
-    cuts['VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
-    cuts['VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    #cuts['VR1_NoTag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag+'*'+HasJetWeight }
+    #cuts['VR1_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag+'*'+HasJetWeight }
+    #cuts['VR1_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
+    #cuts['VR1_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag+'*'+NoJetsWeight }
 
 if 'LooseHighPtMissNoJetControlRegion' in opt.tag or 'LooseHighPtMissNoJetValidationRegion' in opt.tag:
 
@@ -545,12 +578,14 @@ if 'SameSignValidationRegion' in opt.tag or 'SameSignInclusiveValidationRegion' 
 
 if 'SameSignVetoValidationRegion' in opt.tag:
 
-    cuts['SSV_ptmiss']            = { 'expr' : '('+SSM+' && ptmiss'+ctrltag+'>=0  )', 'weight' : btagWeight0tag }
-    cuts['SSV_ptmiss_100to140']   = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140)', 'weight' : btagWeight0tag }
-    cuts['SSV_ptmiss_140']        = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=140)', 'weight' : btagWeight0tag }
-    cuts['SSV_ptmiss_160']        = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
-    cuts['SSV_ptmiss_160_plus']   = { 'expr' : '('+SSP+' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
-    cuts['SSV_ptmiss_160_minus']  = { 'expr' : '('+SSM+' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
+    ssvName = 'SS_'
+
+    cuts[ssvName+'ptmiss']            = { 'expr' : '('+SSM+' && ptmiss'+ctrltag+'>=0  )', 'weight' : btagWeight0tag }
+    cuts[ssvName+'ptmiss_100to140']   = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140)', 'weight' : btagWeight0tag }
+    cuts[ssvName+'ptmiss_140']        = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=140)', 'weight' : btagWeight0tag }
+    cuts[ssvName+'ptmiss_160']        = { 'expr' : '('+SS +' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
+    cuts[ssvName+'ptmiss_160_plus']   = { 'expr' : '('+SSP+' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
+    cuts[ssvName+'ptmiss_160_minus']  = { 'expr' : '('+SSM+' && ptmiss'+ctrltag+'>=160)', 'weight' : btagWeight0tag }
 
 if 'FakeValidationRegion' in opt.tag:
     
@@ -607,21 +642,30 @@ if 'WZValidationRegion' in opt.tag or 'WZtoWWValidationRegion' in opt.tag:
         cuts['WZtoWW_Zcut15_ptmiss-160to380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+' && ptmiss'+ctrltag+'<380)', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut15_ptmiss-380']      = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','380')+')', 'weight' : btagWeight0tag }
 
+    elif 'WZtoWWValidationRegionHigh' in opt.tag:
+
+        #cuts['WZtoWW_Zcut10_ptmiss-100to140'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140)', 'weight' : btagWeight0tag }
+        cuts['WZtoWW_Zcut15_ptmiss-100to140'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140)', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut10_ptmiss-100to140_NoJet'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140 && '+NoJets+')', 'weight' : btagWeight0tag }
+        cuts['WZtoWW_Zcut15_ptmiss-100to140_NoJet'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140 && '+NoJets+')', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut10_ptmiss-100to140_Jets'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140 && '+HasJet+')', 'weight' : btagWeight0tag }
+        cuts['WZtoWW_Zcut15_ptmiss-100to140_Jets'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<140 && '+HasJet+')', 'weight' : btagWeight0tag }
+
     elif 'WZtoWWValidationRegion' in opt.tag:
 
         cuts['WZtoWW_Zcut10']            = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT',  '0')+')', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut15']            = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT',  '0')+')', 'weight' : btagWeight0tag } 
         cuts['WZtoWW_Zcut10_ptmiss-100'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','100')+')', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut15_ptmiss-100'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+')', 'weight' : btagWeight0tag }
-        cuts['WZtoWW_Zcut15_ptmiss-100to220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<220)', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut15_ptmiss-100to220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','100')+' && ptmiss'+ctrltag+'<220)', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut10_ptmiss-140'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','140')+')', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut15_ptmiss-140'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','140')+')', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut10_ptmiss-160'] = { 'expr' : '('+WZselection.replace('ZCUT','10.').replace('METCUT','160')+')', 'weight' : btagWeight0tag }
         cuts['WZtoWW_Zcut15_ptmiss-160'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+')', 'weight' : btagWeight0tag }
-        cuts['WZtoWW_Zcut15_ptmiss-160to220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+' && ptmiss'+ctrltag+'<220)', 'weight' : btagWeight0tag }
-        cuts['WZtoWW_Zcut15_ptmiss-220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','220')+')', 'weight' : btagWeight0tag }
-        cuts['WZtoWW_Zcut15_ptmiss-280'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','280')+')', 'weight' : btagWeight0tag }
-        cuts['WZtoWW_Zcut15_ptmiss-380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','380')+')', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut15_ptmiss-160to220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','160')+' && ptmiss'+ctrltag+'<220)', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut15_ptmiss-220'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','220')+')', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut15_ptmiss-280'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','280')+')', 'weight' : btagWeight0tag }
+        #cuts['WZtoWW_Zcut15_ptmiss-380'] = { 'expr' : '('+WZselection.replace('ZCUT','15.').replace('METCUT','380')+')', 'weight' : btagWeight0tag }
 
         #if 'TL' not in opt.tag and 'T3' not in opt.tag and 'TM' not in opt.tag:
         #    cuts['WZtoWW_ZcutNo']            = { 'expr' : '('+WZselection.replace('ZCUT','999.').replace('METCUT',  '0')+')', 'weight' : btagWeight0tag }
@@ -856,7 +900,7 @@ if 'SignalRegion' in opt.tag:
     splitjets=False  
     if 'CharginoSignalRegions' in opt.tag or 'TChipmWWSignalRegions' in opt.tag or 'VisHT' in opt.tag: splitjets=True
 
-    if 'Paper2016' in opt.tag or 'METBins2016' in opt.tag:
+    if 'Paper2016' in opt.tag or 'METBins2016' in opt.tag or 'PaperB' in opt.tag:
         ptmiss_cuts={"SR1": ' && ptmiss>=140 && ptmiss<200 ',
                      "SR2": ' && ptmiss>=200 && ptmiss<300 ',
                      "SR3": ' && ptmiss>=300 '}
@@ -874,18 +918,18 @@ if 'SignalRegion' in opt.tag:
             del ptmiss_cuts[sr]
     if '_SR' in opt.tag.split('qq')[0]:
         for sr in SRlist:
-            if '_'+sr not in opt.tag.split('_Split')[0]:
+            if '_'+sr not in opt.tag:#.split('_Split')[0]:
                 del ptmiss_cuts[sr]
 
     isrRegions = [ ]
     if 'StopSignalRegions' in opt.tag: 
-        if 'NoISR' not in opt.tag: 
+        if 'NoISRCut' not in opt.tag: 
             if 'ISR4' not in opt.tag: isrRegions.append('SR3')
-            isrRegions.append('SR4')
+            if "SR4" in ptmiss_cuts: isrRegions.append('SR4')
     elif 'CharginoSignalRegions' in opt.tag or 'TChipmWWSignalRegions' in opt.tag:
-        if 'ISR' in opt.tag:
+        if 'ISRCut' in opt.tag:
             if 'ISR4' not in opt.tag: isrRegions.append('SR3')
-            isrRegions.append('SR4') 
+            if "SR4" in ptmiss_cuts: isrRegions.append('SR4') 
 
     for SR in ptmiss_cuts:
 
@@ -924,7 +968,15 @@ if 'SignalRegion' in opt.tag:
         else:
             cuts[SR+'_Veto_em']  = { 'expr' : '(' + OC+' && '+DF+ptmiss_cuts[SR]+isrcut+vetocut+')', 'weight' : btagWeight0tag }
             cuts[SR+'_Veto_sf']  = { 'expr' : '(' + OC+' && '+SF+ptmiss_cuts[SR]+isrcut+vetocut+')', 'weight' : btagWeight0tag }
-    
+   
+if '_NoCRtag' in opt.tag:
+    CRToRemove = []
+    for cut in cuts:
+        if 'SR' in cut and '_Tag' in cut:
+            CRToRemove.append(cut)
+    for cut in CRToRemove:
+        del cuts[cut]
+
 # Add cuts for control regions to be added in the fit
 
 if 'FitCR' in opt.tag and ('FitCRWZ' in opt.tag or 'FitCRttZ' in opt.tag or 'FitCRZZ' in opt.tag or isDatacardOrPlot):
@@ -980,6 +1032,33 @@ if 'FitCR' in opt.tag and ('FitCRWZ' in opt.tag or 'FitCRttZ' in opt.tag or 'Fit
                 exprCR = exprCR.replace('ptmiss_phi', 'ptmiss_phi_ZZ')
                 crcuts[crcut.replace('_sf', '_ZZ')] = { 'expr' : exprCR, 'weight' : cuts[cut]['weight'] } 
 
+    if '_mergeRPfull' in opt.tag:
+        if hasattr(opt, 'outputDirDatacard') or hasattr(opt, 'combineAction'):
+            if hasattr(opt, 'outputDirDatacard'):
+                shapeFile = opt.inputFile
+            else:
+                rawTag = opt.tag.split('_')[0].replace(opt.year,'')
+                shapeFileList = [ './Shapes', opt.year, rawTag ]
+                if 'T2' in opt.sigset:
+                    shapeFileList.append('_'.join([ 'plots', rawTag, 'SM-T2tt_mS-150to800_dm-80to175' ]))
+                else:
+                    shapeFileList.append('_'.join([ 'plots', rawTag, 'SM-TChipmSlepSnu_mC-1050to1125_mX-1to750' ]))
+                shapeFile = '/'.join(shapeFileList)+'.root'
+            fileIn = ROOT.TFile(shapeFile, 'READ')
+            crcutToChange = []
+            crcutToRemove = []
+            for cut in crcuts:
+                if 'CR3' in cut or 'CR4' in cut:
+                    cutVariable = 'mt2ll'+cut.split('_')[0].replace('CR','SR') if 'Merge' in opt.tag else 'mt2ll'
+                    histoData = fileIn.Get(cut+'/'+cutVariable+'/histo_DATA')
+                    if histoData.Integral()==0.:
+                        crcutToRemove.append(cut)
+                        crcutToChange.append(cut.replace('CR3','CR4').replace('CR4','CR3'))
+            for cut in crcutToRemove:
+                del crcuts[cut]
+            for cut in crcutToChange:
+                crcuts[cut.replace('CR3','CR34').replace('CR4','CR43')] = crcuts.pop(cut)
+
     for cut in cutToRemove:
         del cuts[cut]
 
@@ -997,7 +1076,7 @@ if '_Flav' in opt.tag:
         del cuts[cut]
 
 # For FastSim pTmiss
-if isShape and 'Fast' in opt.tag:
+if isShape and 'Fast' in opt.tag and 'FastVsFull' not in opt.tag:
 
     cutList = list(cuts.keys())
 
@@ -1014,6 +1093,27 @@ if isShape and 'Fast' in opt.tag:
                     cuts[cut+'_reco'][key] = cuts[cut][key].replace('ptmiss','ptmiss_reco').replace('ptmiss_reco_phi','ptmiss_phi_reco')
                     cuts[cut+'_gen'][key]  = cuts[cut][key].replace('ptmiss','ptmiss_gen').replace('ptmiss_gen_phi','ptmiss_phi_gen')
                 del cuts[cut]
+        elif 'CR' in cut:
+            if 'FastReco' in opt.tag:
+                for key in cuts[cut]:
+                    cuts[cut][key] = cuts[cut][key].replace('ptmiss'+ctrltag,'ptmiss'+ctrltag+'_reco').replace('ptmiss_phi'+ctrltag,'ptmiss_phi'+ctrltag+'_reco')
+
+            else:
+                print('cuts.py: Fast option not yet implemented for CRs')
+                exit()
+
+    if 'SYSTJESDO' in  opt.tag or 'SYSTJESUP' in  opt.tag or 'SYSTJERDO' in  opt.tag or 'SYSTJERUP' in  opt.tag or 'SYSTUNEDO' in  opt.tag or 'SYSTUNEUP' in  opt.tag:
+        cutList = list(cuts.keys())
+        sampleList = [ x for x in list(samples.keys()) if samples[x]['isSignal'] and x.count('_')==2 and 'to' not in x  ]
+        for cut in cutList:
+            for sample in sampleList:
+                cuts[cut+'_'+sample] = {}
+                for key in cuts[cut]:
+                    cuts[cut+'_'+sample][key] = cuts[cut][key]
+                cuts[cut+'_'+sample]['expr'] = '('+cuts[cut+'_'+sample]['expr']+') && ('+samples[sample]['massPointCut']+')'
+            del cuts[cut]
+        for sample in sampleList:
+            del samples[sample]
 
 # For jet uncertainties on pTmiss and mT2ll
 
@@ -1093,6 +1193,23 @@ if 'SignalCRContamination' in opt.tag:
      cuts['ZZ1'] = { 'expr' : sel4Lep +' && '+lepCut+' && '+ZZFlavCut+' && '+pTmissCut+' && nCleanJet>=1',    'weight' : btagWeight0tag }
      cuts['ttZ'] = { 'expr' : sel3Lep +' && '+lepCut+' && '+WZFlavCut+' && '+pTmissCut,   'weight' : ttZLepB }
 
+if 'MetMT' in opt.tag:
+
+    cuts['Search_noptmiss'] = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=0.' , 'weight' : btagWeightNoCut }
+    cuts['Search_Veto_noptmiss'] = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=0.' , 'weight' : btagWeight0tag }
+    cuts['Search_Tag_noptmiss'] = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=0.' , 'weight' : btagWeight1tag }
+
+    ptmissCut = '100.'
+
+    cuts['Search']          = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeightNoCut }
+    cuts['Search_Veto']     = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeight0tag }
+    cuts['Search_Tag']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeight1tag }
+
+    ptmissCut = '160.'
+
+    cuts['Search_cut']          = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeightNoCut }
+    cuts['Search_Veto_cut']     = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeight0tag }
+    cuts['Search_Tag_cut']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut, 'weight' : btagWeight1tag }
 
 if 'SearchRegion' in opt.tag:
 
@@ -1119,7 +1236,29 @@ if 'SearchRegion' in opt.tag:
             cuts['Search_NoTag']          = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut+' && '+HasJet, 'weight' : btagWeight0tag }
             cuts['Search_NoJet']          = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>='+ptmissCut+' && '+NoJets, 'weight' : btagWeightNoCut }
 
+    elif 'Mid' in opt.tag:
+
+        cuts['Search']           = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        cuts['Search_Veto']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight0tag }
+        cuts['Search_Tag']       = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight1tag }
+        cuts['Search_em']        = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+        cuts['Search_sf']        = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeightNoCut }
+
+        cuts['Search_Veto_em']   = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight0tag }
+        cuts['Search_Veto_sf']   = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight0tag }
+
+        cuts['Search_Tag_em']    = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight1tag }
+        cuts['Search_Tag_sf']    = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140', 'weight' : btagWeight1tag }
+
+        cuts['Search_NoTag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag }
+        cuts['Search_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+HasJet, 'weight' : btagWeight0tag }
+        cuts['Search_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag }
+        cuts['Search_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=100 && ptmiss'+ctrltag+'<140 && '+NoJets, 'weight' : btagWeight0tag }
+
     else:
+        cuts['Search']           = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeightNoCut }
+        cuts['Search_Veto']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeight0tag }
+        cuts['Search_Tag']       = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeight1tag }
         cuts['Search_em']        = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeightNoCut }
         cuts['Search_sf']        = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeightNoCut }
 
@@ -1129,10 +1268,18 @@ if 'SearchRegion' in opt.tag:
         cuts['Search_Tag_em']    = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeight1tag }
         cuts['Search_Tag_sf']    = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160', 'weight' : btagWeight1tag }
 
-        cuts['Search_NoTag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160 && '+HasJet, 'weight' : btagWeight0tag }
-        cuts['Search_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160 && '+HasJet, 'weight' : btagWeight0tag }
-        cuts['Search_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160 && '+NoJets, 'weight' : btagWeight0tag }
-        cuts['Search_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160 && '+NoJets, 'weight' : btagWeight0tag } 
+        #cuts['Search_NoTag_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160 && '+HasJet, 'weight' : btagWeight0tag }
+        #cuts['Search_NoTag_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160 && '+HasJet, 'weight' : btagWeight0tag }
+        #cuts['Search_NoJet_em']  = { 'expr' : OC+' && '+DF+' && ptmiss'+ctrltag+'>=160 && '+NoJets, 'weight' : btagWeight0tag }
+        #cuts['Search_NoJet_sf']  = { 'expr' : OC+' && '+SF+' && ptmiss'+ctrltag+'>=160 && '+NoJets, 'weight' : btagWeight0tag } 
+
+        #cuts['Search_noptmiss']  = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=0.' , 'weight' : btagWeightNoCut }
+        #cuts['Search_SR12']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160 && ptmiss'+ctrltag+'<280', 'weight' : btagWeightNoCut }
+        #cuts['Search_SR12_Veto'] = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160 && ptmiss'+ctrltag+'<280', 'weight' : btagWeight0tag }
+        #cuts['Search_SR12_Tag']  = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=160 && ptmiss'+ctrltag+'<280', 'weight' : btagWeight1tag }
+        #cuts['Search_SR34']      = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=280', 'weight' : btagWeightNoCut }
+        #cuts['Search_Veto_isrcut']   = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=280', 'weight' : btagWeight0tag } 
+        #cuts['Search_Tag_isrcut']   = { 'expr' : OC+' && '+ZVeto+' && ptmiss'+ctrltag+'>=280', 'weight' : btagWeight1tag }
 
 if 'SearchVetoRegion' in opt.tag:
 

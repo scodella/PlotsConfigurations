@@ -1,7 +1,7 @@
 #!/bin/sh -x
-git checkout base
+git checkout run2base
 git fetch
 #git pull
 git checkout SUS23002
-git merge origin/base
+git merge origin/run2base
 

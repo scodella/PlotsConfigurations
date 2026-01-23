@@ -818,10 +818,8 @@ def makeMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillempty
             fillMassScanHistograms(year, tag, sigset, limitOption, fileOption, fillemptybins, outputFileName)
 
 def getMassScanContour(outputFileName, histo):
-    print('bs', histo.GetName(), histo.GetBinContent(histo.FindBin(475.,350)))
     if not 'TChipmWW' in outputFileName or 'observed_up' in histo.GetName():
         histo.Smooth(1, "k3a");
-    print('as', histo.GetName(), histo.GetBinContent(histo.FindBin(475.,350)))
     x, y, z = array( 'd' ), array( 'd' ), array( 'd' )
 
     minZ = 999.
@@ -1046,9 +1044,10 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
                 tagObj[0] = tagObj[1]
             else:
                 legend.AddEntry(tagObj[1],"ratio  #frac{"+tags[0]+"}{"+tags[1]+"}", '')
+                print(tagObj[0].GetNbinsX(), tagObj[1].GetNbinsX(), tagObj[0].GetNbinsY(), tagObj[1].GetNbinsY())
                 tagObj[0].Divide(tagObj[1])
-            tagObj[0].SetMinimum(0.00)
-            tagObj[0].SetMaximum(2.00)
+            tagObj[0].SetMinimum(0.90)
+            tagObj[0].SetMaximum(1.10)
         else:
             legend.AddEntry(tagObj[0],tags[0], '')
             tagObj[0].SetMinimum(0)
@@ -1105,6 +1104,18 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
             same = 'same'
             cDone = 'graph_r_expected_down'
             iDone = iobj
+        elif 'graph_r_blind_down' in tagObjName:
+            iobj = tagObjName.index('graph_r_blind_down')
+            tagObj[iobj].Draw(same)
+            same = 'same'
+            cDone = 'graph_r_expected_blind'
+            iDone = iobj
+        elif 'graph_r_observed_upX' in tagObjName:
+            iobj = tagObjName.index('graph_r_observed_up')
+            tagObj[iobj].Draw(same)
+            same = 'same'
+            cDone = 'graph_r_observed_up'
+            iDone = iobj
 
         #for obj in sorted(tagObjName):
         for iobj in range(len(tagObj)):
@@ -1112,7 +1123,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
             if iobj==iDone and ntag==0: continue
             #if obj==cDone and ntag==0: continue
 
-            #if tagObj[iobj].GetName()!='graph_r_observed_up': continue
+            #if tagObj[iobj].GetName()!='graph_r_expected' and tagObj[iobj].GetName()!='graph_r_expected_down' and tagObj[iobj].GetName()!='graph_r_expected_down2' and tagObj[iobj].GetName()!='graph_r_expected_up': continue
             #iobj = tagObjName.index(obj)
 
             tagObj[iobj].SetLineColor(1)
@@ -1129,6 +1140,7 @@ def plotLimits(year, tags, sigset, limitOptions, fileOption, plotOption, fillemp
                 legend.AddEntry(tagObj[iobj],tags[ntag], 'l')
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction applied' if 'WWPol1a' in tags[ntag] else 'No #font[50]{m}_{T2}(#font[12]{ll}) correction applied'
                 #legeflag = '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties correlated across years' if 'WWcorrYear' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully correlated' if 'WWcorr' in tags[ntag] else '#font[50]{m}_{T2}(#font[12]{ll}) correction uncertainties fully uncorrelated'
+                #legeflag = '#Delta#phi^{min}(lep,#font[50]{p}_{T}^{miss}) uncertainty applied' if 'WWPhicA' in tags[ntag] else 'No #Delta#phi^{min}(lep,#font[50]{p}_{T}^{miss}) uncertainty applied'
                 #legend.AddEntry(tagObj[iobj],legeflag, 'l')
                 ntag+=1
         legend.Draw()
@@ -1172,7 +1184,9 @@ def makeExclusionPlot(year, tag, sigset, limitOptions, fileOption):
     add2sigma = '1' if opt.add2sigma else '0'
     cfgFile.write('EXPECTED ' + inputFileNames[1] + ' graph_r_'+limitType+' graph_r_'+limitType+'_up graph_r_'+limitType+'_down kRed kOrange '+add2sigma+' graph_r_'+limitType+'_up2 graph_r_'+limitType+'_down2\n')
     cfgFile.write('OBSERVED ' + inputFileNames[1] + ' graph_r_observed graph_r_observed_up graph_r_observed_down kBlack kGray\n')
-    cfgFile.write('PRELIMINARY Preliminary\n')
+    cfgFile.write('PRELIMINARY \n')
+    #cfgFile.write('PRELIMINARY Preliminary\n')
+    #cfgFile.write('PRELIMINARY Work in progress\n')
     cfgFile.write('LUMI ' + str(lumi_i) + '\n')
     cfgFile.write('ENERGY 13\n\n')
 

@@ -73,8 +73,8 @@ for background in normBackgroundNuisances:
             for globalNuisance in globalNuisances: 
                 if background in nuisances[globalNuisance]['samples']:
                     del nuisances[globalNuisance]['samples'][background]
-            if background in nuisances['triggerStat']['samples']:
-                    del nuisances['triggerStat']['samples'][background]
+            if background in nuisances['trigger']['samples']:
+                    del nuisances['trigger']['samples'][background]
 
 ### shapes
 
@@ -99,10 +99,15 @@ for scalefactor in leptonSF:
 
 btagWeight1tagSyst = btagWeight1tag if 'TrigBTag' not in opt.tag else btagWeight1tag.replace('*triggerWeightBTag', '') # Bleah!!!
 bSelections = { '1b' : { 'weight' : btagWeight1tagSyst+'_syst/'+btagWeight1tagSyst,
-                         'cuts'   : [ '_Tag', 'SS_', 'Fake', 'ttZ', '1tag', '2tag' ] },
+                         'cuts'   : [ '_Tag', 'Fake', 'ttZ', '1tag', '2tag' ] },
                 '0b' : { 'weight' : '(1.-'+btagWeight1tagSyst+'_syst)/(1.-'+btagWeight1tagSyst+')',
-                         'cuts'   : [ '_Veto', 'SSV_', '_NoTag', 'WZ_', 'WZtoWW_', 'ZZ', 'Zpeak' ] },
+                         'cuts'   : [ '_Veto', '_NoTag', 'WZ_', 'WZtoWW_', 'ZZ', 'Zpeak' ] },
                }
+if 'SameSignVeto' in opt.tag:
+    bSelections['0b']['cuts'].append('SS_')
+else:
+    bSelections['1b']['cuts'].append('SS_')
+
 if 'ttZNormalization' in opt.tag or 'FitCRttZ' in opt.tag:
     if len(list(btagweightmixtagSyst.keys()))>0:
         bSelections['ttZ'] = { 'weight' : btagweightmixtagSyst }
@@ -198,21 +203,31 @@ if 'ttbar' in samples:
 
 # isr fastsim
 
-nuisances['isrFS']  = {
-    'name'  : 'isrFS', # assuming the mismodeling is correlated through the years 
-    'samples'  : { },
-    'kind'  : 'weight',
-    'type'  : 'shape',
-}
-for sample in list(samples.keys()):
-    if 'isrObservable' in samples[sample]:
-            if samples[sample]['isrObservable']=='njetISR':
-                isrWeight = [ '0.5*(3.*isrW-1.)/isrW', '0.5*(isrW+1.)/isrW' ]
-            elif samples[sample]['isrObservable']=='ptISR':
-                isrWeight = [ '(2.*isrW-1.)/isrW', '1./isrW' ]
-            else:
-                print('ERROR: no isrW implementation for model', model)
-            nuisances['isrFS']['samples'][sample] = isrWeight
+if 'NoISRW' not in opt.tag and 'pmssm' not in opt.sigset:
+    nuisances['isrFS']  = {
+        'name'  : 'isrFS', # assuming the mismodeling is correlated through the years 
+        'samples'  : { },
+        'kind'  : 'weight',
+        'type'  : 'shape',
+    }
+    for sample in list(samples.keys()):
+        if 'isrObservable' in samples[sample]:
+                if samples[sample]['isrObservable']=='njetISR':
+                    isrWeight = [ '0.5*(3.*isrW-1.)/isrW', '0.5*(isrW+1.)/isrW' ]
+                elif samples[sample]['isrObservable']=='ptISR':
+                    isrWeight = [ '(2.*isrW-1.)/isrW', '1./isrW' ]
+                else:
+                    print('ERROR: no isrW implementation for model', model)
+                nuisances['isrFS']['samples'][sample] = isrWeight
+else:
+    nuisances['isrFS']  = {
+        'name'  : 'isrFS',
+        'samples'  : { },
+        'type'  : 'lnN',
+    }
+    for sample in list(samples.keys()):
+        if samples[sample]['isSignal']:
+            nuisances['isrFS']['samples'][sample] = '1.010'
 
 ### mt2ll backgrounds (special case for shape uncertainties)
 
@@ -246,7 +261,7 @@ if addMT2Shapes:
     for mt2llregion in mt2llRegions:
         if 'VR1' in mt2llregion: continue
 
-        if 'WWTails' not in opt.tag.split('_')[0] and 'WWHighs' not in opt.tag.split('_')[0] and 'WWPol1a' not in opt.tag.split('_')[0]:
+        if 'WWTails' not in opt.tag.split('_')[0] and 'WWHighs' not in opt.tag.split('_')[0] and 'WWPol1a' not in opt.tag.split('_')[0] and 'WWPol1b' not in opt.tag.split('_')[0]:
 
             if isShape or hasattr(opt, 'groups') or hasattr(opt,'skipLNN') or '_WWShapeCorr' not in opt.tag:
 
@@ -330,6 +345,8 @@ if addMT2Shapes:
                 p0, p1, p2 = '(2.52859e-01)', '(7.05954e+01)', '(-6.03146e+00)'
                 p3, p4, p5 = '(2.53251e-01)', '(1.39018e+02)', '(-8.17122e+00)'
             WWphiUp = '(('+p0+'+'+p1+'*exp('+p2+'*('+dPhiMinlepptmiss+')))/('+p3+'+'+p4+'*exp('+p5+'*('+dPhiMinlepptmiss+'))))'
+        if 'WWPhiW' in opt.tag:
+            WWphiUp = '1./'+WWphiWeight
         else:
             WWphiUp = '1.65965+(6.22541e-01)*log(('+dPhiMinlepptmiss+')+0.16)'
         nuisances[nuisancekey]  = {
@@ -341,13 +358,13 @@ if addMT2Shapes:
                         'type'  : 'shape',
                         'cuts'  : [ ]
         }
-        if ('WWPhibAll' in opt.tag or 'WWPhicAll' in opt.tag) and '_NoWWPhiMinor' not in opt.tag:
+        if ('WWPhibAll' in opt.tag or 'WWPhicAll' in opt.tag or 'WWPhiWAll' in opt.tag) and '_NoWWPhiMinor' not in opt.tag:
             for sample in samples:
                 if not samples[sample]['isDATA'] and not samples[sample]['isSignal']:
                     if sample not in nuisances[nuisancekey]['samples']:
                         nuisances[nuisancekey]['samples'][sample] = [ WWphiUp, '1.' ]
         for cut in list(cuts.keys()):
-            if 'SR4' in cut or ('CR4' in cut and '_NoWWPhiMinor' not in opt.tag and ('WWPhibAll' or 'WWPhicAll' in opt.tag)):
+            if 'SR4' in cut or ('CR4' in cut and '_NoWWPhiMinor' not in opt.tag and ('WWPhibAll' in opt.tag or 'WWPhicAll' in opt.tag or 'WWPhiWAll' in opt.tag)):
                 nuisances[nuisancekey]['cuts'].append(cut)
 
 if '_mt2sr4' in opt.tag:
@@ -428,7 +445,7 @@ if '_mt2sr4' in opt.tag:
 # mt2ll ZZ (from k-factors)
 
 # mt2ll signal
-if signalReco=='fast' and fastsimMetType!='reco' and '_NoPtMissFast' not in opt.tag: 
+if signalReco=='fast' and fastsimMetType!='reco' and '_NoPtMissFast' not in opt.tag and 'SearchRegion' not in opt.tag: 
     if fastsimMetType=='average' or not isFillShape:
         nuisances['ptmissfastsim']  = {
             'name'  : 'ptmissfastsim', # mismodeling correlated through the years?
@@ -511,6 +528,14 @@ if '_NoPDF'      in opt.tag: del nuisances['pdf']
 for treeNuisance in treeNuisances:
 
     for mcType in treeNuisanceDirs[treeNuisance]:
+        if 'jesTotalV' in treeNuisance and mcType=='Bkg': continue
+        if not isShape and not hasattr(opt, 'skipLNN') and 'FastJEC' in opt.tag and 'jesTotal' in treeNuisance and mcType=='Sig':
+            if '_JEUV2' in opt.tag:
+                if 'jesTotalV2' not in treeNuisance: continue
+            elif '_JEUV3' in opt.tag:
+                if 'jesTotalV3' not in treeNuisance: continue
+            else:
+                if 'jesTotalV' in treeNuisance: continue
         if '_NoSigEU' in opt.tag and mcType=='Sig': continue
         if '_NoJER' in opt.tag and 'jer' in treeNuisance: continue
         if '_NoJES' in opt.tag and 'jes' in treeNuisance: continue
@@ -519,7 +544,7 @@ for treeNuisance in treeNuisances:
             print('nuisance warning: missing trees for', treeNuisance, mcType, 'variations')
         else:
 
-            mcTypeName = '_FS' if (mcType=='Sig' and not treeNuisances[treeNuisance]['BkgToSig']) else ''
+            mcTypeName = 'FS' if (mcType=='Sig' and not treeNuisances[treeNuisance]['BkgToSig']) else ''
             yearCorr = '' if treeNuisances[treeNuisance]['year'] else year # not correlated through the years?
 
             nuisances[treeNuisance+mcType] = {
@@ -544,6 +569,16 @@ for treeNuisance in treeNuisances:
         if treeNuisance+'Bkg' in nuisances and treeNuisance+'Sig' in nuisances:
             nuisances[treeNuisance+'Bkg']['samples'].update(nuisances[treeNuisance+'Sig']['samples']) 
             del nuisances[treeNuisance+'Sig']
+
+if not isShape and 'FastJEC' in opt.tag and ('_JEUV2' in opt.tag or '_JEUV3' in opt.tag):
+    if hasattr(opt, 'cardList'):
+        for treeNuisance in treeNuisances:
+            if 'jesTotalV' in treeNuisance:
+                if treeNuisances[treeNuisance]['BkgToSig']:
+                    jesNuisNameBkg = treeNuisance.split('TotalV')[0]+'TotalBkg'
+                    if jesNuisNameBkg in nuisances and treeNuisance+'Sig' in nuisances:
+                        nuisances[jesNuisNameBkg]['samples'].update(nuisances[treeNuisance+'Sig']['samples'])
+                        del nuisances[treeNuisance+'Sig']
 
 ### rate parameters
 rateparameters = {
@@ -583,10 +618,22 @@ if '_NewBond4' in opt.tag:
 elif '_NewBond5' in opt.tag:
     rateparameters['Topnorm']['limits'] = '[0.,2.]'
     rateparameters['WWnorm']['limits'] = '[0.,2.]'
+elif '_NewBond6' in opt.tag:
+    rateparameters['Topnorm']['limits'] = '[-3.,3.]'
+    rateparameters['WWnorm']['limits'] = '[-3.,3.]'
 if '_NoJetBond' not in opt.tag:
-    if '_NewBond3' in opt.tag or '_NewBond4' in opt.tag or '_NewBond5' in opt.tag:
+    if '_NewBond6' in opt.tag:
+        rateparameters['NoJetRate_JetBack']['limits'] = '[-3.,5.]'
+        rateparameters['NoJetRate_DibosonBack']['limits'] = '[-3.,5.]'
+    elif '_NewBond5bX' in opt.tag:
         rateparameters['NoJetRate_JetBack']['limits'] = '[0.2,3.]'
-        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0..,3.]'
+        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.2,3.]'
+    elif '_NewBond5bT' in opt.tag:
+        rateparameters['NoJetRate_JetBack']['limits'] = '[0.5,1.5]'
+        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.7,1.3]'
+    elif '_NewBond3' in opt.tag or '_NewBond4' in opt.tag or '_NewBond5' in opt.tag:
+        rateparameters['NoJetRate_JetBack']['limits'] = '[0.2,3.]'
+        rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.,3.]'
     else:
         rateparameters['NoJetRate_JetBack']['limits'] = '[0.5,1.5]'
         rateparameters['NoJetRate_DibosonBack']['limits'] = '[0.7,1.3]'
@@ -626,9 +673,13 @@ if 'FitCR' in opt.tag:
                 rateparameters['CR'+region+controlregion]['samples'] = backgroundCRs[controlregion]['samples']
                 rateparameters['CR'+region+controlregion]['subcuts'] = backgroundCRs[controlregion]['regions'][region]
                 if '_NoCRBond' not in opt.tag:
-                    if '_NewBond2a' in opt.tag or '_NewBond3a' in opt.tag or '_NewBond4a' in opt.tag or '_NewBond5a' in opt.tag:
+                    if '_NewBond6a' in opt.tag:
+                        rateparameters['CR'+region+controlregion]['limits'] = '[-5.,5.]'
+                    elif '_NewBond2a' in opt.tag or '_NewBond3a' in opt.tag or '_NewBond4a' in opt.tag or '_NewBond5a' in opt.tag:
                         rateparameters['CR'+region+controlregion]['limits'] = '[-3.,5.]'
-                    elif '_NewBond2b' in opt.tag or '_NewBond3b' in opt.tag or '_NewBond4b' in opt.tag or '_NewBond5b' in opt.tag:
+                    elif '_NewBond5bC' in opt.tag:
+                        rateparameters['CR'+region+controlregion]['limits'] = '[0.3,1.7]'
+                    elif '_NewBond2b' in opt.tag or '_NewBond3b' in opt.tag or '_NewBond4b' in opt.tag or '_NewBond5bX' in opt.tag:
                         rateparameters['CR'+region+controlregion]['limits'] = '[-3.,7.]'
                     elif '_NewBond2' in opt.tag or '_NewBond3' in opt.tag or '_NewBond4' in opt.tag or '_NewBond5' in opt.tag: 
                         rateparameters['CR'+region+controlregion]['limits'] = '[0.,5.]' 
@@ -652,7 +703,7 @@ if hasattr(opt, 'outputDirDatacard'):
                 if not useControlRegion: continue
 
             rateparamname = rateparam + '_' + mt2llregion
-
+            #rateparamnamename = rateparamname if mt2llregion!='SR1_' or 'NoJetRate' not in rateparam else rateparam + '_SR2_'
             
             for sample in rateparameters[rateparam]['samples']:
 
@@ -673,11 +724,15 @@ if hasattr(opt, 'outputDirDatacard'):
                     nuisances[sample+rateparamname]['limits'] = rateparameters[rateparam]['limits'] 
                     
                 for cut in list(cuts.keys()):
-                    if (mt2llregion in cut and not isControlSample) or (mt2llregion.replace('SR', 'CR').replace('VR1', 'CR0') in cut and 'CR_' in rateparam and rateparam.split('_')[2]==cut.split('_')[2]):
+                    if (mt2llregion in cut and not isControlSample) or (mt2llregion.replace('SR', 'CR').replace('VR1', 'CR0').replace('_','') in cut and 'CR_' in rateparam and rateparam.split('_')[2]==cut.split('_')[2]):
                         for subcut in rateparameters[rateparam]['subcuts']:
                             if subcut in cut:
                                 nuisances[sample+rateparamname]['cuts'].append(cut)
-                                if 'CR' in cut:
+                                if '_mergeRPfull' in opt.tag:
+                                    if 'CR34_' in cut or 'CR43_' in cut: 
+                                        if rateparamname not in rateParameterToMerge:
+                                            rateParameterToMerge.append(rateparamname)
+                                elif 'CR' in cut:
                                     if rateparamname not in rateParameterToMerge:
                                         for variable in list(variables.keys()):
                                             if 'cuts' not in variables[variable] or cut in variables[variable]['cuts']:
@@ -715,7 +770,22 @@ if hasattr(opt, 'outputDirDatacard'):
 
     fileIn.Close()
 
-    if '_mergeRP' in opt.tag:
+    if '_mergeRPfull' in opt.tag:
+        changeSampleRateParams, removeSampleRateParams, cutsToKeep = [], [], {}
+        for rateParam in rateParameterToMerge:
+            rateParameterToDelete = rateParam.replace('SR3','SR4') if 'SR3' in rateParam else rateParam.replace('SR4','SR3')
+            for samplerateparam in nuisances:
+                if rateParam in samplerateparam:
+                    changeSampleRateParams.append(samplerateparam) 
+                    removeSampleRateParams.append(samplerateparam.replace(rateParam,rateParameterToDelete))
+                    cutsToKeep[samplerateparam] = [ cut for cut in nuisances[samplerateparam.replace(rateParam,rateParameterToDelete)]['cuts'] if 'SR' in cut  ]
+        for samplerateparam in removeSampleRateParams:
+            del nuisances[samplerateparam]
+        for samplerateparam in changeSampleRateParams:
+            nuisances[samplerateparam]['name'] = nuisances[samplerateparam]['name'].replace('SR3','SR34').replace('SR4','SR43')
+            nuisances[samplerateparam]['cuts'].extend(cutsToKeep[samplerateparam])
+
+    elif '_mergeRP' in opt.tag:
         for rateParam in rateParameterToMerge:
 
             keepRateParam = rateParam.replace('SR3','SR4') if 'SR3' in rateParam else rateParam.replace('SR4','SR3')
@@ -731,11 +801,14 @@ if hasattr(opt, 'outputDirDatacard'):
 
             for samplerateparam in keepSampleRateParams:
                 nuisances[samplerateparam]['name'] = nuisances[samplerateparam]['name'].replace('SR3','SR34').replace('SR4','SR43')
+                if '_mergeRPfull' in opt.tag:
+                    cutsToAppend = []
+                    for cut in nuisances[samplerateparam]['cuts']:
+                        cutsToAppend.append(cut.replace('CR3','CR34').replace('CR4','CR43') if 'CR' in cut else cut)
+                    nuisances[samplerateparam]['cuts'] = cutsToAppend
                 for cut in nuisances[samplerateparam.replace(keepRateParam,rateParam)]['cuts']:
-                #    if 'CR' not in cut:
-                    nuisances[samplerateparam]['cuts'].append(cut)
-                    #elif cut in cuts:
-                    #    del cuts[cut]
+                    cutToAppend = cut.replace('CR3','CR43').replace('CR4','CR34') if 'CR' in cut and '_mergeRPfull' in opt.tag else cut
+                    nuisances[samplerateparam]['cuts'].append(cutToAppend)
 
             for samplerateparam in removeSampleRateParams:
                 del nuisances[samplerateparam]
@@ -881,7 +954,7 @@ if 'SignalRegion' in opt.tag or 'ValidationRegion' in opt.tag or 'ttZNormalizati
         
     if 'SignalRegion' not in opt.tag and 'SearchRegion' not in opt.tag:
         for nuisance in nuisances:
-            if nuisance!='stat' and 'norm' in nuisances[nuisance]['name']:
+            if nuisance!='stat' and 'norm' in nuisances[nuisance]['name'] and not hasattr(opt, 'outputDirDatacard'):
                 nuisanceToRemove.append(nuisance)
 
     if 'JetUncertainties' in opt.tag:
@@ -903,12 +976,17 @@ if 'SignalRegion' in opt.tag or 'ValidationRegion' in opt.tag or 'ttZNormalizati
                     nuisances[nuisance+'MET'][key] = nuisances[nuisance][key]
                 nuisances[nuisance+'MET']['name'] = nuisances[nuisance+'MET']['name'].replace(year,'MET'+year)
                     
-elif 'unEn' in opt.tag or 'TwoLeptons' in opt.tag:
+    if 'SYST' in opt.tag:
+        for nuisance in nuisances:
+            if nuisance!='stat':
+                nuisanceToRemove.append(nuisance)
+
+elif 'unEn' in opt.tag or 'TwoLeptons' in opt.tag or 'FastVsFullFS' in opt.tag:
 
     for nuisance in nuisances:
         if nuisance!='stat' and 'jes' not in nuisance and 'jer' not in nuisance and 'unclustEn' not in nuisance:
             nuisanceToRemove.append(nuisance)
-        elif nuisance!='stat' and 'unEn' in opt.tag:
+        elif nuisance!='stat' and 'unEn' in opt.tag and 'FastVsFullFS' not in opt.tag:
             nuisances[nuisance]['cuts'] = [ 'TwoLep' ] 
 
 else:

@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import timeit
 import optparse
 import sys  
 import os
 import math
+import ctypes
 import ROOT
 import LatinoAnalysis.Gardener.hwwtools as hwwtools
 from collections import OrderedDict
@@ -44,7 +45,10 @@ def getShapes(systematic, cuts, variables, samples, systSamples, inputFile):
  
             for sample in samples:
                 if (('SM' in opt.samples or sample==opt.samples) and not samples[sample]['isSignal'] and not samples[sample]['isDATA']) or (samples[sample]['isSignal'] and sample in opt.samples):
-                    if folder.GetListOfKeys().Contains('histo_'+sample+systematic):
+                    if folder.GetListOfKeys().Contains('histo_'+sample+systematic) and ('WWphi' not in systematic or (sample!='ttZ' and sample!='DY' and sample!='ZZTo2L2Nu' and sample!='WZ' and sample!='minor')):
+                    #if folder.GetListOfKeys().Contains('histo_'+sample+systematic) and ('WWphi' not in systematic or (sample!='STtW' and sample!='WW' and sample!='ttbar')):
+                    #if folder.GetListOfKeys().Contains('histo_'+sample+systematic) and ('WWphi' not in systematic or sample=='WZ'):
+                    #if folder.GetListOfKeys().Contains('histo_'+sample+systematic):
                         thisShape.Add(folder.Get('histo_'+sample+systematic))
                     elif folder.GetListOfKeys().Contains('histo_'+sample): 
                         lnNweight = 1.
@@ -56,6 +60,11 @@ def getShapes(systematic, cuts, variables, samples, systSamples, inputFile):
                         print('Warning: missing shapes for sample', sample, 'in cut', cut+'/'+fitvariable)
 
             shapesList.append(thisShape)
+ 
+            #if 'WWphi' in systematic:
+            #    print('WWWW', cut, systematic, thisShape.Integral())
+            #    for ib in range(thisShape.GetNbinsX()):
+            #        print('    ', thisShape.GetBinContent(ib+1))
 
     return shapesList
 
@@ -110,6 +119,7 @@ systematicDictionary['normMinorBkg'] =  'Minor bkg. normalization'
 systematicDictionary['mt2ll']      =  '\\mtll tails'
 systematicDictionary['WWshape']      =  '\\mtll tails (\\invM{\\PW} endpoint)'
 systematicDictionary['WWtails']      =  '\\mtll tails (\\invM{\\PW} endpoint)'
+systematicDictionary['WWphi']        =  '\\phi'
 systematicDictionary['WZbin']        =  '\\mtll tails (\\WZ)'
 systematicDictionary['nonpromptLep'] =  'Nonprompt leptons'
 systematicDictionary['toppt']        = '\\ttbar \\pt reweighting'
@@ -191,8 +201,8 @@ if __name__ == '__main__':
             if opt.debugcut!='XXX' and opt.debugcut not in centralShape.GetName(): continue
             if opt.debugsyst!='XXX' and opt.debugsyst not in 'stat': continue
             systematics['stat'][datayear+'_'+centralShape.GetName()] = { }
-            centralIntegralError = ROOT.double(); centralIntegral = centralShape.IntegralAndError(-1, -1, centralIntegralError)
-            systematics['stat'][datayear+'_'+centralShape.GetName()]['integralUncertainty'] = 100.*centralIntegralError/centralIntegral
+            centralIntegralError = ctypes.c_double(); centralIntegral = centralShape.IntegralAndError(-1, -1, centralIntegralError)
+            systematics['stat'][datayear+'_'+centralShape.GetName()]['integralUncertainty'] = 100.*centralIntegralError.value/centralIntegral
             shapeUncertainty = -1.
             for ib in range(getMaxBinForShapeUncertainty(centralShape.GetNbinsX(), centralShape.GetName(), opt.useallshapebins)):           
                 if centralShape.GetBinContent(ib+1)>0.:
@@ -283,6 +293,7 @@ if __name__ == '__main__':
 
                 shapeUncertainty = -1.       
                 for ib in range(getMaxBinForShapeUncertainty(centralShape.GetNbinsX(), cut, opt.useallshapebins or 'tails' in systematicDictionary[systematic.split('_')[0]])):
+                    if (ib+1)==5: continue
                     if centralShape.GetBinContent(ib+1)==0.:
                         fixedUpContent = 1. if upShape.GetBinContent(ib+1)==0. else 1.; upShape.SetBinContent(ib+1, fixedUpContent)
                         fixedDoContent = 1. if doShape.GetBinContent(ib+1)==0. else 1.; doShape.SetBinContent(ib+1, fixedUpContent)
@@ -335,10 +346,11 @@ if __name__ == '__main__':
     for systematic in systematics:
         for cut in systematics[systematic]:
             columnElements = [ ]
-            if 'year'   in opt.tablelevel: columnElements.append(cut.split('_')[0])
-            if 'ptmiss' in opt.tablelevel: columnElements.append(cut.split('_')[1])
-            if 'jet'    in opt.tablelevel: columnElements.append(cut.split('_')[2])
-            if 'flav'   in opt.tablelevel: columnElements.append(cut.split('_')[3])
+            if not opt.ispaper:
+                if 'year'   in opt.tablelevel: columnElements.append(cut.split('_')[0])
+                if 'ptmiss' in opt.tablelevel: columnElements.append(cut.split('_')[1])
+                if 'jet'    in opt.tablelevel: columnElements.append(cut.split('_')[2])
+                if 'flav'   in opt.tablelevel: columnElements.append(cut.split('_')[3])
             if len(columnElements)==0: column = 'SM processes'
             else: column = '_'.join(columnElements)
             if column not in systematicColumns:

@@ -4,6 +4,7 @@ import optparse
 import numpy
 import os
 import math 
+import glob
 
 massZ = 91.1876
 btagwp = "btagWeight_1tag_deepcsv_M_1c"
@@ -124,11 +125,13 @@ def get_srbin(region, isDF, mt2ll):
 
         return srmt2bin 
 
-def get_CRbin(ptmiss, njets):
+def get_CRbin(ptmiss, njets, merge=False):
 
-    ptmiss_bin = 3
+    ptmiss_edges = [ 380., 280., 220., 160. ] if not merge else [ 280., 220., 160. ]
 
-    for ptmiss_cut in [ 380., 280., 220., 160. ]:
+    ptmiss_bin = len(ptmiss_edges)-1
+
+    for ptmiss_cut in ptmiss_edges:
         if ptmiss>=ptmiss_cut: break
         else: ptmiss_bin -= 1
 
@@ -202,7 +205,7 @@ if __name__ == '__main__':
 
     # Binning for signal regionssr_nbins
     sr_nbins = 20 if not opt.splitmtll else (6*7+(6+4)*8+4*9)
-    cr_nbins = 16 if opt.addcr else 0
+    cr_nbins = 0 if not opt.addcr else 15 if '2016X' in opt.year else 16
     total_nbins = 1 + sr_nbins + cr_nbins
     sr_low = -0.5
     sr_up = sr_low + total_nbins
@@ -215,35 +218,54 @@ if __name__ == '__main__':
 
     thnsparse.Sumw2()
 
-    totalDir = "/eos/cms/store/group/phys_susy/Chargino/Nano/Spring21ULYEARFS_106X_nAODv9_FullYEARv8/susyGen__susyW"
-    totalDir = totalDir.replace('YEAR', opt.year).replace('UL20', 'UL').replace('noHIPM','').replace('HIPM','')
-    srDir = totalDir + "__FSSusyYEARv8__FSSusyCorrYEARv8__FSSusyNominYEARv8__susyMT2fastSmear"
-    srDir = srDir.replace('YEAR', opt.year).replace('noHIPM','').replace('HIPM','')
-    if opt.year=='2016noHIPM': 
-        srDir = srDir.replace('Corr2016v8','Corr2016v8noHIPM').replace('__susyMT2','noHIPM__susyMT2')
-    elif opt.year=='2016HIPM':
-        srDir = srDir.replace('Corr2016v8','Corr2016v8HIPM').replace('__susyMT2','HIPM__susyMT2')
+    baseYear = opt.year.replace('noHIPM','').replace('HIPM','')
+    production = "Spring21ULYEARFS_106X_nAODv9_FullYEARv8".replace('YEAR', baseYear).replace('UL20', 'UL')
+    totalDir = "/eos/cms/store/group/phys_susy/Chargino/Nano/"+production+"/susyGen"
+    srDir = totalDir+"__FSSusyYEARv8__FSSusyCorrYEARv8__FSSusyNominYEARv8__susyMT2fastSmear".replace('YEAR', baseYear)
+    if "2016HIPM" in opt.year:
+        srDir = srDir.replace("FSSusyCorr2016v8__FSSusyNomin2016v8", "FSSusyCorr2016v8HIPM__FSSusyNomin2016v8HIPM")
+    elif "2016noHIPM" in opt.year:
+        srDir = srDir.replace("FSSusyCorr2016v8__FSSusyNomin2016v8", "FSSusyCorr2016v8noHIPM__FSSusyNomin2016v8noHIPM")
     crDir = srDir.replace('fast','crfs')
 
-    samplePart = '__part*' if opt.job=='all' else '__part'+opt.job
+    totalInputFileList = glob.glob(srDir+"/nanoLatino_"+opt.sample+"__part*.root")
+
+    inputFileList = []
+
+    if  opt.job=="all":
+        for ifile in totalInputFileList:
+            inputFileList.append( ifile.split("/")[-1] )
+    elif len(totalInputFileList)>5000:
+        for ff in range(len(totalInputFileList)): 
+            if str(ff%5000)==opt.job:
+                  inputFileList.append( totalInputFileList[ff].split("/")[-1] )
+    else:
+        inputFileList.append( totalInputFileList[int(opt.job)].split("/")[-1] )
 
     if not opt.debugcr and opt.level!="sr":
 
         chainTT = ROOT.TChain('Events')
-        print('Opening input file', totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
-        chainTT.Add(totalDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        for iifile in inputFileList:
+            print(totalDir+'/'+iifile)
+            chainTT.Add(totalDir+'/'+iifile)
 
     if opt.level!="total":
         chain = ROOT.TChain('Events')
 
     if not opt.debugcr and opt.level!="total":
 
-        print('Opening input file', srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
-        chain.Add(srDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        for iifile in inputFileList:
+            print('Opening input file', srDir+'/'+iifile)
+            chain.Add(srDir+'/'+iifile)
 
     if opt.level!="total" and opt.addcr:
-        print('Opening input file', crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
-        chain.Add(crDir+'/nanoLatino_'+opt.sample+samplePart+'.root')
+        for iifile in inputFileList:
+            print('Opening input file', crDir+'/'+iifile)
+            chain.Add(crDir+'/'+iifile)
+
+    if chain.GetNtrees()!=(2*len(inputFileList)):
+        print("pMSSM error: chained "+str(chain.GetNtrees())+" trees of "+str(2*len(inputFileList))+" expected")
+        exit()
 
     count = 0
     
@@ -277,29 +299,33 @@ if __name__ == '__main__':
     "SR40tag": {"SF": 0, "DF": 0},
     "CR4tags": {"SF": 0, "DF": 0}
     }
-     
-    if   '2016HIPM'   in opt.year: nonpromptLep = { 'rate' : 1.18, 'rateUp' : 0.88, 'rateDown' : 1.48 }
-    elif '2016noHIPM' in opt.year: nonpromptLep = { 'rate' : 1.10, 'rateUp' : 0.70, 'rateDown' : 1.50 }
-    elif '2017'       in opt.year: nonpromptLep = { 'rate' : 1.38, 'rateUp' : 1.09, 'rateDown' : 1.67 }
-    elif '2018'       in opt.year: nonpromptLep = { 'rate' : 1.36, 'rateUp' : 1.11, 'rateDown' : 1.61 }
-    else:
-        print("pMSSM: year "+opt.year+" unknown")
-        exit()
 
-    localDir = "/afs/cern.ch/work/s/scodella/SUSY/CMSSW_13_3_1/src/PlotsConfigurations/Configurations/Analysis/"
+    if opt.level!="total":
 
-    triggerFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/TriggerEfficiencies_UL"+opt.year+".root","read")
-    triggerEfficiency = { "121" : triggerFile.Get("Leptonpt1pt2/ee/efficiency_MET_full_met_both"),
-                          "143" : triggerFile.Get("Leptonpt1pt2/em/efficiency_MET_full_met_both"),
-                          "169" : triggerFile.Get("Leptonpt1pt2/mm/efficiency_MET_full_met_both") }
+        if   '2016HIPM'   in opt.year: nonpromptLep = { 'rate' : 1.18, 'rateUp' : 0.88, 'rateDown' : 1.48 }
+        elif '2016noHIPM' in opt.year: nonpromptLep = { 'rate' : 1.10, 'rateUp' : 0.70, 'rateDown' : 1.50 }
+        elif '2017'       in opt.year: nonpromptLep = { 'rate' : 1.38, 'rateUp' : 1.09, 'rateDown' : 1.67 }
+        elif '2018'       in opt.year: nonpromptLep = { 'rate' : 1.36, 'rateUp' : 1.11, 'rateDown' : 1.61 }
+        else:
+            print("pMSSM: year "+opt.year+" unknown")
+            exit()
 
-    fastsimFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/fastsimLeptonWeights_UL_DY.root","read")
-    fastsimScaleFactor = { "11" : fastsimFile.Get("Ele_tight_fullsim"), "13" : fastsimFile.Get("Muo_tight_fullsim") }
+        #localDir = "/afs/cern.ch/work/s/scodella/SUSY/CMSSW_13_3_1/src/PlotsConfigurations/Configurations/Analysis/"
+        localDir = "/eos/user/s/scodella/SUSY/pMSSM/"
 
-    additionalSFDir = localDir+"../../../LatinoAnalysis/NanoGardener/python/data/scale_factor/Full"+opt.year.replace("noHIPM","").replace("HIPM","")+"v8/"
-    AdditionalElectronScaleFactorFile = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Ele_v2.root","read")
-    AdditionalMuonScaleFactorFile     = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Muon.root","read")
-    additionalScaleFactor = { "11" : AdditionalElectronScaleFactorFile.Get("hSFDataMC_central"), "13" : AdditionalMuonScaleFactorFile.Get("hSFDataMC_central") }
+        triggerFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/TriggerEfficiencies_UL"+opt.year+".root","read")
+        triggerEfficiency = { "121" : triggerFile.Get("Leptonpt1pt2/ee/efficiency_MET_full_met_both"),
+                              "143" : triggerFile.Get("Leptonpt1pt2/em/efficiency_MET_full_met_both"),
+                              "169" : triggerFile.Get("Leptonpt1pt2/mm/efficiency_MET_full_met_both") }
+
+        fastsimFile = ROOT.TFile.Open(localDir+"Data/"+opt.year+"/fastsimLeptonWeights_UL_DY.root","read")
+        fastsimScaleFactor = { "11" : fastsimFile.Get("Ele_tight_fullsim"), "13" : fastsimFile.Get("Muo_tight_fullsim") }
+
+        #additionalSFDir = localDir+"../../../LatinoAnalysis/NanoGardener/python/data/scale_factor/Full"+opt.year.replace("noHIPM","").replace("HIPM","")+"v8/"
+        additionalSFDir = localDir+"scale_factor/Full"+opt.year.replace("noHIPM","").replace("HIPM","")+"v8/"
+        AdditionalElectronScaleFactorFile = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Ele_v2.root","read")
+        AdditionalMuonScaleFactorFile     = ROOT.TFile.Open(additionalSFDir+"AdditionalSF_"+opt.year.replace("2016","2016_")+"Muon.root","read")
+        additionalScaleFactor = { "11" : AdditionalElectronScaleFactorFile.Get("hSFDataMC_central"), "13" : AdditionalMuonScaleFactorFile.Get("hSFDataMC_central") }
 
     if opt.level=="total": srEntries = -1    
     else: srEntries = chain.GetEntries()
@@ -558,7 +584,7 @@ if __name__ == '__main__':
                             btagweight_ttZ = btagweight if chain.nLepton==4 else getattr(chain,btagwp.replace('_1tag_', '_2tag_'))
 
                             if chain.nLepton==4 and chain.deltaMassZ_ttZ<15. and chain.deltaMassZ_ttZ>=0. and ptmiss_ttZ>160.: 
-                                crbin = get_CRbin(ptmiss_ttZ, -1)
+                                crbin = get_CRbin(ptmiss_ttZ, -1, '2016X' in opt.year)
 
                             if chain.nLepton==3 and chain.deltaMassZ_WZ<15. and chain.deltaMassZ_WZ>=0. and ptmiss_WZ>=0.:
                                 ptxGhost = ptmiss_WZ*math.cos(ptmiss_phi_WZ)
@@ -568,7 +594,7 @@ if __name__ == '__main__':
                                         ptxGhost += chain.Lepton_pt[ilep]*math.cos(chain.Lepton_phi[ilep])
                                         ptyGhost += chain.Lepton_pt[ilep]*math.sin(chain.Lepton_phi[ilep])
                                 ptmiss_ttZ3Lep = math.sqrt(ptxGhost*ptxGhost + ptyGhost*ptyGhost)  
-                                crbin = get_CRbin(ptmiss_ttZ3Lep, -1)
+                                crbin = get_CRbin(ptmiss_ttZ3Lep, -1, '2016X' in opt.year)
 
                             if crbin>=0:
                                 coordinates_cr = numpy.float64([pmssid1, pmssid2, sr_nbins+12+crbin+1])

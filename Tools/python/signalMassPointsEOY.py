@@ -261,7 +261,8 @@ def getTSlepSlepCrossSection(susyModel, susyMass):
             return susyXsec1*math.exp(-slope*(isusyMass-isusyMass1))
 
     print('getCrossSection ERROR: cross section not available for', susyProcess, 'at mass =', susyMass, ', exiting')
-    exit()
+    return 1.
+    #exit()
 
 for mSlep in range( 100, 1301, 25):
     datasetName = 'TSlepSlep'

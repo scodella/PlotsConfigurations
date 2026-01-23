@@ -1,10 +1,14 @@
 #!/bin/bash
 
-refstep=susyGen__susyW
+refstep=susyGen
 treedir=/eos/cms/store/group/phys_susy/Chargino/Nano
 year=${1//noHIPM/}
 year=${year//HIPM/}
 count=$(find $treedir/Spring21UL*_Full${year}v8/$refstep/nanoLatino_$2__part*.root -maxdepth 1 -type f | wc -l)
+
+if [[ "$count" -gt 5000 ]]; then
+    count=5000
+fi
 
 mkdir -p condor/${1}/$2/split/
 logdir=condor/${1}/$2/split/
@@ -13,6 +17,7 @@ mkdir -p ./THnSparse/${1}/$2/split/
 
 shfile=$logdir/pMSSM_$3_$4_$5_$6
 cp pMSSM.sh $shfile.sh
+cp pMSSM.py /eos/user/s/scodella/SUSY/pMSSM/
 
 sed -i 's/YEAR/'${1}'/g'   $shfile.sh
 sed -i 's/SAMPLE/'${2}'/g' $shfile.sh

@@ -13,7 +13,8 @@ from array import array
 def setAnalysisDefaults(opt):
    
     opt.baseDir = os.getenv('PWD')
-    opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_14/src'
+    #opt.combineLocation = '/afs/cern.ch/work/s/scodella/BTagging/CMSSW_14_1_0_pre4/src/'
+    opt.combineLocation = '/afs/cern.ch/work/s/scodella/SUSY/CMSSW_10_2_13/src'
     opt.isExotics = True
 
     if opt.paperStyle and 'SignalRegion' in opt.tag: opt.option += 'cutLabel'
@@ -34,7 +35,7 @@ def setAnalysisDefaults(opt):
     opt.signalRegionMap['chwwSR'] = { 'tag' : 'TChipmWWSignalRegionsVetoesUL', 'signals' : [ 'TChipmWW_mC-100to700_mX-1to250' ] }
 
     #opt.tableSigset['TChipmSlepSnu'] = [ 'TChipmSlepSnu_mC-300_mX-1', 'TChipmSlepSnu_mC-400_mX-225', 'TChipmSlepSnu_mC-500_mX-50', 'TChipmSlepSnu_mC-300_mX-175', 'TChipmSlepSnu_mC-500_mX-300', 'TChipmSlepSnu_mC-650_mX-125', 'TChipmSlepSnu_mC-650_mX-350', 'TChipmSlepSnu_mC-800_mX-200', 'TChipmSlepSnu_mC-950_mX-200', 'TChipmSlepSnu_mC-200_mX-125', 'TChipmSlepSnu_mC-200_mX-150', 'TChipmSlepSnu_mC-250_mX-175', 'TChipmSlepSnu_mC-300_mX-200', 'TChipmSlepSnu_mC-300_mX-225', 'TChipmSlepSnu_mC-350_mX-250', 'TChipmSlepSnu_mC-400_mX-275', 'TChipmSlepSnu_mC-450_mX-325', 'TChipmSlepSnu_mC-500_mX-325', 'TChipmSlepSnu_mC-700_mX-425', 'TChipmSlepSnu_mC-800_mX-450', 'TChipmSlepSnu_mC-900_mX-425', 'TChipmSlepSnu_mC-1000_mX-375', 'TChipmSlepSnu_mC-1100_mX-300', 'TChipmSlepSnu_mC-1150_mX-1' ]
-    opt.tableSigset['TChipmSlepSnu'] = [ 'TChipmSlepSnu_mC-300_mX-1', 'TChipmSlepSnu_mC-400_mX-225', 'TChipmSlepSnu_mC-500_mX-50', 'TChipmSlepSnu_mC-300_mX-175', 'TChipmSlepSnu_mC-500_mX-300', 'TChipmSlepSnu_mC-650_mX-125', 'TChipmSlepSnu_mC-650_mX-350', 'TChipmSlepSnu_mC-800_mX-200', 'TChipmSlepSnu_mC-950_mX-200', 'TChipmSlepSnu_mC-300_mX-200', 'TChipmSlepSnu_mC-300_mX-225', 'TChipmSlepSnu_mC-350_mX-250', 'TChipmSlepSnu_mC-400_mX-275', 'TChipmSlepSnu_mC-450_mX-325', 'TChipmSlepSnu_mC-500_mX-325', 'TChipmSlepSnu_mC-700_mX-425', 'TChipmSlepSnu_mC-800_mX-450', 'TChipmSlepSnu_mC-900_mX-425', 'TChipmSlepSnu_mC-1000_mX-375', 'TChipmSlepSnu_mC-1100_mX-300', 'TChipmSlepSnu_mC-1150_mX-1' ]
+    opt.tableSigset['TChipmSlepSnu'] = [ 'TChipmSlepSnu_mC-300_mX-1', 'TChipmSlepSnu_mC-400_mX-225', 'TChipmSlepSnu_mC-500_mX-50', 'TChipmSlepSnu_mC-300_mX-175', 'TChipmSlepSnu_mC-500_mX-300', 'TChipmSlepSnu_mC-650_mX-125', 'TChipmSlepSnu_mC-650_mX-350', 'TChipmSlepSnu_mC-800_mX-200', 'TChipmSlepSnu_mC-950_mX-200', 'TChipmSlepSnu_mC-300_mX-200', 'TChipmSlepSnu_mC-300_mX-225', 'TChipmSlepSnu_mC-350_mX-250', 'TChipmSlepSnu_mC-400_mX-275', 'TChipmSlepSnu_mC-450_mX-325', 'TChipmSlepSnu_mC-500_mX-325', 'TChipmSlepSnu_mC-700_mX-425', 'TChipmSlepSnu_mC-800_mX-450', 'TChipmSlepSnu_mC-900_mX-425', 'TChipmSlepSnu_mC-1000_mX-375', 'TChipmSlepSnu_mC-1050_mX-1', 'TChipmSlepSnu_mC-1100_mX-300', 'TChipmSlepSnu_mC-1150_mX-1' ]
     opt.tableSigset['T2tt']          = [ 'T2tt_mS-300_mX-213', 'T2tt_mS-300_mX-175', 'T2tt_mS-350_mX-263', 'T2tt_mS-350_mX-225', 'T2tt_mS-400_mX-275', 'T2tt_mS-300_mX-125', 'T2tt_mS-350_mX-175', 'T2tt_mS-400_mX-225', 'T2tt_mS-400_mX-313', 'T2tt_mS-475_mX-350', 'T2tt_mS-450_mX-275', 'T2tt_mS-450_mX-325', 'T2tt_mS-475_mX-388', 'T2tt_mS-450_mX-363', 'T2tt_mS-475_mX-300', 'T2tt_mS-475_mX-325', 'T2tt_mS-475_mX-375', 'T2tt_mS-500_mX-325', 'T2tt_mS-500_mX-350', 'T2tt_mS-500_mX-375', 'T2tt_mS-500_mX-400', 'T2tt_mS-500_mX-413', 'T2tt_mS-525_mX-350', 'T2tt_mS-525_mX-375', 'T2tt_mS-525_mX-400', 'T2tt_mS-525_mX-425', 'T2tt_mS-525_mX-438', 'T2tt_mS-550_mX-375', 'T2tt_mS-550_mX-400', 'T2tt_mS-550_mX-425', 'T2tt_mS-550_mX-450', 'T2tt_mS-550_mX-463' ]
     opt.tableSigset['TChipmWW']      = [ 'TChipmWW_mC-100_mX-1', 'TChipmWW_mC-150_mX-1', 'TChipmWW_mC-200_mX-1', 'TChipmWW_mC-200_mX-25', 'TChipmWW_mC-200_mX-50', 'TChipmWW_mC-300_mX-75', 'TChipmWW_mC-400_mX-50', 'TChipmWW_mC-350_mX-75' ]    
     opt.tableSigset['Studies']      = [ 'T2tt_mS-525_mX-350','T2tt_mS-525_mX-438','TChipmSlepSnu_mC-1150_mX-1','TChipmSlepSnu_mC-900_mX-475','EOYT2tt_mS-525_mX-350','EOYT2tt_mS-525_mX-438','EOYTChipmSlepSnu_mC-1150_mX-1','EOYTChipmSlepSnu_mC-900_mX-475' ]
@@ -226,7 +227,7 @@ def mergeSignalToSM(opt):
         for tag in opt.tag.split('-'):
 
             smtag = tag.split('VetoesUL')[0]+'VetoesUL'
-            signaltag = tag.replace('Group','').replace('Other','').replace('WWPol1a','').replace('SmtEU','')
+            signaltag = tag.replace('Group','').replace('Other','').replace('WWPol1a','').replace('SmtEU','').replace('WWPhicAll','')
 
             for sigset in getSignalList(opt, opt.sigset, tag):
 
@@ -295,10 +296,10 @@ def mergeFitCR(opt):
                 if opt.recover and commonTools.isGoodFile(outputFile): continue
                 os.system('rm -r -f '+outputFile)
 
-                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace('FastReco','').replace(signalTag,'') ]
-                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('Other','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('WWPhibAll','').replace('WWPhib','').replace('WWPhicAll','').replace('SmtEU','').replace('FXbtv',''))
+                filesToMerge = [ outputFile.replace('FitCR','').replace('-'+signal,'').replace(signalTag,'').replace('NoISRW','') ]
+                filesToMerge.append(outputFile.replace('FitCR','').replace('SM-','').replace('Group','').replace('Other','').replace('WWTails','').replace('WWHighs','').replace('WWPol1a','').replace('WWPhibAll','').replace('WWPhib','').replace('WWPhicAll','').replace('SmtEU','')) #.replace('FXbtv','').replace('nofx',''))
                 for backcr in opt.backgroundsInFit:
-                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace('FastReco','').replace(signalTag,'').replace('SmtEU','')) #.replace('WWPhibAll','')
+                    filesToMerge.append(outputFile.replace('FitCR','FitCR'+backcr).replace('-'+signal,'').replace(signalTag,'').replace('SmtEU','').replace('NoISRW',''))
 
                 foundFilesToMerge = True
                 for fileToMerge in filesToMerge:
@@ -307,6 +308,7 @@ def mergeFitCR(opt):
                         foundFilesToMerge = False
 
                 if foundFilesToMerge:
+                    #print('haddfast --compress '+outputFile+' '+' '.join(filesToMerge))
                     os.system('haddfast --compress '+outputFile+' '+' '.join(filesToMerge))
 
 # make pseudo-data out of MC shapes
@@ -660,11 +662,13 @@ def makeRateParametersTables(opt):
                         tableLine += '_{-'+str(backgroundRateParam[searchRegion][year][3])+'}$'
                         for year2 in opt.year.split('-'):
                             if year2 in backgroundRateParam[searchRegion] and int(year2)>int(year):
+                                print(tableLine, backgroundRateParam[searchRegion][year][0], backgroundRateParam[searchRegion][year][2], backgroundRateParam[searchRegion][year][3], backgroundRateParam[searchRegion][year2][0], backgroundRateParam[searchRegion][year2][2], backgroundRateParam[searchRegion][year2][3])
                                 if backgroundRateParam[searchRegion][year][0]>backgroundRateParam[searchRegion][year2][0]:
                                     pull = commonTools.statisticalCompatibility(backgroundRateParam[searchRegion][year][0],backgroundRateParam[searchRegion][year][3],backgroundRateParam[searchRegion][year2][0],backgroundRateParam[searchRegion][year2][2])
                                 else:
                                     pull = commonTools.statisticalCompatibility(backgroundRateParam[searchRegion][year][0],backgroundRateParam[searchRegion][year][2],backgroundRateParam[searchRegion][year2][0],backgroundRateParam[searchRegion][year2][3])
                                 totalPulls += 1.
+                                #print('pull', searchRegion, year, year2)
                                 if abs(pull)>1.: Pulls1 += 1.
                                 if abs(pull)>2.: Pulls2 += 1.
                                 if abs(pull)>3.: 
@@ -915,13 +919,18 @@ def plotFastSimLeptonEfficiencies(opt):
 
 def mergeSearchRegionKinematics(opt):
 
-    if 'SearchRegionKinematics' not in opt.tag:
+    if 'SearchRegion' not in opt.tag:
         print('Please choose a tag with SearchRegionKinematics')
         exit()
 
     for year in opt.year.split('-'):
         
-        outtag = opt.tag.replace('Kinematics', 'KinematicsMerged')
+        if 'Kinematics' in opt.tag:
+            outtag = opt.tag.replace('Kinematics', 'KinematicsMerged')
+        elif 'Mid' in opt.tag:
+            outtag = opt.tag.replace('Mid', 'MidMerged')
+        else:
+            outtag = opt.tag.replace('SearchRegion', 'SearchRegionMerged')
 
         samples, cuts, variables, nuisances = commonTools.getDictionariesInLoop(opt.configuration, year, opt.tag, opt.sigset, 'nuisances')
 
@@ -931,7 +940,6 @@ def mergeSearchRegionKinematics(opt):
         for cut in cuts:
 
             outputFile.mkdir(cut)
-
 
             mergedShapes = {}
 
@@ -965,6 +973,7 @@ def mergeSearchRegionKinematics(opt):
                                        if 'cuts' not in variables[histoVariable] or cut in variables[histoVariable]['cuts']:
                                            histoName = '/'.join([ cut, histoVariable, 'histo_'+sample ])
 
+                            print('e', year, shapeName, histoName)
                             if histo not in mergedShapes[shapeName]:
                                 mergedShapes[shapeName][histo] = inputFile.Get(histoName)
                             else:
